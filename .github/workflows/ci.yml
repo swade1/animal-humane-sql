@@ -15,5 +15,5 @@ jobs:
         with:
           node-version: '20'
       - run: npm install
-      - run: npm run lint
+      - run: npm run lint -- src
       - run: npm run build
