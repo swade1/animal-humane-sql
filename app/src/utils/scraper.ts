@@ -69,8 +69,8 @@ export async function getIframeUrls(mainUrl: string): Promise<string[]> {
 
 
 import fetch from 'node-fetch';
-import { supabase } from '../lib/supabaseClient';
-import { logDogHistory } from './dogHistory';
+import { supabase } from '../lib/supabaseClient.ts';
+import { logDogHistory } from './dogHistory.ts';
 
 export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]> {
   try {

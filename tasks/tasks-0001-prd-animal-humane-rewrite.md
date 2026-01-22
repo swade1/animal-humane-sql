@@ -36,7 +36,7 @@
     - [x] Document the manual entry process for future maintainers
 
 ### 3. Build frontend for data display and manual entry
-- [ ] Design UI wireframes for dog data display and manual entry
+- [x] Design UI wireframes for dog data display and manual entry
 - [ ] Outline UI components and pages for each tab based on AH Screenshots directory
 - [ ] Implement dog list and detail views (status, location, origin, etc.)
 - [ ] Add clickable dog names linking to public shelter pages

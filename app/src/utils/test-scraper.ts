@@ -1,5 +1,5 @@
 
-import { runScraper } from './scraper';
+import { runScraper } from './scraper.ts';
 
 (async () => {
   try {
