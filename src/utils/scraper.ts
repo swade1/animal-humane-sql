@@ -3,6 +3,31 @@
 
 import puppeteer from 'puppeteer';
 
+// Define Dog type for mapping
+type Dog = {
+  id: number;
+  name: string;
+  location: string;
+  origin: string;
+  status: string;
+  url: string;
+  intake_date: string | null;
+  length_of_stay_days: number | null;
+  birthdate: string | null;
+  age_group: string;
+  breed: string;
+  secondary_breed: string;
+  weight_group: string;
+  color: string;
+  bite_quarantine: number | null;
+  returned: number | null;
+  latitude: string | null;
+  longitude: string | null;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+};
+
 // Example: Scrape main page and extract iframe URLs
 export async function getIframeUrls(mainUrl: string): Promise<string[]> {
   const browser = await puppeteer.launch({ headless: true });
@@ -47,48 +72,48 @@ import fetch from 'node-fetch';
 import { supabase } from '../lib/supabaseClient';
 import { logDogHistory } from './dogHistory';
 
-export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<any[]> {
+export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]> {
   try {
     const res = await fetch(jsonUrl);
     if (!res.ok) {
       console.error(`Failed to fetch available-animals JSON: ${jsonUrl} (status: ${res.status})`);
       return [];
     }
-    const data = await res.json() as { animals?: any[] };
+    const data = await res.json() as { animals?: Record<string, unknown>[] };
     if (!data.animals || !Array.isArray(data.animals)) {
       console.error(`No animals array in JSON: ${jsonUrl}`);
       return [];
     }
-    // Map each animal to Supabase schema
     const today = new Date();
-    const mapped = data.animals.map((parsed: any) => {
-      const intakeDate = parsed.intake_date ? new Date(parseInt(parsed.intake_date, 10) * 1000) : null;
-      let lengthOfStay = null;
+    const mapped: Dog[] = data.animals.map((parsed) => {
+      const p = parsed as Record<string, any>;
+      const intakeDate = p.intake_date ? new Date(parseInt(p.intake_date, 10) * 1000) : null;
+      let lengthOfStay: number | null = null;
       if (intakeDate) {
         // Calculate difference in days (UTC)
         const diffTime = today.setHours(0,0,0,0) - intakeDate.setHours(0,0,0,0);
         lengthOfStay = Math.floor(diffTime / (1000 * 60 * 60 * 24));
       }
       return {
-        id: parsed.nid,
-        name: parsed.name,
-        location: parsed.location,
+        id: p.nid,
+        name: p.name,
+        location: p.location,
         origin: '', // Manual entry required
-        status: parsed.adoptable === 1 ? 'Available' : '', // Needs logic for other statuses
-        url: parsed.public_url,
+        status: p.adoptable === 1 ? 'Available' : '', // Needs logic for other statuses
+        url: p.public_url,
         intake_date: intakeDate ? intakeDate.toISOString().slice(0, 10) : null,
         length_of_stay_days: lengthOfStay,
-        birthdate: parsed.birthday ? new Date(parseInt(parsed.birthday, 10) * 1000).toISOString().slice(0, 10) : null,
-        age_group: parsed.age_group?.name || '',
-        breed: parsed.breed,
-        secondary_breed: parsed.secondary_breed,
-        weight_group: parsed.weight_group,
-        color: parsed.secondary_color ? `${parsed.primary_color} and ${parsed.secondary_color}` : parsed.primary_color,
+        birthdate: p.birthday ? new Date(parseInt(p.birthday, 10) * 1000).toISOString().slice(0, 10) : null,
+        age_group: p.age_group?.name || '',
+        breed: p.breed,
+        secondary_breed: p.secondary_breed,
+        weight_group: p.weight_group,
+        color: p.secondary_color ? `${p.primary_color} and ${p.secondary_color}` : p.primary_color,
         bite_quarantine: null, // Manual entry required
         returned: null, // Manual entry required
         latitude: null, // Manual entry required
         longitude: null, // Manual entry required
-        notes: parsed.kennel_description || '',
+        notes: p.kennel_description || '',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -119,6 +144,7 @@ export async function runScraper() {
 
 
       // Fetch name, location, and status for comparison
+      const ids = dogDataArr.map(d => d.id);
       const { data: existingDogs, error: fetchError } = await supabase
         .from('dogs')
         .select('id,location,status,name')
@@ -127,9 +153,9 @@ export async function runScraper() {
         console.error('Error fetching existing dogs for history logging:', fetchError, 'Dog IDs:', ids);
       }
       // Maps for quick lookup
-      const locationMap = new Map();
-      const statusMap = new Map();
-      const nameMap = new Map();
+      const locationMap = new Map<number, string>();
+      const statusMap = new Map<number, string>();
+      const nameMap = new Map<number, string>();
       if (existingDogs) {
         for (const d of existingDogs) {
           locationMap.set(d.id, d.location);
@@ -181,7 +207,7 @@ export async function runScraper() {
       }
 
       // Upsert each dog record into Supabase
-      const { error, data } = await supabase
+      const { error } = await supabase
         .from('dogs')
         .upsert(dogDataArr, { onConflict: 'id' });
       if (error) {
