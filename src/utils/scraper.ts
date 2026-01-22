@@ -44,7 +44,7 @@ export async function getIframeUrls(mainUrl: string): Promise<string[]> {
           console.log('Captured available-animals URL:', url);
         }
       }
-    } catch (e) {
+    } catch {
       // Ignore errors
     }
   });
@@ -85,35 +85,46 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]
       return [];
     }
     const today = new Date();
-    const mapped: Dog[] = data.animals.map((parsed) => {
-      const p = parsed as Record<string, any>;
-      const intakeDate = p.intake_date ? new Date(parseInt(p.intake_date, 10) * 1000) : null;
+    const mapped: Dog[] = data.animals.map((parsed: Record<string, unknown>) => {
+      // Helper for safe property extraction
+      const getString = (obj: Record<string, unknown>, key: string): string => typeof obj[key] === 'string' ? obj[key] as string : '';
+      const getNumber = (obj: Record<string, unknown>, key: string): number => typeof obj[key] === 'number' ? obj[key] as number : (typeof obj[key] === 'string' ? parseInt(obj[key] as string, 10) : 0);
+      const getOptionalString = (obj: Record<string, unknown>, key: string): string | null => typeof obj[key] === 'string' ? obj[key] as string : null;
+      const getOptionalNumber = (obj: Record<string, unknown>, key: string): number | null => typeof obj[key] === 'number' ? obj[key] as number : (typeof obj[key] === 'string' ? parseInt(obj[key] as string, 10) : null);
+
+      const p = parsed;
+      const intakeDate = p.intake_date ? new Date(getNumber(p, 'intake_date') * 1000) : null;
       let lengthOfStay: number | null = null;
       if (intakeDate) {
         // Calculate difference in days (UTC)
         const diffTime = today.setHours(0,0,0,0) - intakeDate.setHours(0,0,0,0);
         lengthOfStay = Math.floor(diffTime / (1000 * 60 * 60 * 24));
       }
+      // Handle age_group as nested object
+      let ageGroup = '';
+      if (typeof p.age_group === 'object' && p.age_group !== null && 'name' in p.age_group) {
+        ageGroup = (p.age_group as { name?: string }).name || '';
+      }
       return {
-        id: p.nid,
-        name: p.name,
-        location: p.location,
+        id: getNumber(p, 'nid'),
+        name: getString(p, 'name'),
+        location: getString(p, 'location'),
         origin: '', // Manual entry required
-        status: p.adoptable === 1 ? 'Available' : '', // Needs logic for other statuses
-        url: p.public_url,
+        status: getNumber(p, 'adoptable') === 1 ? 'Available' : '', // Needs logic for other statuses
+        url: getString(p, 'public_url'),
         intake_date: intakeDate ? intakeDate.toISOString().slice(0, 10) : null,
         length_of_stay_days: lengthOfStay,
-        birthdate: p.birthday ? new Date(parseInt(p.birthday, 10) * 1000).toISOString().slice(0, 10) : null,
-        age_group: p.age_group?.name || '',
-        breed: p.breed,
-        secondary_breed: p.secondary_breed,
-        weight_group: p.weight_group,
-        color: p.secondary_color ? `${p.primary_color} and ${p.secondary_color}` : p.primary_color,
+        birthdate: p.birthday ? new Date(getNumber(p, 'birthday') * 1000).toISOString().slice(0, 10) : null,
+        age_group: ageGroup,
+        breed: getString(p, 'breed'),
+        secondary_breed: getString(p, 'secondary_breed'),
+        weight_group: getString(p, 'weight_group'),
+        color: getString(p, 'secondary_color') ? `${getString(p, 'primary_color')} and ${getString(p, 'secondary_color')}` : getString(p, 'primary_color'),
         bite_quarantine: null, // Manual entry required
         returned: null, // Manual entry required
         latitude: null, // Manual entry required
         longitude: null, // Manual entry required
-        notes: p.kennel_description || '',
+        notes: getString(p, 'kennel_description') || '',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
