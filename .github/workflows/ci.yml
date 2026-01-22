@@ -22,3 +22,6 @@ jobs:
         working-directory: app
       - run: NEXT_PRIVATE_BUILD_WORKER=webpack npm run build
         working-directory: app
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
