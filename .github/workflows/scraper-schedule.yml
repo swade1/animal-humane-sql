@@ -13,6 +13,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Print current branch
+        run: |
+          echo "Current branch:" && git branch --show-current
+
+      - name: List workspace contents
+        run: |
+          echo "Workspace root:" && ls -alh
+          echo "App directory:" && ls -alh app || echo "app directory not found"
+
+      - name: List workspace and app directory
+        run: |
+          echo "Workspace root:" && ls -alh
+          echo "App directory:" && ls -alh app || echo "app directory not found"
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
