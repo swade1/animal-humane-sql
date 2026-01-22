@@ -13,6 +13,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: List workspace contents
+        run: |
+          echo "Listing workspace root contents:"
+          ls -alh
+          echo "Listing ./app directory contents:"
+          ls -alh ./app || echo "./app directory not found"
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
