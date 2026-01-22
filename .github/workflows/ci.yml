@@ -16,4 +16,5 @@ jobs:
           node-version: '20'
       - run: npm install
       - run: npm run lint -- src
-      - run: npm run build
+      - run: rm -rf .next
+      - run: NEXT_PRIVATE_BUILD_WORKER=webpack npm run build
