@@ -1,0 +1,44 @@
+name: Scheduled Scraper
+
+on:
+  schedule:
+    # Runs at 9am, 11am, 1pm, 3pm, 5pm, 7pm MST (16:00, 18:00, 20:00, 22:00, 0:00 UTC)
+    - cron: '0 16,18,20,22,0,2 * * *'
+  workflow_dispatch:
+
+jobs:
+  run-scraper:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Print current branch
+        run: |
+          echo "Current branch:" && git branch --show-current
+
+      - name: List workspace contents
+        run: |
+          echo "Workspace root:" && ls -alh
+          echo "App directory:" && ls -alh app || echo "app directory not found"
+
+      - name: List workspace and app directory
+        run: |
+          echo "Workspace root:" && ls -alh
+          echo "App directory:" && ls -alh app || echo "app directory not found"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: app
+
+      - name: Run scraper
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: npx ts-node src/utils/test-scraper.ts
+        working-directory: app
