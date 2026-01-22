@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabaseClient.ts';
+import { supabase } from '../lib/supabaseClient';
 
 /**
  * Logs a change to a dog's data in the dog_history table.

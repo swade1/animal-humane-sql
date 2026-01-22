@@ -37,7 +37,7 @@
 
 ### 3. Build frontend for data display and manual entry
 - [x] Design UI wireframes for dog data display and manual entry
-- [ ] Outline UI components and pages for each tab based on AH Screenshots directory
+- [x] Outline UI components and pages for each tab based on AH Screenshots directory
 - [ ] Implement dog list and detail views (status, location, origin, etc.)
 - [ ] Add clickable dog names linking to public shelter pages
 - [ ] Implement manual entry/editing UI (developer-only access)
