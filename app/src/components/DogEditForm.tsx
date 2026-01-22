@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
 
+type DogFormFields = {
+  origin: string;
+  latitude: string;
+  longitude: string;
+  bite_quarantine: number;
+  returned: number;
+  notes: string;
+};
+
 type DogEditFormProps = {
-  dog: {
-    origin: string;
-    latitude: string;
-    longitude: string;
-    bite_quarantine: number;
-    returned: number;
-    notes: string;
-  };
-  onSave: (fields: any) => void;
+  dog: DogFormFields;
+  onSave: (fields: DogFormFields) => void;
   onCancel: () => void;
 };
 
 export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<DogFormFields>({
     origin: dog.origin || '',
     latitude: dog.latitude || '',
     longitude: dog.longitude || '',
