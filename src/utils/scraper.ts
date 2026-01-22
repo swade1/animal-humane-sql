@@ -35,7 +35,7 @@ export async function getIframeUrls(mainUrl: string): Promise<string[]> {
   const availableAnimalsUrls: string[] = [];
 
   // Intercept network requests and responses
-  page.on('response', async (response) => {
+  page.on('response', async (response: { url: () => string }) => {
     try {
       const url = response.url();
       if (url.includes('available-animals')) {
@@ -53,8 +53,8 @@ export async function getIframeUrls(mainUrl: string): Promise<string[]> {
   await page.waitForSelector('.shelterluv', { timeout: 60000 });
 
   // Extract all iframe src URLs (for completeness)
-  const iframeUrls = await page.$$eval('iframe', iframes =>
-    iframes.map(iframe => iframe.src)
+  const iframeUrls = await page.$$eval('iframe', (iframes: HTMLIFrameElement[]) =>
+    iframes.map((iframe: HTMLIFrameElement) => iframe.src)
   );
 
   await browser.close();
@@ -89,8 +89,6 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]
       // Helper for safe property extraction
       const getString = (obj: Record<string, unknown>, key: string): string => typeof obj[key] === 'string' ? obj[key] as string : '';
       const getNumber = (obj: Record<string, unknown>, key: string): number => typeof obj[key] === 'number' ? obj[key] as number : (typeof obj[key] === 'string' ? parseInt(obj[key] as string, 10) : 0);
-      const getOptionalString = (obj: Record<string, unknown>, key: string): string | null => typeof obj[key] === 'string' ? obj[key] as string : null;
-      const getOptionalNumber = (obj: Record<string, unknown>, key: string): number | null => typeof obj[key] === 'number' ? obj[key] as number : (typeof obj[key] === 'string' ? parseInt(obj[key] as string, 10) : null);
 
       const p = parsed;
       const intakeDate = p.intake_date ? new Date(getNumber(p, 'intake_date') * 1000) : null;
