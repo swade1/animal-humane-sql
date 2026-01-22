@@ -15,6 +15,10 @@ jobs:
         with:
           node-version: '20'
       - run: npm install
+        working-directory: app
       - run: npm run lint -- src
+        working-directory: app
       - run: rm -rf .next
+        working-directory: app
       - run: NEXT_PRIVATE_BUILD_WORKER=webpack npm run build
+        working-directory: app
