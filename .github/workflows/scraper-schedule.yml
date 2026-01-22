@@ -3,7 +3,7 @@ name: Scheduled Scraper
 on:
   schedule:
     # Runs at 9am, 11am, 1pm, 3pm, 5pm, 7pm MST (16:00, 18:00, 20:00, 22:00, 0:00 UTC)
-    - cron: '0 16,18,20,22,0 * * *'
+    - cron: '0 16,18,20,22,0,2 * * *'
   workflow_dispatch:
 
 jobs:

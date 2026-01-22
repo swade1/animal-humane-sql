@@ -51,38 +51,48 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<any[]
   try {
     const res = await fetch(jsonUrl);
     if (!res.ok) {
-      console.error('Failed to fetch available-animals JSON:', jsonUrl, res.status);
+      console.error(`Failed to fetch available-animals JSON: ${jsonUrl} (status: ${res.status})`);
       return [];
     }
     const data = await res.json() as { animals?: any[] };
     if (!data.animals || !Array.isArray(data.animals)) {
-      console.error('No animals array in JSON:', jsonUrl);
+      console.error(`No animals array in JSON: ${jsonUrl}`);
       return [];
     }
     // Map each animal to Supabase schema
-    const mapped = data.animals.map((parsed: any) => ({
-      id: parsed.nid,
-      name: parsed.name,
-      location: parsed.location,
-      origin: '', // Manual entry required
-      status: parsed.adoptable === 1 ? 'Available' : '', // Needs logic for other statuses
-      url: parsed.public_url,
-      intake_date: parsed.intake_date ? new Date(parseInt(parsed.intake_date, 10) * 1000).toISOString().slice(0, 10) : null,
-      length_of_stay_days: null, // Calculated elsewhere
-      birthdate: parsed.birthday ? new Date(parseInt(parsed.birthday, 10) * 1000).toISOString().slice(0, 10) : null,
-      age_group: parsed.age_group?.name || '',
-      breed: parsed.breed,
-      secondary_breed: parsed.secondary_breed,
-      weight_group: parsed.weight_group,
-      color: parsed.secondary_color ? `${parsed.primary_color} and ${parsed.secondary_color}` : parsed.primary_color,
-      bite_quarantine: null, // Manual entry required
-      returned: null, // Manual entry required
-      latitude: null, // Manual entry required
-      longitude: null, // Manual entry required
-      notes: parsed.kennel_description || '',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }));
+    const today = new Date();
+    const mapped = data.animals.map((parsed: any) => {
+      const intakeDate = parsed.intake_date ? new Date(parseInt(parsed.intake_date, 10) * 1000) : null;
+      let lengthOfStay = null;
+      if (intakeDate) {
+        // Calculate difference in days (UTC)
+        const diffTime = today.setHours(0,0,0,0) - intakeDate.setHours(0,0,0,0);
+        lengthOfStay = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      }
+      return {
+        id: parsed.nid,
+        name: parsed.name,
+        location: parsed.location,
+        origin: '', // Manual entry required
+        status: parsed.adoptable === 1 ? 'Available' : '', // Needs logic for other statuses
+        url: parsed.public_url,
+        intake_date: intakeDate ? intakeDate.toISOString().slice(0, 10) : null,
+        length_of_stay_days: lengthOfStay,
+        birthdate: parsed.birthday ? new Date(parseInt(parsed.birthday, 10) * 1000).toISOString().slice(0, 10) : null,
+        age_group: parsed.age_group?.name || '',
+        breed: parsed.breed,
+        secondary_breed: parsed.secondary_breed,
+        weight_group: parsed.weight_group,
+        color: parsed.secondary_color ? `${parsed.primary_color} and ${parsed.secondary_color}` : parsed.primary_color,
+        bite_quarantine: null, // Manual entry required
+        returned: null, // Manual entry required
+        latitude: null, // Manual entry required
+        longitude: null, // Manual entry required
+        notes: parsed.kennel_description || '',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+    });
     console.log('Mapped dog data from available-animals JSON:', mapped);
     return mapped;
   } catch (err) {
@@ -107,39 +117,30 @@ export async function runScraper() {
       const dogDataArr = await scrapeAvailableAnimalsJson(jsonUrl);
       if (dogDataArr.length === 0) continue;
 
-      // Fetch current dogs from Supabase for comparison
-      const ids = dogDataArr.map(d => d.id);
+
+      // Fetch name, location, and status for comparison
       const { data: existingDogs, error: fetchError } = await supabase
         .from('dogs')
-        .select('id,location')
+        .select('id,location,status,name')
         .in('id', ids);
       if (fetchError) {
-        console.error('Error fetching existing dogs for history logging:', fetchError);
+        console.error('Error fetching existing dogs for history logging:', fetchError, 'Dog IDs:', ids);
       }
-      // Map for quick lookup
-      const existingMap = new Map();
+      // Maps for quick lookup
+      const locationMap = new Map();
+      const statusMap = new Map();
+      const nameMap = new Map();
       if (existingDogs) {
         for (const d of existingDogs) {
-          existingMap.set(d.id, d.location);
-        }
-      }
-
-      // Log location and status changes
-      // Fetch status as well for comparison
-      const { data: existingStatusDogs, error: fetchStatusError } = await supabase
-        .from('dogs')
-        .select('id,status')
-        .in('id', ids);
-      const statusMap = new Map();
-      if (existingStatusDogs) {
-        for (const d of existingStatusDogs) {
+          locationMap.set(d.id, d.location);
           statusMap.set(d.id, d.status);
+          nameMap.set(d.id, d.name);
         }
       }
 
       for (const dog of dogDataArr) {
         // Location change
-        const oldLocation = existingMap.get(dog.id) ?? null;
+        const oldLocation = locationMap.get(dog.id) ?? null;
         const newLocation = dog.location ?? null;
         if (oldLocation && newLocation && oldLocation !== newLocation) {
           await logDogHistory({
@@ -149,6 +150,7 @@ export async function runScraper() {
             newValue: newLocation,
             notes: 'Location updated by scraper'
           });
+          console.error(`Location change detected for dog ID ${dog.id} (${dog.name}): '${oldLocation}' -> '${newLocation}'`);
         }
         // Status change
         const oldStatus = statusMap.get(dog.id) ?? null;
@@ -161,6 +163,20 @@ export async function runScraper() {
             newValue: newStatus,
             notes: 'Status updated by scraper'
           });
+          console.error(`Status change detected for dog ID ${dog.id} (${dog.name}): '${oldStatus}' -> '${newStatus}'`);
+        }
+        // Name change
+        const oldName = nameMap.get(dog.id) ?? null;
+        const newName = dog.name ?? null;
+        if (oldName && newName && oldName !== newName) {
+          await logDogHistory({
+            dogId: dog.id,
+            eventType: 'name_change',
+            oldValue: oldName,
+            newValue: newName,
+            notes: 'Name updated by scraper'
+          });
+          console.error(`Name change detected for dog ID ${dog.id}: '${oldName}' -> '${newName}'`);
         }
       }
 
@@ -169,7 +185,9 @@ export async function runScraper() {
         .from('dogs')
         .upsert(dogDataArr, { onConflict: 'id' });
       if (error) {
-        console.error('Supabase upsert error:', error);
+        const dogIds = dogDataArr.map(d => d.id).join(', ');
+        const dogNames = dogDataArr.map(d => d.name).join(', ');
+        console.error(`Supabase upsert error:`, error, `Dog IDs: ${dogIds}`, `Dog Names: ${dogNames}`);
       } else {
         console.log(`Upserted ${dogDataArr.length} dogs to Supabase.`);
       }
