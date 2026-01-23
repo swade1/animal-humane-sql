@@ -8,6 +8,9 @@ export default function OverviewTable() {
   const [averageLengthOfStay, setAverageLengthOfStay] = useState<number | null>(null);
   const [longestStay, setLongestStay] = useState<number | null>(null);
   const [longestStayDog, setLongestStayDog] = useState<{ id: string, name: string } | null>(null);
+  const [puppyCount, setPuppyCount] = useState<number | null>(null);
+  const [adultCount, setAdultCount] = useState<number | null>(null);
+  const [seniorCount, setSeniorCount] = useState<number | null>(null);
   const [showModal, setShowModal] = useState(false);
   useEffect(() => {
     async function fetchOverviewData() {
@@ -36,6 +39,30 @@ export default function OverviewTable() {
         setLongestStay(0);
         setLongestStayDog(null);
       }
+
+      // Fetch available puppies count
+      const { count: puppyCountValue, error: puppyError } = await supabase
+        .from('dogs')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'Available')
+        .eq('age_group', 'Puppy');
+      if (!puppyError) setPuppyCount(puppyCountValue ?? 0);
+
+      // Fetch available adults count
+      const { count: adultCountValue, error: adultError } = await supabase
+        .from('dogs')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'Available')
+        .eq('age_group', 'Adult');
+      if (!adultError) setAdultCount(adultCountValue ?? 0);
+
+      // Fetch available seniors count
+      const { count: seniorCountValue, error: seniorError } = await supabase
+        .from('dogs')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'Available')
+        .eq('age_group', 'Senior');
+      if (!seniorError) setSeniorCount(seniorCountValue ?? 0);
     }
     fetchOverviewData();
   }, []);
@@ -98,15 +125,15 @@ export default function OverviewTable() {
             </tr>
             <tr>
               <td className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '30px' }}>Puppies (0 to 1 year):</td>
-              <td>6</td>
+              <td>{puppyCount === null ? '...' : puppyCount}</td>
             </tr>
             <tr>
               <td className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '30px' }}>Adults:</td>
-              <td>33</td>
+              <td>{adultCount === null ? '...' : adultCount}</td>
             </tr>
             <tr>
               <td className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '30px' }}>Seniors (8+ years):</td>
-              <td>3</td>
+              <td>{seniorCount === null ? '...' : seniorCount}</td>
             </tr>
           </tbody>
         </table>
@@ -116,21 +143,46 @@ export default function OverviewTable() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div
             className="bg-white rounded-lg shadow-lg p-6 relative flex flex-col items-center justify-center"
-            style={{ width: 500, height: 500, maxWidth: 500, maxHeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{
+              width: 750,
+              height: 750,
+              maxWidth: 750,
+              maxHeight: 750,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'fixed',
+              left: '50%',
+              top: '10%',
+              transform: 'translate(-50%, 0)',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+              background: 'rgba(255,255,255,0.97)'
+            }}
           >
             <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl"
+              className="absolute text-gray-500 hover:text-gray-700 bg-white rounded-full flex items-center justify-center shadow-md"
               onClick={() => setShowModal(false)}
               aria-label="Close"
+              style={{
+                zIndex: 10,
+                top: 16,
+                right: 16,
+                position: 'absolute',
+                lineHeight: 1,
+                width: 64,
+                height: 64,
+                fontSize: 48,
+                fontWeight: 900
+              }}
             >
-              &times;
+              ×
             </button>
             <h3 className="text-lg font-bold mb-2 text-center w-full">{longestStayDog.name}</h3>
             <iframe
-              src={`http://new.shelterluv.com/embed/animal/${longestStayDog.id}`}
+              src={`http://new.shelterluv.com/embed/animal/${longestStayDog.id}/`}
               title={longestStayDog.name}
               className="rounded border"
-              style={{ width: 460, height: 420, border: '1px solid #ccc', background: '#fff' }}
+              style={{ width: 700, height: 650, border: '1px solid #ccc', background: '#fff' }}
               allowFullScreen
             />
           </div>
