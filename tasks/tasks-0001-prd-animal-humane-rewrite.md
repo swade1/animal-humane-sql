@@ -39,6 +39,13 @@
 - [x] Design UI wireframes for dog data display and manual entry
 - [x] Outline UI components and pages for each tab based on AH Screenshots directory
 - [ ] Implement dog list and detail views (status, location, origin, etc.)
+    - [ ] Scaffold DogList and DogDetail components/pages.
+    - [ ] Implement data fetching from Supabase for list and detail views.
+    - [ ] Build UI for displaying dog info and history (match wireframes).
+    - [ ] Add search/filter/sort functionality to the list.
+    - [ ] Implement navigation between list and detail views.
+    - [ ] Handle loading, error, and empty states.
+    - [ ] Add responsive styles and accessibility features.
 - [ ] Add clickable dog names linking to public shelter pages
 - [ ] Implement manual entry/editing UI (developer-only access)
 - [ ] Add authentication for manual entry (developer-only)

@@ -101,7 +101,12 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]
       // Handle age_group as nested object
       let ageGroup = '';
       if (typeof p.age_group === 'object' && p.age_group !== null && 'name' in p.age_group) {
-        ageGroup = (p.age_group as { name?: string }).name || '';
+        const rawAgeGroup = (p.age_group as { name?: string }).name || '';
+        if (['Puppy', 'Adult', 'Senior'].includes(rawAgeGroup)) {
+          ageGroup = rawAgeGroup;
+        } else {
+          ageGroup = '';
+        }
       }
       return {
         id: getNumber(p, 'nid'),
@@ -180,6 +185,7 @@ export async function runScraper() {
         if (oldLocation && newLocation && oldLocation !== newLocation) {
           await logDogHistory({
             dogId: dog.id,
+            name: dog.name,
             eventType: 'location_change',
             oldValue: oldLocation,
             newValue: newLocation,
@@ -193,6 +199,7 @@ export async function runScraper() {
         if (oldStatus && newStatus && oldStatus !== newStatus) {
           await logDogHistory({
             dogId: dog.id,
+            name: dog.name,
             eventType: 'status_change',
             oldValue: oldStatus,
             newValue: newStatus,
@@ -206,6 +213,7 @@ export async function runScraper() {
         if (oldName && newName && oldName !== newName) {
           await logDogHistory({
             dogId: dog.id,
+            name: dog.name,
             eventType: 'name_change',
             oldValue: oldName,
             newValue: newName,
@@ -224,7 +232,9 @@ export async function runScraper() {
         const dogNames = dogDataArr.map(d => d.name).join(', ');
         console.error(`Supabase upsert error:`, error, `Dog IDs: ${dogIds}`, `Dog Names: ${dogNames}`);
       } else {
+        const dogNames = dogDataArr.map(d => d.name).join(', ');
         console.log(`Upserted ${dogDataArr.length} dogs to Supabase.`);
+        console.log(`Upserted dog names: ${dogNames}`);
       }
     }
   } catch (err) {
