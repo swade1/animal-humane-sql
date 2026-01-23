@@ -15,7 +15,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-4xl mx-auto bg-white rounded shadow p-6">
-        <h1 className="text-2xl font-bold mb-6 text-center">Animal Humane SQL</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center">Animal Humane New Mexico: Pet Status and Updates</h1>
         <div className="flex border-b mb-6">
           {TABS.map(tab => (
             <button
