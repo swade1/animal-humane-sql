@@ -1,71 +1,76 @@
 
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
-
+import { useQuery } from '@tanstack/react-query';
 export default function OverviewTable() {
-  const [availableDogs, setAvailableDogs] = useState<number | null>(null);
-  const [averageLengthOfStay, setAverageLengthOfStay] = useState<number | null>(null);
-  const [longestStay, setLongestStay] = useState<number | null>(null);
-  const [longestStayDog, setLongestStayDog] = useState<{ id: string, name: string } | null>(null);
-  const [puppyCount, setPuppyCount] = useState<number | null>(null);
-  const [adultCount, setAdultCount] = useState<number | null>(null);
-  const [seniorCount, setSeniorCount] = useState<number | null>(null);
   const [showModal, setShowModal] = useState(false);
-  useEffect(() => {
-    async function fetchOverviewData() {
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['overviewData'],
+    queryFn: async () => {
       // Fetch available dogs count
       const { count, error } = await supabase
         .from('dogs')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'Available');
-      if (!error) setAvailableDogs(count ?? 0);
-
       // Fetch average and longest length_of_stay_days for available dogs
-      const { data, error: stayError } = await supabase
+      const { data: stayData, error: stayError } = await supabase
         .from('dogs')
         .select('id, name, length_of_stay_days')
         .eq('status', 'Available');
-      if (!stayError && data && data.length > 0) {
-        const total = data.reduce((sum, dog) => sum + (dog.length_of_stay_days ?? 0), 0);
-        const avg = total / data.length;
-        setAverageLengthOfStay(Math.round(avg));
-        const maxStay = Math.max(...data.map(dog => dog.length_of_stay_days ?? 0));
-        setLongestStay(maxStay);
-        const longestDog = data.find(dog => dog.length_of_stay_days === maxStay);
-        if (longestDog) setLongestStayDog({ id: longestDog.id.toString(), name: longestDog.name });
+      let averageLengthOfStay = null;
+      let longestStay = null;
+      let longestStayDog = null;
+      if (!stayError && stayData && stayData.length > 0) {
+        const total = stayData.reduce((sum, dog) => sum + (dog.length_of_stay_days ?? 0), 0);
+        const avg = total / stayData.length;
+        averageLengthOfStay = Math.round(avg);
+        const maxStay = Math.max(...stayData.map(dog => dog.length_of_stay_days ?? 0));
+        longestStay = maxStay;
+        const longestDog = stayData.find(dog => dog.length_of_stay_days === maxStay);
+        if (longestDog) longestStayDog = { id: longestDog.id.toString(), name: longestDog.name };
       } else if (!stayError) {
-        setAverageLengthOfStay(0);
-        setLongestStay(0);
-        setLongestStayDog(null);
+        averageLengthOfStay = 0;
+        longestStay = 0;
+        longestStayDog = null;
       }
-
       // Fetch available puppies count
       const { count: puppyCountValue, error: puppyError } = await supabase
         .from('dogs')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'Available')
         .eq('age_group', 'Puppy');
-      if (!puppyError) setPuppyCount(puppyCountValue ?? 0);
-
       // Fetch available adults count
       const { count: adultCountValue, error: adultError } = await supabase
         .from('dogs')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'Available')
         .eq('age_group', 'Adult');
-      if (!adultError) setAdultCount(adultCountValue ?? 0);
-
       // Fetch available seniors count
       const { count: seniorCountValue, error: seniorError } = await supabase
         .from('dogs')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'Available')
         .eq('age_group', 'Senior');
-      if (!seniorError) setSeniorCount(seniorCountValue ?? 0);
-    }
-    fetchOverviewData();
-  }, []);
+      return {
+        availableDogs: error ? null : (count ?? 0),
+        averageLengthOfStay,
+        longestStay,
+        longestStayDog,
+        puppyCount: puppyError ? null : (puppyCountValue ?? 0),
+        adultCount: adultError ? null : (adultCountValue ?? 0),
+        seniorCount: seniorError ? null : (seniorCountValue ?? 0)
+      };
+    },
+    staleTime: 1000 * 60 * 60 * 2 // 2 hours
+  });
+
+  if (isLoading || !data) {
+    return <div>Loading...</div>;
+  }
+
+  const { availableDogs, averageLengthOfStay, longestStay, longestStayDog, puppyCount, adultCount, seniorCount } = data;
 
   return (
     <div className="border border-[#ccc] p-4 rounded bg-[#fafafa]">
