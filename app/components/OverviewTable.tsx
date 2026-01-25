@@ -1,4 +1,3 @@
-
 "use client";
 import React, { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
@@ -13,22 +12,28 @@ export default function OverviewTable() {
       const { count, error } = await supabase
         .from('dogs')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'Available');
+        .eq('status', 'available');
       // Fetch average and longest length_of_stay_days for available dogs
       const { data: stayData, error: stayError } = await supabase
         .from('dogs')
-        .select('id, name, length_of_stay_days')
-        .eq('status', 'Available');
+        .select('id, name, intake_date')
+        .eq('status', 'available');
       let averageLengthOfStay = null;
       let longestStay = null;
       let longestStayDog = null;
       if (!stayError && stayData && stayData.length > 0) {
-        const total = stayData.reduce((sum, dog) => sum + (dog.length_of_stay_days ?? 0), 0);
-        const avg = total / stayData.length;
+        const today = new Date();
+        const dogsWithStay = stayData.map(dog => {
+          const intakeDate = dog.intake_date ? new Date(dog.intake_date) : null;
+          const stayDays = intakeDate ? Math.floor((today.getTime() - intakeDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+          return { ...dog, length_of_stay_days: stayDays };
+        });
+        const total = dogsWithStay.reduce((sum, dog) => sum + (dog.length_of_stay_days ?? 0), 0);
+        const avg = total / dogsWithStay.length;
         averageLengthOfStay = Math.round(avg);
-        const maxStay = Math.max(...stayData.map(dog => dog.length_of_stay_days ?? 0));
+        const maxStay = Math.max(...dogsWithStay.map(dog => dog.length_of_stay_days ?? 0));
         longestStay = maxStay;
-        const longestDog = stayData.find(dog => dog.length_of_stay_days === maxStay);
+        const longestDog = dogsWithStay.find(dog => dog.length_of_stay_days === maxStay);
         if (longestDog) longestStayDog = { id: longestDog.id.toString(), name: longestDog.name };
       } else if (!stayError) {
         averageLengthOfStay = 0;
@@ -39,19 +44,19 @@ export default function OverviewTable() {
       const { count: puppyCountValue, error: puppyError } = await supabase
         .from('dogs')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'Available')
+        .eq('status', 'available')
         .eq('age_group', 'Puppy');
       // Fetch available adults count
       const { count: adultCountValue, error: adultError } = await supabase
         .from('dogs')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'Available')
+        .eq('status', 'available')
         .eq('age_group', 'Adult');
       // Fetch available seniors count
       const { count: seniorCountValue, error: seniorError } = await supabase
         .from('dogs')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'Available')
+        .eq('status', 'available')
         .eq('age_group', 'Senior');
       return {
         availableDogs: error ? null : (count ?? 0),

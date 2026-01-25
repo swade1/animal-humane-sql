@@ -30,7 +30,10 @@ type Dog = {
 
 // Example: Scrape main page and extract iframe URLs
 export async function getIframeUrls(mainUrl: string): Promise<string[]> {
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  });
   const page = await browser.newPage();
   const availableAnimalsUrls: string[] = [];
 
