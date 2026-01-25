@@ -30,7 +30,7 @@ type Dog = {
 };
 
 // Example: Scrape main page and extract iframe URLs
-
+export async function getIframeUrls(mainUrl: string): Promise<string[]> {
   let browser;
   const launchOptions = {
     headless: true,
@@ -92,7 +92,6 @@ type Dog = {
     if (browser) await browser.close();
     throw err;
   }
-
 }
 
 import fetch from 'node-fetch';
