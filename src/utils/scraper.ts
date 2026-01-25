@@ -342,8 +342,16 @@ export async function runScraper() {
             await page.goto(urlToCheck, { waitUntil: 'networkidle2', timeout: 60000 });
             let location = '';
             try {
-              // Extract the :animal attribute from the root element (or adjust selector as needed)
-              const animalJson = await page.$eval('[\:animal]', el => el.getAttribute(':animal'));
+              // Use page.evaluate to find the element with the :animal attribute
+              const animalJson = await page.evaluate(() => {
+                const allElements = document.querySelectorAll('*');
+                for (const el of allElements) {
+                  if (el.hasAttribute(':animal')) {
+                    return el.getAttribute(':animal');
+                  }
+                }
+                return null;
+              });
               if (animalJson) {
                 // Unescape HTML entities and parse JSON
                 const decoded = animalJson.replace(/&quot;/g, '"');
