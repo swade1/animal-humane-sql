@@ -257,26 +257,29 @@ export async function runScraper() {
     const mergedDogs = Array.from(dogMap.values());
 
     // Fetch name, location, and status for comparison
+
     const ids = mergedDogs.map(d => d.id);
-    const { data: existingDogs, error: fetchError } = await supabase
+    // Fetch all previously available dogs
+    const { data: prevAvailableDogs, error: prevFetchError } = await supabase
       .from('dogs')
       .select('id,location,status,name')
-      .in('id', ids);
-    if (fetchError) {
-      console.error('Error fetching existing dogs for history logging:', fetchError, 'Dog IDs:', ids);
+      .eq('status', 'available');
+    if (prevFetchError) {
+      console.error('Error fetching previously available dogs:', prevFetchError);
     }
     // Maps for quick lookup
     const locationMap = new Map<number, string>();
     const statusMap = new Map<number, string>();
     const nameMap = new Map<number, string>();
-    if (existingDogs) {
-      for (const d of existingDogs) {
+    if (prevAvailableDogs) {
+      for (const d of prevAvailableDogs) {
         locationMap.set(d.id, d.location);
         statusMap.set(d.id, d.status);
         nameMap.set(d.id, d.name);
       }
     }
 
+    // Log changes for dogs still present
     for (const dog of mergedDogs) {
       // Location change
       const oldLocation = locationMap.get(dog.id) ?? null;
@@ -317,6 +320,38 @@ export async function runScraper() {
         });
         console.error(`Name change detected for dog ID ${dog.id}: '${oldName}' -> '${newName}'`);
       }
+    }
+
+    // Log status_change for dogs previously available but now missing (check web page location before marking as adopted)
+    if (prevAvailableDogs) {
+      const mergedDogIds = new Set(mergedDogs.map(d => d.id));
+      const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+      for (const prevDog of prevAvailableDogs) {
+        if (!mergedDogIds.has(prevDog.id)) {
+          try {
+            const page = await browser.newPage();
+            await page.goto(prevDog.url, { waitUntil: 'networkidle2', timeout: 60000 });
+            // Adjust selector as needed to match the location field on the dog's page
+            const location = await page.$eval('.location, .dog-location', el => el.textContent?.trim() || '');
+            await page.close();
+            if (!location) {
+              await logDogHistory({
+                dogId: prevDog.id,
+                eventType: 'status_change',
+                oldValue: 'available',
+                newValue: 'adopted',
+                notes: 'Dog no longer present in available-animals JSON and location is empty; likely adopted.'
+              });
+              console.error(`Status change detected for dog ID ${prevDog.id} (${prevDog.name}): 'available' -> 'adopted' (missing from new scrape, location empty)`);
+            } else {
+              console.log(`[scraper] Dog ID ${prevDog.id} (${prevDog.name}) missing from JSON but location is not empty; not marking as adopted.`);
+            }
+          } catch (err) {
+            console.error(`[scraper] Error checking location for missing dog ${prevDog.name} (ID: ${prevDog.id}):`, err);
+          }
+        }
+      }
+      await browser.close();
     }
 
     // Upsert all merged dogs into Supabase
