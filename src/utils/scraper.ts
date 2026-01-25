@@ -256,26 +256,58 @@ export async function runScraper() {
     }
     const mergedDogs = Array.from(dogMap.values());
 
-    // Fetch name, location, and status for comparison
-
+    // Fetch name, location, status, and all manual fields for comparison
     const ids = mergedDogs.map(d => d.id);
-    // Fetch all previously available dogs
-    const { data: prevAvailableDogs, error: prevFetchError } = await supabase
+    // Fetch all previously available dogs (all statuses) for manual field preservation
+    const { data: prevDogs, error: prevFetchError } = await supabase
       .from('dogs')
-      .select('id,location,status,name,url')
-      .eq('status', 'available');
+      .select('id,location,status,name,url,origin,latitude,longitude,bite_quarantine,returned');
     if (prevFetchError) {
-      console.error('Error fetching previously available dogs:', prevFetchError);
+      console.error('Error fetching previous dogs:', prevFetchError);
     }
     // Maps for quick lookup
     const locationMap = new Map<number, string>();
     const statusMap = new Map<number, string>();
     const nameMap = new Map<number, string>();
-    if (prevAvailableDogs) {
-      for (const d of prevAvailableDogs) {
+    const originMap = new Map<number, string>();
+    const latitudeMap = new Map<number, string | null>();
+    const longitudeMap = new Map<number, string | null>();
+    const biteQuarantineMap = new Map<number, number | null>();
+    const returnedMap = new Map<number, number | null>();
+    if (prevDogs) {
+      for (const d of prevDogs) {
         locationMap.set(d.id, d.location);
         statusMap.set(d.id, d.status);
         nameMap.set(d.id, d.name);
+        originMap.set(d.id, d.origin);
+        latitudeMap.set(d.id, d.latitude);
+        longitudeMap.set(d.id, d.longitude);
+        biteQuarantineMap.set(d.id, d.bite_quarantine);
+        returnedMap.set(d.id, d.returned);
+      }
+    }
+
+    // Preserve manual fields for mergedDogs
+    for (const dog of mergedDogs) {
+      const existingOrigin = originMap.get(dog.id);
+      if (existingOrigin && existingOrigin.trim() !== '') {
+        dog.origin = existingOrigin;
+      }
+      const existingLat = latitudeMap.get(dog.id);
+      if (existingLat && existingLat !== null) {
+        dog.latitude = existingLat;
+      }
+      const existingLng = longitudeMap.get(dog.id);
+      if (existingLng && existingLng !== null) {
+        dog.longitude = existingLng;
+      }
+      const existingBite = biteQuarantineMap.get(dog.id);
+      if (existingBite !== undefined && existingBite !== null) {
+        dog.bite_quarantine = existingBite;
+      }
+      const existingReturned = returnedMap.get(dog.id);
+      if (existingReturned !== undefined && existingReturned !== null) {
+        dog.returned = existingReturned;
       }
     }
 
