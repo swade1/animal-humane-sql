@@ -29,9 +29,29 @@ type Dog = {
 };
 
 // Example: Scrape main page and extract iframe URLs
-export async function getIframeUrls(mainUrl: string): Promise<string[]> {
-  const browser = await puppeteer.launch({ headless: true });
-  const page = await browser.newPage();
+
+  let browser;
+  const launchOptions = {
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  };
+  console.log('[scraper] Puppeteer launch options:', JSON.stringify(launchOptions));
+  try {
+    browser = await puppeteer.launch(launchOptions);
+  } catch (err) {
+    console.error('[scraper] FATAL: Failed to launch Puppeteer browser.');
+    console.error('[scraper] This likely means the sandbox flags are not being honored or the environment is too restricted.');
+    console.error('[scraper] Error details:', err);
+    throw err;
+  }
+  let page;
+  try {
+    page = await browser.newPage();
+  } catch (err) {
+    console.error('Failed to create Puppeteer page:', err);
+    await browser.close();
+    throw err;
+  }
   const availableAnimalsUrls: string[] = [];
 
   // Intercept network requests and responses
@@ -49,15 +69,28 @@ export async function getIframeUrls(mainUrl: string): Promise<string[]> {
     }
   });
 
-  await page.goto(mainUrl, { waitUntil: 'networkidle2', timeout: 120000 });
-  await page.waitForSelector('.shelterluv', { timeout: 60000 });
+  try {
+    await page.goto(mainUrl, { waitUntil: 'networkidle2', timeout: 120000 });
+    await page.waitForSelector('.shelterluv', { timeout: 60000 });
 
-  // Extract all iframe src URLs (for completeness)
-  const iframeUrls = await page.$$eval('iframe', (iframes: HTMLIFrameElement[]) =>
-    iframes.map((iframe: HTMLIFrameElement) => iframe.src)
-  );
+    // Extract all iframe src URLs (for completeness)
+    const iframeUrls = await page.$$eval('iframe', (iframes: HTMLIFrameElement[]) =>
+      iframes.map((iframe: HTMLIFrameElement) => iframe.src)
+    );
 
-  await browser.close();
+    await browser.close();
+
+    // Combine iframe URLs and captured available-animals URLs, removing duplicates
+    const allUrls = Array.from(new Set([...iframeUrls, ...availableAnimalsUrls]));
+    console.log('Found iframe URLs:', iframeUrls);
+    console.log('Found available-animals URLs:', availableAnimalsUrls);
+    console.log('All combined URLs:', allUrls);
+    return allUrls;
+  } catch (err) {
+    console.error('Error during Puppeteer page operations:', err);
+    if (browser) await browser.close();
+    throw err;
+  }
   // Combine iframe URLs and captured available-animals URLs, removing duplicates
   const allUrls = Array.from(new Set([...iframeUrls, ...availableAnimalsUrls]));
   console.log('Found iframe URLs:', iframeUrls);
