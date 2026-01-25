@@ -99,8 +99,6 @@ type Dog = {
   return allUrls;
 }
 
-
-
 import fetch from 'node-fetch';
 import { supabase } from '../lib/supabaseClient';
 import { logDogHistory } from './dogHistory';
