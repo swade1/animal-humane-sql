@@ -12,7 +12,13 @@ type Dog = {
   status: string;
   url: string;
   intake_date: string | null;
+  import puppeteer from 'puppeteer';
+  import fetch from 'node-fetch';
+  import { supabase } from '../lib/supabaseClient';
+  import { logDogHistory } from './dogHistory';
   length_of_stay_days: number | null;
+  // Scraper for animalhumanenm.org and its iframes
+  // Uses node-fetch and cheerio for HTML parsing
   birthdate: string | null;
   age_group: string;
   breed: string;
