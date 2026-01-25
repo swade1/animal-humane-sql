@@ -82,15 +82,16 @@ export default function AdoptionsTab() {
               <tr><td colSpan={3} style={{ color: '#888' }}>No adoptions found.</td></tr>
             )}
             {!isLoading && adoptedDogs && [...adoptedDogs]
+              .filter((dog): dog is { id: number; name: string; adopted_date: string; length_of_stay_days: number | string } => !!dog && !!dog.adopted_date)
               .sort((a, b) => {
-                const dateA = new Date(a.adopted_date as string).valueOf();
-                const dateB = new Date(b.adopted_date as string).valueOf();
+                const dateA = new Date(a.adopted_date).valueOf();
+                const dateB = new Date(b.adopted_date).valueOf();
                 return dateA - dateB;
               })
               .map(dog => (
                 <tr key={dog.id} className="align-middle">
                   <td>{dog.name}</td>
-                  <td style={{ paddingLeft: '8ch', textAlign: 'center' }}>{formatDate(dog.adopted_date as string)}</td>
+                  <td style={{ paddingLeft: '8ch', textAlign: 'center' }}>{formatDate(dog.adopted_date)}</td>
                   <td style={{ paddingLeft: '8ch', textAlign: 'center' }}>{dog.length_of_stay_days}</td>
                 </tr>
               ))}
