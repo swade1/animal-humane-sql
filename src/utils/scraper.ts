@@ -347,6 +347,7 @@ export async function runScraper() {
               console.error(`[scraper] Could not find .location selector for dog ${prevDog.name} (ID: ${prevDog.id}):`, selErr);
               location = '';
             }
+            console.log(`[scraper] Raw location value for dog ID ${prevDog.id} (${prevDog.name}): '${location}'`);
             await page.close();
             if (!location) {
               const adoptionDate = new Date().toISOString();
