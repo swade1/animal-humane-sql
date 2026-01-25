@@ -330,7 +330,16 @@ export async function runScraper() {
         if (!mergedDogIds.has(prevDog.id)) {
           try {
             const page = await browser.newPage();
-            await page.goto(prevDog.url, { waitUntil: 'networkidle2', timeout: 60000 });
+              const mergedDogUrlMap = new Map<number, string>();
+              for (const dog of mergedDogs) {
+                mergedDogUrlMap.set(dog.id, dog.url);
+              }
+              const urlToCheck = mergedDogUrlMap.get(prevDog.id) || prevDog.url;
+              if (!urlToCheck) {
+                console.warn(`[scraper] No valid url for missing dog ${prevDog.name} (ID: ${prevDog.id}), skipping adoption check.`);
+                continue;
+              }
+              await page.goto(urlToCheck, { waitUntil: 'networkidle2', timeout: 60000 });
             // Adjust selector as needed to match the location field on the dog's page
             const location = await page.$eval('.location, .dog-location', el => el.textContent?.trim() || '');
             await page.close();
