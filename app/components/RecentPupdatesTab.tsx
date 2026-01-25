@@ -1,5 +1,7 @@
 "use client";
 import React, { useState } from "react";
+
+type Dog = { id: number; name: string; intake_date: string; created_at: string };
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "../lib/supabaseClient";
 
@@ -11,7 +13,7 @@ export default function RecentPupdatesTab() {
   const dd = String(today.getDate()).padStart(2, '0');
   const todayStr = `${yyyy}-${mm}-${dd}`;
 
-  const [modalDog, setModalDog] = useState(null);
+  const [modalDog, setModalDog] = useState<Dog | null>(null);
 
   // Query for returned dogs
   const { data: returnedDogs, isLoading: isLoadingReturned } = useQuery({
