@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import Tabs from "./components/Tabs";
 import OverviewTable from "./components/OverviewTable";
 import RecentPupdatesTab from "./components/RecentPupdatesTab";
+import CurrentPopulationTab from "./components/CurrentPopulationTab";
+import AdoptionsTab from "./components/AdoptionsTab";
 
 const tabLabels = [
   "Overview",
@@ -41,6 +43,8 @@ export default function HomePage() {
           <div style={{ marginTop: '10px', marginLeft: '20px', marginRight: '20px' }}>
             {activeTab === 0 && <OverviewTable />}
             {activeTab === 1 && <RecentPupdatesTab />}
+            {activeTab === 2 && <CurrentPopulationTab />}
+            {activeTab === 3 && <AdoptionsTab />}
           </div>
           {/* Add other tab content as needed */}
         </div>
