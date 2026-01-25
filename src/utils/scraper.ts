@@ -377,30 +377,50 @@ export async function runScraper() {
             await page.goto(urlToCheck, { waitUntil: 'networkidle2', timeout: 60000 });
             let location = '';
             try {
-              // Use page.evaluate to find the element with the :animal attribute
-              const animalJson = await page.evaluate(() => {
-                const allElements = document.querySelectorAll('*');
-                for (const el of allElements) {
-                  if (el.hasAttribute(':animal')) {
-                    return el.getAttribute(':animal');
+              // Try to extract location from visible HTML structure
+              location = await page.evaluate(() => {
+                // Find all divs with class 'inline-flex' and text 'Location'
+                const labelDivs = Array.from(document.querySelectorAll('div.inline-flex'));
+                for (const labelDiv of labelDivs) {
+                  if (labelDiv.textContent && labelDiv.textContent.trim().toLowerCase() === 'location') {
+                    // The value is in the next sibling div with class 'pl-2'
+                    let sibling = labelDiv.nextElementSibling;
+                    while (sibling) {
+                      if (sibling.classList.contains('pl-2')) {
+                        return sibling.textContent?.trim() || '';
+                      }
+                      sibling = sibling.nextElementSibling;
+                    }
                   }
                 }
-                return null;
+                return '';
               });
-              console.log(`[scraper] Raw :animal attribute for dog ID ${prevDog.id} (${prevDog.name}):`, animalJson);
-              if (animalJson) {
-                // Unescape HTML entities and parse JSON
-                const decoded = animalJson.replace(/&quot;/g, '"');
-                const animalObj = JSON.parse(decoded);
-                location = animalObj.location || '';
-              } else {
-                // If :animal attribute is missing, log the page HTML for debugging
-                const pageHtml = await page.content();
-                console.error(`[scraper] Could not find :animal attribute for dog ${prevDog.name} (ID: ${prevDog.id}). Page HTML:\n`, pageHtml);
+              if (!location) {
+                // Fallback: Use :animal attribute if visible HTML extraction fails
+                const animalJson = await page.evaluate(() => {
+                  const allElements = document.querySelectorAll('*');
+                  for (const el of allElements) {
+                    if (el.hasAttribute(':animal')) {
+                      return el.getAttribute(':animal');
+                    }
+                  }
+                  return null;
+                });
+                console.log(`[scraper] Raw :animal attribute for dog ID ${prevDog.id} (${prevDog.name}):`, animalJson);
+                if (animalJson) {
+                  // Unescape HTML entities and parse JSON
+                  const decoded = animalJson.replace(/&quot;/g, '"');
+                  const animalObj = JSON.parse(decoded);
+                  location = animalObj.location || '';
+                } else {
+                  // If :animal attribute is missing, log the page HTML for debugging
+                  const pageHtml = await page.content();
+                  console.error(`[scraper] Could not find :animal attribute for dog ${prevDog.name} (ID: ${prevDog.id}). Page HTML:\n`, pageHtml);
+                }
               }
             } catch (selErr) {
-              // If JSON parse fails, log the error and the raw attribute
-              console.error(`[scraper] Could not extract location from :animal attribute for dog ${prevDog.name} (ID: ${prevDog.id}):`, selErr);
+              // If extraction fails, log the error
+              console.error(`[scraper] Could not extract location for dog ${prevDog.name} (ID: ${prevDog.id}):`, selErr);
               location = '';
             }
             console.log(`[scraper] Raw location value for dog ID ${prevDog.id} (${prevDog.name}): '${location}'`);
