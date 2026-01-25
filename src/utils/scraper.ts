@@ -91,6 +91,7 @@ type Dog = {
     if (browser) await browser.close();
     throw err;
   }
+
 }
 
 import fetch from 'node-fetch';
