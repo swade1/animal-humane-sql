@@ -449,8 +449,22 @@ export async function runScraper() {
                 .update({ status: 'adopted', location: '', adopted_date: adoptionDate })
                 .eq('id', prevDog.id);
               console.error(`Status/location change detected for dog ID ${prevDog.id} (${prevDog.name}): 'available' -> 'adopted', location cleared (missing from new scrape, location empty)`);
+            } else if (location !== prevDog.location) {
+              // If location changed but not adopted, update dogs table and log
+              await logDogHistory({
+                dogId: prevDog.id,
+                eventType: 'location_change',
+                oldValue: prevDog.location,
+                newValue: location,
+                notes: `Location updated for missing dog during scrape.`
+              });
+              await supabase
+                .from('dogs')
+                .update({ location })
+                .eq('id', prevDog.id);
+              console.log(`[scraper] Updated location for missing dog ID ${prevDog.id} (${prevDog.name}): '${prevDog.location}' -> '${location}'`);
             } else {
-              console.log(`[scraper] Dog ID ${prevDog.id} (${prevDog.name}) missing from JSON but location is not empty; not marking as adopted.`);
+              console.log(`[scraper] Dog ID ${prevDog.id} (${prevDog.name}) missing from JSON but location is not empty and unchanged; not marking as adopted.`);
             }
           } catch (err) {
             console.error(`[scraper] Error checking location for missing dog ${prevDog.name} (ID: ${prevDog.id}):`, err);
