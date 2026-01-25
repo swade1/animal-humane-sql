@@ -91,12 +91,6 @@ type Dog = {
     if (browser) await browser.close();
     throw err;
   }
-  // Combine iframe URLs and captured available-animals URLs, removing duplicates
-  const allUrls = Array.from(new Set([...iframeUrls, ...availableAnimalsUrls]));
-  console.log('Found iframe URLs:', iframeUrls);
-  console.log('Found available-animals URLs:', availableAnimalsUrls);
-  console.log('All combined URLs:', allUrls);
-  return allUrls;
 }
 
 import fetch from 'node-fetch';
