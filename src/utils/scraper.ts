@@ -1,3 +1,73 @@
+// Check for adoptions by scraping each available dog's page
+export async function checkForAdoptions() {
+  // 1. Get all dogs with status 'available'
+  const { data: availableDogs, error } = await supabase
+    .from('dogs')
+    .select('id, name, location, url, status')
+    .eq('status', 'available');
+  if (error) {
+    console.error('[adoption-check] Error fetching available dogs:', error);
+    return;
+  }
+  if (!availableDogs || availableDogs.length === 0) {
+    console.log('[adoption-check] No available dogs to check.');
+    return;
+  }
+  const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+  for (const dog of availableDogs) {
+    try {
+      const page = await browser.newPage();
+      await page.goto(dog.url, { waitUntil: 'networkidle2', timeout: 60000 });
+      // Adjust selector as needed to match the location field on the dog's page
+      const location = await page.$eval('.location, .dog-location', el => el.textContent?.trim() || '');
+      if (!location) {
+        // Location is empty: dog has been adopted
+        // 1. Find most recent location (prefer current, else from dog_history)
+        let oldLocation = dog.location;
+        if (!oldLocation) {
+          // Try to get last non-empty location from dog_history
+          const { data: history, error: histErr } = await supabase
+            .from('dog_history')
+            .select('old_value')
+            .eq('dog_id', dog.id)
+            .eq('event_type', 'location_change')
+            .order('id', { ascending: false })
+            .limit(1);
+          if (!histErr && history && history.length > 0) {
+            oldLocation = history[0].old_value;
+          }
+        }
+        const adoptionDate = new Date().toISOString();
+        // Log location_change
+        await logDogHistory({
+          dogId: dog.id,
+          eventType: 'location_change',
+          oldValue: oldLocation,
+          newValue: '',
+          notes: `Location cleared (adopted) at ${adoptionDate}`
+        });
+        // Log status_change
+        await logDogHistory({
+          dogId: dog.id,
+          eventType: 'status_change',
+          oldValue: 'available',
+          newValue: 'adopted',
+          notes: `Status set to adopted at ${adoptionDate}`
+        });
+        // Update dog record in DB
+        await supabase
+          .from('dogs')
+          .update({ status: 'adopted', location: '', adopted_date: adoptionDate })
+          .eq('id', dog.id);
+        console.log(`[adoption-check] Dog adopted: ${dog.name} (ID: ${dog.id}) at ${adoptionDate}`);
+      }
+      await page.close();
+    } catch (err) {
+      console.error(`[adoption-check] Error checking dog ${dog.name} (ID: ${dog.id}):`, err);
+    }
+  }
+  await browser.close();
+}
 // Scraper for animalhumanenm.org and its iframes
 // Uses node-fetch and cheerio for HTML parsing
 
@@ -173,85 +243,92 @@ export async function runScraper() {
       console.error('No available-animals JSON URLs found.');
       return;
     }
+    // Fetch and merge all dogs from all endpoints
+    let allDogs: Dog[] = [];
     for (const jsonUrl of availableAnimalsUrls) {
       const dogDataArr = await scrapeAvailableAnimalsJson(jsonUrl);
-      if (dogDataArr.length === 0) continue;
+      allDogs = allDogs.concat(dogDataArr);
+    }
+    // De-duplicate by dog id
+    const dogMap = new Map<number, Dog>();
+    for (const dog of allDogs) {
+      dogMap.set(dog.id, dog);
+    }
+    const mergedDogs = Array.from(dogMap.values());
 
+    // Fetch name, location, and status for comparison
+    const ids = mergedDogs.map(d => d.id);
+    const { data: existingDogs, error: fetchError } = await supabase
+      .from('dogs')
+      .select('id,location,status,name')
+      .in('id', ids);
+    if (fetchError) {
+      console.error('Error fetching existing dogs for history logging:', fetchError, 'Dog IDs:', ids);
+    }
+    // Maps for quick lookup
+    const locationMap = new Map<number, string>();
+    const statusMap = new Map<number, string>();
+    const nameMap = new Map<number, string>();
+    if (existingDogs) {
+      for (const d of existingDogs) {
+        locationMap.set(d.id, d.location);
+        statusMap.set(d.id, d.status);
+        nameMap.set(d.id, d.name);
+      }
+    }
 
-      // Fetch name, location, and status for comparison
-      const ids = dogDataArr.map(d => d.id);
-      const { data: existingDogs, error: fetchError } = await supabase
-        .from('dogs')
-        .select('id,location,status,name')
-        .in('id', ids);
-      if (fetchError) {
-        console.error('Error fetching existing dogs for history logging:', fetchError, 'Dog IDs:', ids);
+    for (const dog of mergedDogs) {
+      // Location change
+      const oldLocation = locationMap.get(dog.id) ?? null;
+      const newLocation = dog.location ?? null;
+      if (oldLocation && newLocation && oldLocation !== newLocation) {
+        await logDogHistory({
+          dogId: dog.id,
+          eventType: 'location_change',
+          oldValue: oldLocation,
+          newValue: newLocation,
+          notes: 'Location updated by scraper'
+        });
+        console.error(`Location change detected for dog ID ${dog.id} (${dog.name}): '${oldLocation}' -> '${newLocation}'`);
       }
-      // Maps for quick lookup
-      const locationMap = new Map<number, string>();
-      const statusMap = new Map<number, string>();
-      const nameMap = new Map<number, string>();
-      if (existingDogs) {
-        for (const d of existingDogs) {
-          locationMap.set(d.id, d.location);
-          statusMap.set(d.id, d.status);
-          nameMap.set(d.id, d.name);
-        }
+      // Status change
+      const oldStatus = statusMap.get(dog.id) ?? null;
+      const newStatus = dog.status ?? null;
+      if (oldStatus && newStatus && oldStatus !== newStatus) {
+        await logDogHistory({
+          dogId: dog.id,
+          eventType: 'status_change',
+          oldValue: oldStatus,
+          newValue: newStatus,
+          notes: 'Status updated by scraper'
+        });
+        console.error(`Status change detected for dog ID ${dog.id} (${dog.name}): '${oldStatus}' -> '${newStatus}'`);
       }
+      // Name change
+      const oldName = nameMap.get(dog.id) ?? null;
+      const newName = dog.name ?? null;
+      if (oldName && newName && oldName !== newName) {
+        await logDogHistory({
+          dogId: dog.id,
+          eventType: 'name_change',
+          oldValue: oldName,
+          newValue: newName,
+          notes: 'Name updated by scraper'
+        });
+        console.error(`Name change detected for dog ID ${dog.id}: '${oldName}' -> '${newName}'`);
+      }
+    }
 
-      for (const dog of dogDataArr) {
-        // Location change
-        const oldLocation = locationMap.get(dog.id) ?? null;
-        const newLocation = dog.location ?? null;
-        if (oldLocation && newLocation && oldLocation !== newLocation) {
-          await logDogHistory({
-            dogId: dog.id,
-            eventType: 'location_change',
-            oldValue: oldLocation,
-            newValue: newLocation,
-            notes: 'Location updated by scraper'
-          });
-          console.error(`Location change detected for dog ID ${dog.id} (${dog.name}): '${oldLocation}' -> '${newLocation}'`);
-        }
-        // Status change
-        const oldStatus = statusMap.get(dog.id) ?? null;
-        const newStatus = dog.status ?? null;
-        if (oldStatus && newStatus && oldStatus !== newStatus) {
-          await logDogHistory({
-            dogId: dog.id,
-            eventType: 'status_change',
-            oldValue: oldStatus,
-            newValue: newStatus,
-            notes: 'Status updated by scraper'
-          });
-          console.error(`Status change detected for dog ID ${dog.id} (${dog.name}): '${oldStatus}' -> '${newStatus}'`);
-        }
-        // Name change
-        const oldName = nameMap.get(dog.id) ?? null;
-        const newName = dog.name ?? null;
-        if (oldName && newName && oldName !== newName) {
-          await logDogHistory({
-            dogId: dog.id,
-            eventType: 'name_change',
-            oldValue: oldName,
-            newValue: newName,
-            notes: 'Name updated by scraper'
-          });
-          console.error(`Name change detected for dog ID ${dog.id}: '${oldName}' -> '${newName}'`);
-        }
-      }
-
-      // Upsert each dog record into Supabase
-      const { error } = await supabase
-        .from('dogs')
-        .upsert(dogDataArr, { onConflict: 'id' });
-      if (error) {
-        const dogIds = dogDataArr.map(d => d.id).join(', ');
-        const dogNames = dogDataArr.map(d => d.name).join(', ');
-        console.error(`Supabase upsert error:`, error, `Dog IDs: ${dogIds}`, `Dog Names: ${dogNames}`);
-      } else {
-        console.log(`Upserted ${dogDataArr.length} dogs to Supabase.`);
-      }
+    // Upsert all merged dogs into Supabase
+    const { error } = await supabase
+      .from('dogs')
+      .upsert(mergedDogs, { onConflict: 'id' });
+    if (error) {
+      const dogIds = mergedDogs.map(d => d.id).join(', ');
+      const dogNames = mergedDogs.map(d => d.name).join(', ');
+      console.error(`Supabase upsert error:`, error, `Dog IDs: ${dogIds}`, `Dog Names: ${dogNames}`);
+    } else {
+      console.log(`Upserted ${mergedDogs.length} dogs to Supabase.`);
     }
   } catch (err) {
     console.error('Error in runScraper:', err);
