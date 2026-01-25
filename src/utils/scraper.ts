@@ -199,12 +199,17 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]
       if (typeof p.age_group === 'object' && p.age_group !== null && 'name' in p.age_group) {
         ageGroup = (p.age_group as { name?: string }).name || '';
       }
+      // All dogs are adoptable unless their status is 'adopted'
+      let status = 'available';
+      if (typeof p.status === 'string' && p.status.trim().toLowerCase() === 'adopted') {
+        status = 'adopted';
+      }
       return {
         id: getNumber(p, 'nid'),
         name: getString(p, 'name'),
         location: getString(p, 'location'),
         origin: '', // Manual entry required
-        status: getNumber(p, 'adoptable') === 1 ? 'available' : '', // Needs logic for other statuses
+        status: status.trim(),
         url: getString(p, 'public_url'),
         intake_date: intakeDate ? intakeDate.toISOString().slice(0, 10) : null,
         length_of_stay_days: lengthOfStay,
@@ -277,7 +282,8 @@ export async function runScraper() {
     if (prevDogs) {
       for (const d of prevDogs) {
         locationMap.set(d.id, d.location);
-        statusMap.set(d.id, d.status);
+        // Always trim status from DB
+        statusMap.set(d.id, typeof d.status === 'string' ? d.status.trim() : d.status);
         nameMap.set(d.id, d.name);
         originMap.set(d.id, d.origin);
         latitudeMap.set(d.id, d.latitude);
@@ -313,8 +319,8 @@ export async function runScraper() {
 
     // Log changes for dogs still present
 
-      // Prepare prevAvailableDogs for adoption/status-change logic
-      const prevAvailableDogs = prevDogs ? prevDogs.filter(d => d.status === 'available') : [];
+      // Prepare prevAvailableDogs for adoption/status-change logic (always trim status)
+      const prevAvailableDogs = prevDogs ? prevDogs.filter(d => typeof d.status === 'string' && d.status.trim() === 'available') : [];
     for (const dog of mergedDogs) {
       // Location change with extra logging
       const oldLocation = locationMap.get(dog.id) ?? null;
