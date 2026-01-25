@@ -387,15 +387,19 @@ export async function runScraper() {
                 }
                 return null;
               });
+              console.log(`[scraper] Raw :animal attribute for dog ID ${prevDog.id} (${prevDog.name}):`, animalJson);
               if (animalJson) {
                 // Unescape HTML entities and parse JSON
                 const decoded = animalJson.replace(/&quot;/g, '"');
                 const animalObj = JSON.parse(decoded);
                 location = animalObj.location || '';
               } else {
-                console.error(`[scraper] Could not find :animal attribute for dog ${prevDog.name} (ID: ${prevDog.id})`);
+                // If :animal attribute is missing, log the page HTML for debugging
+                const pageHtml = await page.content();
+                console.error(`[scraper] Could not find :animal attribute for dog ${prevDog.name} (ID: ${prevDog.id}). Page HTML:\n`, pageHtml);
               }
             } catch (selErr) {
+              // If JSON parse fails, log the error and the raw attribute
               console.error(`[scraper] Could not extract location from :animal attribute for dog ${prevDog.name} (ID: ${prevDog.id}):`, selErr);
               location = '';
             }
