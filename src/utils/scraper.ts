@@ -134,7 +134,7 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]
         name: getString(p, 'name'),
         location: getString(p, 'location'),
         origin: '', // Manual entry required
-        status: getNumber(p, 'adoptable') === 1 ? 'Available' : '', // Needs logic for other statuses
+        status: getNumber(p, 'adoptable') === 1 ? 'available' : '', // Needs logic for other statuses
         url: getString(p, 'public_url'),
         intake_date: intakeDate ? intakeDate.toISOString().slice(0, 10) : null,
         length_of_stay_days: lengthOfStay,
