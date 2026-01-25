@@ -393,6 +393,9 @@ export async function runScraper() {
     // Log status_change for dogs previously available but now missing (check web page location before marking as adopted)
     if (prevAvailableDogs) {
       const mergedDogIds = new Set(mergedDogs.map(d => d.id));
+      // Debug: log all missing dogs being checked
+      const missingDogs = prevAvailableDogs.filter(prevDog => !mergedDogIds.has(prevDog.id));
+      console.log(`[debug] Missing dogs to check (not in mergedDogs, status=available):`, missingDogs.map(d => ({ id: d.id, name: d.name, location: d.location, status: d.status })));
       const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
       for (const prevDog of prevAvailableDogs) {
         if (!mergedDogIds.has(prevDog.id)) {
