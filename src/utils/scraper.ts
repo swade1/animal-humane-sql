@@ -316,10 +316,14 @@ export async function runScraper() {
       // Prepare prevAvailableDogs for adoption/status-change logic
       const prevAvailableDogs = prevDogs ? prevDogs.filter(d => d.status === 'available') : [];
     for (const dog of mergedDogs) {
-      // Location change
+      // Location change with extra logging
       const oldLocation = locationMap.get(dog.id) ?? null;
       const newLocation = dog.location ?? null;
-      if (oldLocation && newLocation && oldLocation !== newLocation) {
+      const normOldLocation = oldLocation ? oldLocation.trim() : '';
+      const normNewLocation = newLocation ? newLocation.trim() : '';
+      console.log(`[debug] Checking location for dog ID ${dog.id} (${dog.name}): old='${oldLocation}' new='${newLocation}' | normOld='${normOldLocation}' normNew='${normNewLocation}'`);
+      if (normOldLocation && normNewLocation && normOldLocation !== normNewLocation) {
+        console.log(`[debug] Location change detected for dog ID ${dog.id} (${dog.name}): '${normOldLocation}' -> '${normNewLocation}'`);
         await logDogHistory({
           dogId: dog.id,
           eventType: 'location_change',
@@ -327,6 +331,10 @@ export async function runScraper() {
           newValue: newLocation,
           notes: 'Location updated by scraper'
         });
+        await supabase
+          .from('dogs')
+          .update({ location: newLocation })
+          .eq('id', dog.id);
         console.error(`Location change detected for dog ID ${dog.id} (${dog.name}): '${oldLocation}' -> '${newLocation}'`);
       }
       // Status change
@@ -340,6 +348,10 @@ export async function runScraper() {
           newValue: newStatus,
           notes: 'Status updated by scraper'
         });
+        await supabase
+          .from('dogs')
+          .update({ status: newStatus })
+          .eq('id', dog.id);
         console.error(`Status change detected for dog ID ${dog.id} (${dog.name}): '${oldStatus}' -> '${newStatus}'`);
       }
       // Name change
@@ -353,7 +365,28 @@ export async function runScraper() {
           newValue: newName,
           notes: 'Name updated by scraper'
         });
+        await supabase
+          .from('dogs')
+          .update({ name: newName })
+          .eq('id', dog.id);
         console.error(`Name change detected for dog ID ${dog.id}: '${oldName}' -> '${newName}'`);
+      }
+      // Origin change
+      const oldOrigin = originMap.get(dog.id) ?? null;
+      const newOrigin = dog.origin ?? null;
+      if (oldOrigin && newOrigin && oldOrigin !== newOrigin) {
+        await logDogHistory({
+          dogId: dog.id,
+          eventType: 'origin_change',
+          oldValue: oldOrigin,
+          newValue: newOrigin,
+          notes: 'Origin updated by scraper'
+        });
+        await supabase
+          .from('dogs')
+          .update({ origin: newOrigin })
+          .eq('id', dog.id);
+        console.error(`Origin change detected for dog ID ${dog.id}: '${oldOrigin}' -> '${newOrigin}'`);
       }
     }
 
