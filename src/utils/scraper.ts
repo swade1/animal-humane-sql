@@ -335,14 +335,29 @@ export async function runScraper() {
             const location = await page.$eval('.location, .dog-location', el => el.textContent?.trim() || '');
             await page.close();
             if (!location) {
+              const adoptionDate = new Date().toISOString();
+              // Log location_change
+              await logDogHistory({
+                dogId: prevDog.id,
+                eventType: 'location_change',
+                oldValue: prevDog.location,
+                newValue: '',
+                notes: `Location cleared (adopted) at ${adoptionDate}`
+              });
+              // Log status_change
               await logDogHistory({
                 dogId: prevDog.id,
                 eventType: 'status_change',
                 oldValue: 'available',
                 newValue: 'adopted',
-                notes: 'Dog no longer present in available-animals JSON and location is empty; likely adopted.'
+                notes: `Dog no longer present in available-animals JSON and location is empty; likely adopted at ${adoptionDate}.`
               });
-              console.error(`Status change detected for dog ID ${prevDog.id} (${prevDog.name}): 'available' -> 'adopted' (missing from new scrape, location empty)`);
+              // Update dog record in DB
+              await supabase
+                .from('dogs')
+                .update({ status: 'adopted', location: '', adopted_date: adoptionDate })
+                .eq('id', prevDog.id);
+              console.error(`Status/location change detected for dog ID ${prevDog.id} (${prevDog.name}): 'available' -> 'adopted', location cleared (missing from new scrape, location empty)`);
             } else {
               console.log(`[scraper] Dog ID ${prevDog.id} (${prevDog.name}) missing from JSON but location is not empty; not marking as adopted.`);
             }
