@@ -312,6 +312,9 @@ export async function runScraper() {
     }
 
     // Log changes for dogs still present
+
+      // Prepare prevAvailableDogs for adoption/status-change logic
+      const prevAvailableDogs = prevDogs ? prevDogs.filter(d => d.status === 'available') : [];
     for (const dog of mergedDogs) {
       // Location change
       const oldLocation = locationMap.get(dog.id) ?? null;
