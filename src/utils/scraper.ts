@@ -342,9 +342,18 @@ export async function runScraper() {
             await page.goto(urlToCheck, { waitUntil: 'networkidle2', timeout: 60000 });
             let location = '';
             try {
-              location = await page.$eval('.location', el => el.textContent?.trim() || '');
+              // Extract the :animal attribute from the root element (or adjust selector as needed)
+              const animalJson = await page.$eval('[\:animal]', el => el.getAttribute(':animal'));
+              if (animalJson) {
+                // Unescape HTML entities and parse JSON
+                const decoded = animalJson.replace(/&quot;/g, '"');
+                const animalObj = JSON.parse(decoded);
+                location = animalObj.location || '';
+              } else {
+                console.error(`[scraper] Could not find :animal attribute for dog ${prevDog.name} (ID: ${prevDog.id})`);
+              }
             } catch (selErr) {
-              console.error(`[scraper] Could not find .location selector for dog ${prevDog.name} (ID: ${prevDog.id}):`, selErr);
+              console.error(`[scraper] Could not extract location from :animal attribute for dog ${prevDog.name} (ID: ${prevDog.id}):`, selErr);
               location = '';
             }
             console.log(`[scraper] Raw location value for dog ID ${prevDog.id} (${prevDog.name}): '${location}'`);
