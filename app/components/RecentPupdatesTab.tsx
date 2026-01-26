@@ -5,6 +5,7 @@ type Dog = { id: number; name: string; intake_date: string; created_at: string }
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "../lib/supabaseClient";
 import { parseISO, isSameDay } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 
 export default function RecentPupdatesTab() {
   // Get today's date in YYYY-MM-DD
@@ -39,6 +40,7 @@ export default function RecentPupdatesTab() {
     },
     staleTime: 1000 * 60 * 60 * 2
   });
+
   const { data: newDogs, isLoading } = useQuery({
     queryKey: ['newDogs'],
     queryFn: async () => {
@@ -47,8 +49,6 @@ export default function RecentPupdatesTab() {
         .from('dogs')
         .select('id, name, intake_date, created_at');
       if (errorToday || !dogsToday) return [];
-
-
 
       // New dogs: available today and created_at is today
       return dogsToday.filter(dog => {
@@ -210,23 +210,24 @@ interface AdoptedTodayDogsProps {
   setModalDog: SetModalDog;
 }
 function AdoptedTodayDogs({ setModalDog }: AdoptedTodayDogsProps) {
-  const todayUTC = new Date();
-  const todayStr = todayUTC.toISOString().slice(0, 10);
+  const mstTimeZone = 'America/Denver';
+  const todayMST = toZonedTime(new Date(), mstTimeZone);
   const { data: adoptedToday, isLoading } = useQuery({
-    queryKey: ['adoptedToday', todayStr],
+    queryKey: ['adoptedToday', todayMST.toISOString().slice(0, 10)],
     queryFn: async () => {
-      // Get all dog_history events for today with new_value 'adopted'
+      // Get all dog_history events with new_value 'adopted'
       const { data: history, error } = await supabase
         .from('dog_history')
         .select('dog_id, name, adopted_date')
-        .eq('new_value', 'adopted')
-        .gte('adopted_date', todayStr)
-        .lte('adopted_date', todayStr + 'T23:59:59.999Z');
+        .eq('new_value', 'adopted');
       if (error || !history) return [];
-      // Deduplicate by dog_id
+      // Deduplicate by dog_id and filter by MST date
       const seen = new Set();
       return history.filter(h => {
-        if (seen.has(h.dog_id)) return false;
+        if (!h.adopted_date) return false;
+        const adoptedMST = toZonedTime(parseISO(h.adopted_date), mstTimeZone);
+        const isToday = isSameDay(adoptedMST, todayMST);
+        if (seen.has(h.dog_id) || !isToday) return false;
         seen.add(h.dog_id);
         return true;
       });
@@ -253,7 +254,7 @@ function AdoptedTodayDogs({ setModalDog }: AdoptedTodayDogsProps) {
       ))}
     </div>
   );
-}
+  }
 
 // Helper component for trial adoptions dogs
 interface TrialAdoptionsDogsProps {
@@ -263,23 +264,14 @@ function TrialAdoptionsDogs({ setModalDog }: TrialAdoptionsDogsProps) {
   const { data: trialDogs, isLoading } = useQuery({
     queryKey: ['trialAdoptions'],
     queryFn: async () => {
-      // Get all available dogs
+      // Get all available dogs with 'Trial Adoption' in location
       const { data: availableDogs, error: errorAvailable } = await supabase
         .from('dogs')
-        .select('id, name, intake_date, created_at')
-        .eq('status', 'available');
+        .select('id, name, intake_date, created_at, location')
+        .eq('status', 'available')
+        .ilike('location', '%Trial Adoption%');
       if (errorAvailable || !availableDogs) return [];
-
-      // Get all dog_history events with new_value containing 'Trial Adoption'
-      const { data: history, error: errorHistory } = await supabase
-        .from('dog_history')
-        .select('dog_id, new_value')
-        .ilike('new_value', '%Trial Adoption%');
-      if (errorHistory || !history) return [];
-
-      const trialDogIds = new Set(history.map(h => h.dog_id));
-      // Only show available dogs that have a matching dog_history event
-      return availableDogs.filter(dog => trialDogIds.has(dog.id));
+      return availableDogs;
     },
     staleTime: 1000 * 60 * 60 * 2
   });
