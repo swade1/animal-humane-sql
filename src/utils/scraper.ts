@@ -273,7 +273,6 @@ export async function runScraper() {
     }
 
     // Fetch name, location, status, and all manual fields for comparison
-    const ids = mergedDogs.map(d => d.id);
     // Fetch all previously available dogs (all statuses) for manual field preservation
     const { data: prevDogs, error: prevFetchError } = await supabase
       .from('dogs')
