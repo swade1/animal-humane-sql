@@ -176,7 +176,7 @@ export async function runScraper() {
       // If a dog's status is 'adopted', set location to null
       dogDataArr = dogDataArr.map(dog =>
         dog.status === 'adopted'
-          ? { ...dog, location: null }
+          ? { ...dog, location: '' }
           : dog
       );
       if (dogDataArr.length === 0) continue;
