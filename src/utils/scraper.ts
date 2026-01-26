@@ -265,8 +265,18 @@ export async function runScraper() {
     // Save scraped dog IDs to public/latest_scraped_ids.json for UI set comparison
     try {
       const fs = await import('fs');
+      const path = await import('path');
+      console.log('[debug] Current working directory:', process.cwd());
+      console.log('[debug] mergedDogs before writing IDs:', mergedDogs);
       const scrapedDogIds = mergedDogs.map(dog => dog.id);
-      fs.writeFileSync('public/latest_scraped_ids.json', JSON.stringify(scrapedDogIds));
+      const filePath = path.join(process.cwd(), 'public', 'latest_scraped_ids.json');
+      // Ensure the public directory exists
+      const publicDir = path.join(process.cwd(), 'public');
+      if (!fs.existsSync(publicDir)) {
+        fs.mkdirSync(publicDir, { recursive: true });
+      }
+      // Write or create the file
+      fs.writeFileSync(filePath, JSON.stringify(scrapedDogIds));
       console.log(`Saved ${scrapedDogIds.length} scraped dog IDs to public/latest_scraped_ids.json`);
     } catch (err) {
       console.error('Error saving scraped dog IDs to public/latest_scraped_ids.json:', err);
@@ -533,6 +543,11 @@ export async function runScraper() {
       await browser.close();
     }
 
+    // Set scraped=true for all scraped dogs
+    for (const dog of mergedDogs) {
+      dog.scraped = true;
+    }
+
     // Upsert all merged dogs into Supabase
     const { error } = await supabase
       .from('dogs')
@@ -543,6 +558,18 @@ export async function runScraper() {
       console.error(`Supabase upsert error:`, error, `Dog IDs: ${dogIds}`, `Dog Names: ${dogNames}`);
     } else {
       console.log(`Upserted ${mergedDogs.length} dogs to Supabase.`);
+    }
+
+    // Set scraped=false for all dogs not in the latest scrape
+    const scrapedIds = mergedDogs.map(d => d.id);
+    const { error: updateUnscrapedError } = await supabase
+      .from('dogs')
+      .update({ scraped: false })
+      .not('id', 'in', `(${scrapedIds.join(',')})`);
+    if (updateUnscrapedError) {
+      console.error('Error updating unscraped dogs:', updateUnscrapedError);
+    } else {
+      console.log('Set scraped=false for all dogs not in the latest scrape.');
     }
   } catch (err) {
     console.error('Error in runScraper:', err);

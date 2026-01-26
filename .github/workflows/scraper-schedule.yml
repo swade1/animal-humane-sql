@@ -40,3 +40,9 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: npx tsx src/utils/test-scraper.ts
+
+      - name: Upload scraped IDs JSON
+        uses: actions/upload-artifact@v4
+        with:
+          name: latest_scraped_ids
+          path: public/latest_scraped_ids.json
