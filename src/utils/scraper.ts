@@ -228,6 +228,7 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]
         // Only set created_at for new dogs; preserve for existing
         created_at: '', // will be set below if new or filled in later
         updated_at: new Date().toISOString(),
+        scraped: true,
       };
     });
     console.log('Mapped dog data from available-animals JSON:', mapped);
