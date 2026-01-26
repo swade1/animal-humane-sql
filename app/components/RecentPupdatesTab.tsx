@@ -1,6 +1,5 @@
 "use client";
 import React, { useState } from "react";
-
 type Dog = { id: number; name: string; intake_date: string; created_at: string };
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "../lib/supabaseClient";
@@ -11,6 +10,31 @@ export default function RecentPupdatesTab() {
   // Get today's date in YYYY-MM-DD
   // Use UTC date for comparison
   const todayUTC = new Date();
+
+
+  // Query for temporarily unlisted dogs
+  const { data: temporarilyUnlistedDogs, isLoading: isLoadingUnlisted } = useQuery({
+    queryKey: ['temporarilyUnlistedDogs'],
+    queryFn: async () => {
+      // Get all available dogs
+      const { data: allDogs, error: errorAll } = await supabase
+        .from('dogs')
+        .select('id, name, updated_at, status')
+        .eq('status', 'available');
+      if (errorAll || !allDogs) return [];
+
+      // Find the latest updated_at timestamp (most recent scrape)
+      let latestScrape = '';
+      allDogs.forEach(dog => {
+        if (dog.updated_at && (!latestScrape || new Date(dog.updated_at) > new Date(latestScrape))) {
+          latestScrape = dog.updated_at;
+        }
+      });
+      // List dogs whose updated_at is less than the latest scrape
+      return allDogs.filter(dog => dog.updated_at && new Date(dog.updated_at) < new Date(latestScrape));
+    },
+    staleTime: 1000 * 60 * 60 * 2
+  });
 
   const [modalDog, setModalDog] = useState<Dog | null>(null);
 
@@ -149,6 +173,34 @@ export default function RecentPupdatesTab() {
           <AdoptedTodayDogs setModalDog={setModalDog} />
         </div>
 
+        {/* Available but Temporarily Unlisted Section */}
+        <div className="mb-8">
+          <h3 className="text-md font-bold mb-2" style={{ marginLeft: '0.5em' }}>Available but Temporarily Unlisted</h3>
+          <div style={{ height: '0.6em' }} />
+          <p className="text-sm mb-4" style={{ marginLeft: '0.5em' }}><em>We're taking a short break but we'll be back soon!</em></p>
+          <div style={{ height: '0.6em' }} />
+          {isLoadingUnlisted && <div>Loading temporarily unlisted dogs...</div>}
+          {!isLoadingUnlisted && temporarilyUnlistedDogs && temporarilyUnlistedDogs.length > 0 && (
+            <div style={{ marginLeft: '1.5em', marginBottom: '1.2em' }}>
+              {temporarilyUnlistedDogs.map(dog => (
+                <React.Fragment key={dog.id}>
+                  <span
+                    className="text-[#2a5db0] cursor-pointer font-bold"
+                    style={{ fontWeight: 700, display: 'inline-block', marginBottom: '0.5em' }}
+                    onClick={() => setModalDog(dog)}
+                  >
+                    {dog.name}
+                  </span>
+                  <br />
+                </React.Fragment>
+              ))}
+            </div>
+          )}
+          {!isLoadingUnlisted && temporarilyUnlistedDogs && temporarilyUnlistedDogs.length === 0 && (
+            <div style={{ marginLeft: '1.5em', color: '#888', marginTop: '0.3em', marginBottom: '1.2em' }}>No temporarily unlisted dogs today.</div>
+          )}
+        </div>
+
         {/* Modal for dog info */}
         {modalDog && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -190,7 +242,7 @@ export default function RecentPupdatesTab() {
               </button>
               <h3 className="text-lg font-bold mb-2 text-center w-full">{modalDog.name}</h3>
               <iframe
-                src={`http://new.shelterluv.com/embed/animal/${modalDog.id}/`}
+                src={`https://new.shelterluv.com/embed/animal/${modalDog.id}`}
                 title={modalDog.name}
                 className="rounded border"
                 style={{ width: 700, height: 650, border: '1px solid #ccc', background: '#fff' }}
@@ -245,7 +297,7 @@ function AdoptedTodayDogs({ setModalDog }: AdoptedTodayDogsProps) {
           <span
             className="text-[#2a5db0] cursor-pointer font-bold"
             style={{ fontWeight: 700, display: 'inline-block', marginBottom: '0.5em' }}
-            onClick={() => setModalDog(dog)}
+            onClick={() => setModalDog({ ...dog, id: dog.dog_id })}
           >
             {dog.name}
           </span>
