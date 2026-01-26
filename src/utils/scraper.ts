@@ -267,7 +267,7 @@ export async function runScraper() {
     // Fetch all previously available dogs (all statuses) for manual field preservation
     const { data: prevDogs, error: prevFetchError } = await supabase
       .from('dogs')
-      .select('id,location,status,name,url,origin,latitude,longitude,bite_quarantine,returned');
+      .select('id,location,status,name,url,origin,latitude,longitude,bite_quarantine,returned,created_at');
     if (prevFetchError) {
       console.error('Error fetching previous dogs:', prevFetchError);
     }
