@@ -262,6 +262,16 @@ export async function runScraper() {
     }
     const mergedDogs = Array.from(dogMap.values());
 
+    // Save scraped dog IDs to public/latest_scraped_ids.json for UI set comparison
+    try {
+      const fs = await import('fs');
+      const scrapedDogIds = mergedDogs.map(dog => dog.id);
+      fs.writeFileSync('public/latest_scraped_ids.json', JSON.stringify(scrapedDogIds));
+      console.log(`Saved ${scrapedDogIds.length} scraped dog IDs to public/latest_scraped_ids.json`);
+    } catch (err) {
+      console.error('Error saving scraped dog IDs to public/latest_scraped_ids.json:', err);
+    }
+
     // Fetch name, location, status, and all manual fields for comparison
     const ids = mergedDogs.map(d => d.id);
     // Fetch all previously available dogs (all statuses) for manual field preservation

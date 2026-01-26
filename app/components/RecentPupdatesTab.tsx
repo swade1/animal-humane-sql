@@ -12,26 +12,35 @@ export default function RecentPupdatesTab() {
   const todayUTC = new Date();
 
 
-  // Query for temporarily unlisted dogs
+  // Query for temporarily unlisted dogs using set comparison
   const { data: temporarilyUnlistedDogs, isLoading: isLoadingUnlisted } = useQuery({
     queryKey: ['temporarilyUnlistedDogs'],
     queryFn: async () => {
       // Get all available dogs
       const { data: allDogs, error: errorAll } = await supabase
         .from('dogs')
-        .select('id, name, intake_date, created_at, updated_at, status')
+        .select('id, name, intake_date, created_at, updated_at, status, location')
         .eq('status', 'available');
       if (errorAll || !allDogs) return [];
 
-      // Find the latest updated_at timestamp (most recent scrape)
-      let latestScrape = '';
-      allDogs.forEach(dog => {
-        if (dog.updated_at && (!latestScrape || new Date(dog.updated_at) > new Date(latestScrape))) {
-          latestScrape = dog.updated_at;
+      // Fetch latest scraped ids from public/latest_scraped_ids.json
+      let scrapedIds: number[] = [];
+      try {
+        const res = await fetch('/latest_scraped_ids.json');
+        if (res.ok) {
+          scrapedIds = await res.json();
         }
+      } catch (err) {
+        // If file missing or fetch fails, fallback to empty set
+        scrapedIds = [];
+      }
+
+      // List dogs whose id is NOT in scrapedIds and are NOT currently in trial adoption
+      return allDogs.filter(dog => {
+        const isUnlisted = !scrapedIds.includes(dog.id);
+        const isTrial = dog.status === 'available' && dog.location && dog.location.includes('Trial Adoption');
+        return isUnlisted && !isTrial;
       });
-      // List dogs whose updated_at is less than the latest scrape
-      return allDogs.filter(dog => dog.updated_at && new Date(dog.updated_at) < new Date(latestScrape));
     },
     staleTime: 1000 * 60 * 60 * 2
   });
