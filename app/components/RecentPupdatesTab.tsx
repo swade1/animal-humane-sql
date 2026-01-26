@@ -19,7 +19,7 @@ export default function RecentPupdatesTab() {
       // Get all available dogs
       const { data: allDogs, error: errorAll } = await supabase
         .from('dogs')
-        .select('id, name, updated_at, status')
+        .select('id, name, intake_date, created_at, updated_at, status')
         .eq('status', 'available');
       if (errorAll || !allDogs) return [];
 
