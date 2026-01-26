@@ -97,6 +97,7 @@ type Dog = {
   notes: string;
   created_at: string;
   updated_at: string;
+  scraped: boolean;
 };
 
 // Example: Scrape main page and extract iframe URLs
