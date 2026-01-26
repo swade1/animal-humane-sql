@@ -225,7 +225,7 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]
         longitude: null, // Manual entry required
         notes: getString(p, 'kennel_description') || '',
         // Only set created_at for new dogs; preserve for existing
-        created_at: undefined, // will be set below if new
+        created_at: '', // will be set below if new or filled in later
         updated_at: new Date().toISOString(),
       };
     });
