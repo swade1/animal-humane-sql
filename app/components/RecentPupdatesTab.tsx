@@ -205,7 +205,11 @@ export default function RecentPupdatesTab() {
 }
 
 // Helper component for adopted today dogs
-function AdoptedTodayDogs({ setModalDog }) {
+type SetModalDog = (dog: any) => void;
+interface AdoptedTodayDogsProps {
+  setModalDog: SetModalDog;
+}
+function AdoptedTodayDogs({ setModalDog }: AdoptedTodayDogsProps) {
   const todayUTC = new Date();
   const todayStr = todayUTC.toISOString().slice(0, 10);
   const { data: adoptedToday, isLoading } = useQuery({
@@ -252,7 +256,10 @@ function AdoptedTodayDogs({ setModalDog }) {
 }
 
 // Helper component for trial adoptions dogs
-function TrialAdoptionsDogs({ setModalDog }) {
+interface TrialAdoptionsDogsProps {
+  setModalDog: SetModalDog;
+}
+function TrialAdoptionsDogs({ setModalDog }: TrialAdoptionsDogsProps) {
   const { data: trialDogs, isLoading } = useQuery({
     queryKey: ['trialAdoptions'],
     queryFn: async () => {
