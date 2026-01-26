@@ -224,7 +224,8 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]
         latitude: null, // Manual entry required
         longitude: null, // Manual entry required
         notes: getString(p, 'kennel_description') || '',
-        created_at: new Date().toISOString(),
+        // Only set created_at for new dogs; preserve for existing
+        created_at: undefined, // will be set below if new
         updated_at: new Date().toISOString(),
       };
     });
@@ -293,8 +294,15 @@ export async function runScraper() {
       }
     }
 
-    // Preserve manual fields for mergedDogs
+    // Preserve manual fields and created_at for mergedDogs
     for (const dog of mergedDogs) {
+            // Preserve created_at for existing dogs
+            const prevDog = prevDogs?.find(d => d.id === dog.id);
+            if (prevDog && prevDog.created_at) {
+              dog.created_at = prevDog.created_at;
+            } else {
+              dog.created_at = new Date().toISOString();
+            }
       const existingOrigin = originMap.get(dog.id);
       if (existingOrigin && existingOrigin.trim() !== '') {
         dog.origin = existingOrigin;

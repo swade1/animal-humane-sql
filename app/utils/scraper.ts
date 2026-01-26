@@ -88,6 +88,21 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]
       return [];
     }
     const today = new Date();
+    // Fetch existing dogs to preserve created_at
+    const ids = data.animals.map((parsed: Record<string, unknown>) => {
+      const getNumber = (obj: Record<string, unknown>, key: string): number => typeof obj[key] === 'number' ? obj[key] as number : (typeof obj[key] === 'string' ? parseInt(obj[key] as string, 10) : 0);
+      return getNumber(parsed, 'nid');
+    });
+    let existingDogsMap: Record<number, string> = {};
+    if (ids.length > 0) {
+      const { data: existingDogs } = await supabase
+        .from('dogs')
+        .select('id, created_at')
+        .in('id', ids);
+      if (existingDogs) {
+        existingDogsMap = Object.fromEntries(existingDogs.map(d => [d.id, d.created_at]));
+      }
+    }
     const mapped: Dog[] = data.animals.map((parsed: Record<string, unknown>) => {
       // Helper for safe property extraction
       const getString = (obj: Record<string, unknown>, key: string): string => typeof obj[key] === 'string' ? obj[key] as string : '';
@@ -111,8 +126,9 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]
           ageGroup = '';
         }
       }
+      const id = getNumber(p, 'nid');
       return {
-        id: getNumber(p, 'nid'),
+        id,
         name: getString(p, 'name'),
         location: getString(p, 'location'),
         origin: '', // Manual entry required
@@ -131,7 +147,7 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]
         latitude: null, // Manual entry required
         longitude: null, // Manual entry required
         notes: getString(p, 'kennel_description') || '',
-        created_at: new Date().toISOString(),
+        created_at: existingDogsMap[id] || new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
     });
@@ -156,25 +172,47 @@ export async function runScraper() {
       return;
     }
     for (const jsonUrl of availableAnimalsUrls) {
-      const dogDataArr = await scrapeAvailableAnimalsJson(jsonUrl);
+      let dogDataArr = await scrapeAvailableAnimalsJson(jsonUrl);
+      // If a dog's status is 'adopted', set location to null
+      dogDataArr = dogDataArr.map(dog =>
+        dog.status === 'adopted'
+          ? { ...dog, location: null }
+          : dog
+      );
       if (dogDataArr.length === 0) continue;
 
 
-      // Fetch name, location, and status for comparison
+      // Upsert each dog record into Supabase FIRST
+      const { error } = await supabase
+        .from('dogs')
+        .upsert(dogDataArr, { onConflict: 'id' });
+      if (error) {
+        const dogIds = dogDataArr.map(d => d.id).join(', ');
+        const dogNames = dogDataArr.map(d => d.name).join(', ');
+        console.error(`Supabase upsert error:`, error, `Dog IDs: ${dogIds}`, `Dog Names: ${dogNames}`);
+        continue; // Skip history logging if upsert fails
+      } else {
+        const dogNames = dogDataArr.map(d => d.name).join(', ');
+        console.log(`Upserted ${dogDataArr.length} dogs to Supabase.`);
+        console.log(`Upserted dog names: ${dogNames}`);
+      }
+
+      // Fetch updated dogs for comparison
       const ids = dogDataArr.map(d => d.id);
-      const { data: existingDogs, error: fetchError } = await supabase
+      const { data: updatedDogs, error: fetchError } = await supabase
         .from('dogs')
         .select('id,location,status,name')
         .in('id', ids);
       if (fetchError) {
-        console.error('Error fetching existing dogs for history logging:', fetchError, 'Dog IDs:', ids);
+        console.error('Error fetching updated dogs for history logging:', fetchError, 'Dog IDs:', ids);
+        continue;
       }
       // Maps for quick lookup
       const locationMap = new Map<number, string>();
       const statusMap = new Map<number, string>();
       const nameMap = new Map<number, string>();
-      if (existingDogs) {
-        for (const d of existingDogs) {
+      if (updatedDogs) {
+        for (const d of updatedDogs) {
           locationMap.set(d.id, d.location);
           statusMap.set(d.id, d.status);
           nameMap.set(d.id, d.name);
@@ -224,20 +262,6 @@ export async function runScraper() {
           });
           console.error(`Name change detected for dog ID ${dog.id}: '${oldName}' -> '${newName}'`);
         }
-      }
-
-      // Upsert each dog record into Supabase
-      const { error } = await supabase
-        .from('dogs')
-        .upsert(dogDataArr, { onConflict: 'id' });
-      if (error) {
-        const dogIds = dogDataArr.map(d => d.id).join(', ');
-        const dogNames = dogDataArr.map(d => d.name).join(', ');
-        console.error(`Supabase upsert error:`, error, `Dog IDs: ${dogIds}`, `Dog Names: ${dogNames}`);
-      } else {
-        const dogNames = dogDataArr.map(d => d.name).join(', ');
-        console.log(`Upserted ${dogDataArr.length} dogs to Supabase.`);
-        console.log(`Upserted dog names: ${dogNames}`);
       }
     }
   } catch (err) {

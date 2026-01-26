@@ -4,20 +4,18 @@ import React, { useState } from "react";
 type Dog = { id: number; name: string; intake_date: string; created_at: string };
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "../lib/supabaseClient";
+import { parseISO, isSameDay } from 'date-fns';
 
 export default function RecentPupdatesTab() {
   // Get today's date in YYYY-MM-DD
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  const todayStr = `${yyyy}-${mm}-${dd}`;
+  // Use UTC date for comparison
+  const todayUTC = new Date();
 
   const [modalDog, setModalDog] = useState<Dog | null>(null);
 
   // Query for returned dogs
   const { data: returnedDogs, isLoading: isLoadingReturned } = useQuery({
-    queryKey: ['returnedDogs', todayStr],
+    queryKey: ['returnedDogs'],
     queryFn: async () => {
       // Get all available dogs
       const { data: availableDogs, error: errorAvailable } = await supabase
@@ -42,7 +40,7 @@ export default function RecentPupdatesTab() {
     staleTime: 1000 * 60 * 60 * 2
   });
   const { data: newDogs, isLoading } = useQuery({
-    queryKey: ['newDogs', todayStr],
+    queryKey: ['newDogs'],
     queryFn: async () => {
       // Get all dogs present today
       const { data: dogsToday, error: errorToday } = await supabase
@@ -55,7 +53,13 @@ export default function RecentPupdatesTab() {
       // New dogs: available today and created_at is today
       return dogsToday.filter(dog => {
         if (!dog.created_at) return false;
-        return dog.created_at.startsWith(todayStr);
+        // Parse created_at as UTC and compare to todayUTC
+        try {
+          const createdDate = parseISO(dog.created_at);
+          return isSameDay(createdDate, todayUTC);
+        } catch {
+          return false;
+        }
       });
     },
     staleTime: 1000 * 60 * 60 * 2 // 2 hours
@@ -93,7 +97,7 @@ export default function RecentPupdatesTab() {
             </div>
           )}
           {!isLoading && newDogs && newDogs.length === 0 && (
-            <div style={{ marginLeft: '1.5em', color: '#888', marginTop: '0.3em' }}>No new dogs today.</div>
+            <div style={{ marginLeft: '1.5em', color: '#888', marginTop: '0.05em', marginBottom: '1.2em' }}>No new dogs today.</div>
           )}
         </div>
         {/* Returned Dogs Section */}
@@ -104,7 +108,7 @@ export default function RecentPupdatesTab() {
           <div style={{ height: '0.6em' }} />
           {isLoadingReturned && <div>Loading returned dogs...</div>}
           {!isLoadingReturned && returnedDogs && returnedDogs.length > 0 && (
-            <div style={{ marginLeft: '1.5em' }}>
+            <div style={{ marginLeft: '1.5em', marginBottom: '1.2em' }}>
               {returnedDogs.map(dog => (
                 <React.Fragment key={dog.id}>
                   <span
@@ -119,10 +123,32 @@ export default function RecentPupdatesTab() {
               ))}
             </div>
           )}
+
           {!isLoadingReturned && returnedDogs && returnedDogs.length === 0 && (
-            <div style={{ marginLeft: '1.5em', color: '#888', marginTop: '0.3em' }}>No returned dogs today.</div>
+            <div style={{ marginLeft: '1.5em', color: '#888', marginTop: '0.3em', marginBottom: '1.2em' }}>No returned dogs today.</div>
           )}
         </div>
+
+
+        {/* Trial Adoptions Section */}
+        <div className="mb-8">
+          <h3 className="text-md font-bold mb-2" style={{ marginLeft: '0.5em' }}>Trial Adoptions</h3>
+          <div style={{ height: '0.6em' }} />
+          <p className="text-sm mb-4" style={{ marginLeft: '0.5em' }}><em>We're checking out a potential new home and evaluating the quality of the treats and toys.</em></p>
+          <div style={{ height: '0.6em' }} />
+          <TrialAdoptionsDogs setModalDog={setModalDog} />
+        </div>
+
+        {/* Adopted/Reclaimed Dogs Section */}
+        <div className="mb-8">
+          <h3 className="text-md font-bold mb-2" style={{ marginLeft: '0.5em' }}>Adopted/Reclaimed Dogs</h3>
+          <div style={{ height: '0.6em' }} />
+          <p className="text-sm mb-4" style={{ marginLeft: '0.5em' }}><em>We've been adopted!!!</em></p>
+          <div style={{ height: '0.6em' }} />
+          {/* Query for dogs adopted today */}
+          <AdoptedTodayDogs setModalDog={setModalDog} />
+        </div>
+
         {/* Modal for dog info */}
         {modalDog && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -174,6 +200,100 @@ export default function RecentPupdatesTab() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// Helper component for adopted today dogs
+function AdoptedTodayDogs({ setModalDog }) {
+  const todayUTC = new Date();
+  const todayStr = todayUTC.toISOString().slice(0, 10);
+  const { data: adoptedToday, isLoading } = useQuery({
+    queryKey: ['adoptedToday', todayStr],
+    queryFn: async () => {
+      // Get all dog_history events for today with new_value 'adopted'
+      const { data: history, error } = await supabase
+        .from('dog_history')
+        .select('dog_id, name, adopted_date')
+        .eq('new_value', 'adopted')
+        .gte('adopted_date', todayStr)
+        .lte('adopted_date', todayStr + 'T23:59:59.999Z');
+      if (error || !history) return [];
+      // Deduplicate by dog_id
+      const seen = new Set();
+      return history.filter(h => {
+        if (seen.has(h.dog_id)) return false;
+        seen.add(h.dog_id);
+        return true;
+      });
+    },
+    staleTime: 1000 * 60 * 60 * 2,
+  });
+  if (isLoading) return <div>Loading adopted dogs...</div>;
+  if (!adoptedToday || adoptedToday.length === 0) return (
+    <div style={{ marginLeft: '1.5em', color: '#888', marginTop: '0.3em' }}>No adoptions today.</div>
+  );
+  return (
+    <div style={{ marginLeft: '1.5em' }}>
+      {adoptedToday.map(dog => (
+        <React.Fragment key={dog.dog_id}>
+          <span
+            className="text-[#2a5db0] cursor-pointer font-bold"
+            style={{ fontWeight: 700, display: 'inline-block', marginBottom: '0.5em' }}
+            onClick={() => setModalDog(dog)}
+          >
+            {dog.name}
+          </span>
+          <br />
+        </React.Fragment>
+      ))}
+    </div>
+  );
+}
+
+// Helper component for trial adoptions dogs
+function TrialAdoptionsDogs({ setModalDog }) {
+  const { data: trialDogs, isLoading } = useQuery({
+    queryKey: ['trialAdoptions'],
+    queryFn: async () => {
+      // Get all available dogs
+      const { data: availableDogs, error: errorAvailable } = await supabase
+        .from('dogs')
+        .select('id, name, intake_date, created_at')
+        .eq('status', 'available');
+      if (errorAvailable || !availableDogs) return [];
+
+      // Get all dog_history events with new_value containing 'Trial Adoption'
+      const { data: history, error: errorHistory } = await supabase
+        .from('dog_history')
+        .select('dog_id, new_value')
+        .ilike('new_value', '%Trial Adoption%');
+      if (errorHistory || !history) return [];
+
+      const trialDogIds = new Set(history.map(h => h.dog_id));
+      // Only show available dogs that have a matching dog_history event
+      return availableDogs.filter(dog => trialDogIds.has(dog.id));
+    },
+    staleTime: 1000 * 60 * 60 * 2
+  });
+  if (isLoading) return <div>Loading trial adoptions...</div>;
+  if (!trialDogs || trialDogs.length === 0) return (
+    <div style={{ marginLeft: '1.5em', color: '#888', marginTop: '0.05em', marginBottom: '1.2em' }}>No trial adoptions today.</div>
+  );
+  return (
+    <div style={{ marginLeft: '1.5em', marginBottom: '1.2em' }}>
+      {trialDogs.map(dog => (
+        <React.Fragment key={dog.id}>
+          <span
+            className="text-[#2a5db0] cursor-pointer font-bold"
+            style={{ fontWeight: 700, display: 'inline-block', marginBottom: '0.5em' }}
+            onClick={() => setModalDog(dog)}
+          >
+            {dog.name}
+          </span>
+          <br />
+        </React.Fragment>
+      ))}
     </div>
   );
 }

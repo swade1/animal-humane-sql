@@ -1,14 +1,21 @@
 "use client";
+
 import React from "react";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "../lib/supabaseClient";
+import { toZonedTime, format } from 'date-fns-tz';
 
-function formatDate(dateString: string) {
-  const date = new Date(dateString);
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const dd = String(date.getDate()).padStart(2, '0');
-  const yyyy = date.getFullYear();
-  return `${mm}/${dd}/${yyyy}`;
+function formatDateMST(dateString: string) {
+  // Normalize to ISO format for reliable UTC parsing
+  let isoString = dateString;
+  if (dateString && !dateString.includes('T')) {
+    // Convert "YYYY-MM-DD HH:mm:ss+00" to "YYYY-MM-DDTHH:mm:ssZ"
+    isoString = dateString.replace(' ', 'T').replace('+00', 'Z');
+  }
+  const timeZone = 'America/Denver';
+  const utcDate = new Date(isoString);
+  const mstDate = toZonedTime(utcDate, timeZone);
+  return format(mstDate, 'MM/dd/yyyy', { timeZone });
 }
 
 export default function AdoptionsTab() {
@@ -24,10 +31,10 @@ export default function AdoptionsTab() {
       // Query dog_history for adoptions in last 8 days
       const { data: history, error: historyError } = await supabase
         .from('dog_history')
-        .select('dog_id, new_value, event_time')
+        .select('dog_id, new_value, adopted_date')
         .eq('new_value', 'adopted')
-        .gte('event_time', eightDaysAgoStr)
-        .order('event_time', { ascending: false });
+        .gte('adopted_date', eightDaysAgoStr)
+        .order('adopted_date', { ascending: false });
       if (historyError || !history) return [];
 
       // Get unique dog_ids
@@ -45,16 +52,22 @@ export default function AdoptionsTab() {
       const dogMap = Object.fromEntries(dogs.map(d => [d.id, d]));
 
       // Compose rows: name, adopted date, length_of_stay_days
+      // Deduplicate by dog id and adopted_date (ignore time)
+      const seen = new Set<string>();
       return history.map(h => {
         const dog = dogMap[h.dog_id];
-        return dog
-          ? {
-              id: h.dog_id,
-              name: dog.name,
-              adopted_date: h.event_time,
-              length_of_stay_days: dog.length_of_stay_days ?? '',
-            }
-          : null;
+        if (!dog) return null;
+        // Use only the date part for deduplication
+        const dateOnly = h.adopted_date ? h.adopted_date.slice(0, 10) : '';
+        const key = `${h.dog_id}-${dateOnly}`;
+        if (seen.has(key)) return null;
+        seen.add(key);
+        return {
+          id: h.dog_id,
+          name: dog.name,
+          adopted_date: h.adopted_date,
+          length_of_stay_days: dog.length_of_stay_days ?? '',
+        };
       }).filter(Boolean);
     },
     staleTime: 1000 * 60 * 60 * 2,
@@ -89,9 +102,9 @@ export default function AdoptionsTab() {
                 return dateA - dateB;
               })
               .map(dog => (
-                <tr key={dog.id} className="align-middle">
+                <tr key={`${dog.id}-${dog.adopted_date}`} className="align-middle">
                   <td>{dog.name}</td>
-                  <td style={{ paddingLeft: '8ch', textAlign: 'center' }}>{formatDate(dog.adopted_date)}</td>
+                  <td style={{ paddingLeft: '8ch', textAlign: 'center' }}>{formatDateMST(dog.adopted_date)}</td>
                   <td style={{ paddingLeft: '8ch', textAlign: 'center' }}>{dog.length_of_stay_days}</td>
                 </tr>
               ))}
