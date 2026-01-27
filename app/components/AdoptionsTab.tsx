@@ -1,6 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
+
+type AdoptedDog = {
+  id: number;
+  name: string;
+  adopted_date: string;
+  length_of_stay_days: string | number;
+};
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "../lib/supabaseClient";
 import { toZonedTime, format } from 'date-fns-tz';
@@ -17,8 +24,7 @@ function formatDateMST(dateString: string) {
   const mstDate = toZonedTime(utcDate, timeZone);
   return format(mstDate, 'MM/dd/yyyy', { timeZone });
 }
-export default function AdoptionsTab() {
-  const [modalDog, setModalDog] = useState(null);
+  const [modalDog, setModalDog] = useState<AdoptedDog | null>(null);
   const { data: adoptedDogs, isLoading } = useQuery({
     queryKey: ['adoptedDogs'],
     queryFn: async () => {
