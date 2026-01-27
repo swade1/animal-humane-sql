@@ -11,35 +11,35 @@ export default function RecentPupdatesTab() {
   // Use UTC date for comparison
   const todayUTC = new Date();
 
+  // Query for dogs with status: null (Available Soon)
+  const { data: availableSoonDogs, isLoading: isLoadingAvailableSoon } = useQuery({
+    queryKey: ['availableSoonDogs'],
+    queryFn: async () => {
+      const { data: soonDogs, error: errorSoon } = await supabase
+        .from('dogs')
+        .select('id, name, intake_date, created_at')
+        .is('status', null);
+      if (errorSoon || !soonDogs) return [];
+      return soonDogs;
+    },
+    staleTime: 1000 * 60 * 60 * 2
+  });
 
-  // Query for temporarily unlisted dogs using set comparison
+
+  // Query for temporarily unlisted dogs using scraped=false
   const { data: temporarilyUnlistedDogs, isLoading: isLoadingUnlisted } = useQuery({
     queryKey: ['temporarilyUnlistedDogs'],
     queryFn: async () => {
-      // Get all available dogs
-      const { data: allDogs, error: errorAll } = await supabase
+      const { data: unlistedDogs, error: errorUnlisted } = await supabase
         .from('dogs')
         .select('id, name, intake_date, created_at, updated_at, status, location')
-        .eq('status', 'available');
-      if (errorAll || !allDogs) return [];
-
-      // Fetch latest scraped ids from public/latest_scraped_ids.json
-      let scrapedIds: number[] = [];
-      try {
-        const res = await fetch('/latest_scraped_ids.json');
-        if (res.ok) {
-          scrapedIds = await res.json();
-        }
-      } catch (err) {
-        // If file missing or fetch fails, fallback to empty set
-        scrapedIds = [];
-      }
-
-      // List dogs whose id is NOT in scrapedIds and are NOT currently in trial adoption
-      return allDogs.filter(dog => {
-        const isUnlisted = !scrapedIds.includes(dog.id);
-        const isTrial = dog.status === 'available' && dog.location && dog.location.includes('Trial Adoption');
-        return isUnlisted && !isTrial;
+        .eq('status', 'available')
+        .eq('scraped', false);
+      if (errorUnlisted || !unlistedDogs) return [];
+      // Exclude dogs in trial adoption
+      return unlistedDogs.filter(dog => {
+        const isTrial = dog.location && dog.location.includes('Trial Adoption');
+        return !isTrial;
       });
     },
     staleTime: 1000 * 60 * 60 * 2
@@ -75,25 +75,49 @@ export default function RecentPupdatesTab() {
   });
 
   const { data: newDogs, isLoading } = useQuery({
-    queryKey: ['newDogs'],
+    queryKey: ['newDogs', availableSoonDogs?.map(d => d.id) ?? []],
     queryFn: async () => {
       // Get all dogs present today
       const { data: dogsToday, error: errorToday } = await supabase
         .from('dogs')
-        .select('id, name, intake_date, created_at');
-      if (errorToday || !dogsToday) return [];
+        .select('id, name, intake_date, created_at, status');
+      if (errorToday || !dogsToday) {
+        console.log('Error or no dogsToday:', errorToday, dogsToday);
+        return [];
+      }
 
-      // New dogs: available today and created_at is today
-      return dogsToday.filter(dog => {
+      // Get IDs of Available Soon dogs to exclude
+      const availableSoonIds = (availableSoonDogs || []).map(d => d.id);
+
+      // New dogs: available today and created_at is today (in MST), and not in Available Soon
+      const mstTimeZone = 'America/Denver';
+      const todayMST = toZonedTime(new Date(), mstTimeZone);
+      const filtered = dogsToday.filter(dog => {
         if (!dog.created_at) return false;
-        // Parse created_at as UTC and compare to todayUTC
+        if (availableSoonIds.includes(dog.id)) return false;
         try {
           const createdDate = parseISO(dog.created_at);
-          return isSameDay(createdDate, todayUTC);
-        } catch {
+          const createdMST = toZonedTime(createdDate, mstTimeZone);
+          const sameDay = isSameDay(createdMST, todayMST);
+          console.log('[NEW DOGS DEBUG]', {
+            id: dog.id,
+            name: dog.name,
+            created_at: dog.created_at,
+            createdDate: createdDate.toString(),
+            createdMST: createdMST.toString(),
+            todayMST: todayMST.toString(),
+            sameDay
+          });
+          return sameDay;
+        } catch (e) {
+          console.log('[NEW DOGS DEBUG] parse error:', e, dog.id, dog.created_at);
           return false;
         }
       });
+      console.log('dogsToday:', dogsToday);
+      console.log('availableSoonIds:', availableSoonIds);
+      console.log('newDogs (filtered):', filtered);
+      return filtered;
     },
     staleTime: 1000 * 60 * 60 * 2 // 2 hours
   });
@@ -107,6 +131,7 @@ export default function RecentPupdatesTab() {
         <div style={{ height: '0.5em' }} />
         <p className="text-base mb-6">This tab shows recent changes in dog status and availability.</p>
         <div style={{ height: '1.5em' }} />
+        {/* ...existing code... */}
         <div className="mb-8">
           <h3 className="text-md font-bold mb-2" style={{ marginLeft: '0.5em' }}>New Dogs</h3>
           <div style={{ height: '0.6em' }} />
@@ -182,6 +207,9 @@ export default function RecentPupdatesTab() {
           <AdoptedTodayDogs setModalDog={setModalDog} />
         </div>
 
+        {/* Extra spacing between Adopted/Reclaimed and Unlisted sections */}
+        <div style={{ height: '1.5em' }} />
+
         {/* Available but Temporarily Unlisted Section */}
         <div className="mb-8">
           <h3 className="text-md font-bold mb-2" style={{ marginLeft: '0.5em' }}>Available but Temporarily Unlisted</h3>
@@ -207,6 +235,36 @@ export default function RecentPupdatesTab() {
           )}
           {!isLoadingUnlisted && temporarilyUnlistedDogs && temporarilyUnlistedDogs.length === 0 && (
             <div style={{ marginLeft: '1.5em', color: '#888', marginTop: '0.3em', marginBottom: '1.2em' }}>No temporarily unlisted dogs today.</div>
+          )}
+        </div>
+
+        {/* Available Soon Section (moved last) */}
+        <div className="mb-8">
+          <h3 className="text-md font-bold mb-2" style={{ marginLeft: '0.5em' }}>Available Soon</h3>
+          <div style={{ height: '0.6em' }} />
+          <p className="text-sm mb-4" style={{ marginLeft: '0.5em' }}><em>We're settling in and getting ready for our close-ups!</em></p>
+          <div style={{ height: '0.6em' }} />
+          {isLoadingAvailableSoon && <div>Loading available soon dogs...</div>}
+          {!isLoadingAvailableSoon && availableSoonDogs && availableSoonDogs.length > 0 && (
+            <div style={{ marginLeft: '1.5em' }}>
+              {[...availableSoonDogs]
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map(dog => (
+                  <React.Fragment key={dog.id}>
+                    <span
+                      className="text-[#2a5db0] cursor-pointer font-bold"
+                      style={{ fontWeight: 700, display: 'inline-block', marginBottom: '0.5em' }}
+                      onClick={() => setModalDog(dog)}
+                    >
+                      {dog.name}
+                    </span>
+                    <br />
+                  </React.Fragment>
+                ))}
+            </div>
+          )}
+          {!isLoadingAvailableSoon && availableSoonDogs && availableSoonDogs.length === 0 && (
+            <div style={{ marginLeft: '1.5em', color: '#888', marginTop: '0.05em', marginBottom: '1.2em' }}>No dogs in this category.</div>
           )}
         </div>
 

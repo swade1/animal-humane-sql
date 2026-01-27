@@ -322,7 +322,18 @@ export async function runScraper() {
             if (prevDog && prevDog.created_at) {
               dog.created_at = prevDog.created_at;
             } else {
-              dog.created_at = new Date().toISOString();
+              const now = new Date();
+              let iso = now.toISOString();
+              // Ensure 'Z' is present for UTC
+              if (!iso.endsWith('Z')) iso = iso + 'Z';
+              dog.created_at = iso;
+              // Log the local and UTC time for visibility
+              console.log('[SCRAPER] New dog created:', {
+                id: dog.id,
+                name: dog.name,
+                local: now.toString(),
+                utc: dog.created_at
+              });
             }
       const existingOrigin = originMap.get(dog.id);
       if (existingOrigin && existingOrigin.trim() !== '') {
