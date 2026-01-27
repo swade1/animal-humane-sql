@@ -67,9 +67,27 @@ export default function RecentPupdatesTab() {
         .eq('new_value', 'available');
       if (errorHistory || !history) return [];
 
-      const returnedDogIds = new Set(history.map(h => h.dog_id));
-      // Only show available dogs that have a matching status_change in history
-      return availableDogs.filter(dog => returnedDogIds.has(dog.id));
+      // Only show available dogs whose most recent adopted→available status_change event is today (MST)
+      const mstTimeZone = 'America/Denver';
+      const todayMST = toZonedTime(new Date(), mstTimeZone);
+      // Build a map of dog_id to most recent status_change event
+      const recentReturnMap = new Map();
+      for (const h of history) {
+        if (!h.dog_id || !h.created_at) continue;
+        let createdAtStr = h.created_at;
+        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(createdAtStr)) {
+          createdAtStr += 'Z';
+        }
+        const eventDate = parseISO(createdAtStr);
+        const eventMST = toZonedTime(eventDate, mstTimeZone);
+        if (!recentReturnMap.has(h.dog_id) || eventMST > recentReturnMap.get(h.dog_id)) {
+          recentReturnMap.set(h.dog_id, eventMST);
+        }
+      }
+      return availableDogs.filter(dog => {
+        const returnedDate = recentReturnMap.get(dog.id);
+        return returnedDate && isSameDay(returnedDate, todayMST);
+      });
     },
     staleTime: 1000 * 60 * 60 * 2
   });
@@ -96,13 +114,19 @@ export default function RecentPupdatesTab() {
         if (!dog.created_at) return false;
         if (availableSoonIds.includes(dog.id)) return false;
         try {
-          const createdDate = parseISO(dog.created_at);
+          // Patch: If created_at is missing 'Z' or timezone, treat as UTC
+          let createdAtStr = dog.created_at;
+          if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(createdAtStr)) {
+            createdAtStr += 'Z';
+          }
+          const createdDate = parseISO(createdAtStr);
           const createdMST = toZonedTime(createdDate, mstTimeZone);
           const sameDay = isSameDay(createdMST, todayMST);
           console.log('[NEW DOGS DEBUG]', {
             id: dog.id,
             name: dog.name,
             created_at: dog.created_at,
+            createdAtStr,
             createdDate: createdDate.toString(),
             createdMST: createdMST.toString(),
             todayMST: todayMST.toString(),
@@ -139,7 +163,7 @@ export default function RecentPupdatesTab() {
           <div style={{ height: '0.6em' }} />
           {isLoading && <div>Loading new dogs...</div>}
           {!isLoading && newDogs && newDogs.length > 0 && (
-            <div style={{ marginLeft: '1.5em' }}>
+            <div style={{ marginLeft: '0.5em' }}>
               {newDogs.map(dog => (
                 <React.Fragment key={dog.id}>
                   <span
@@ -158,6 +182,7 @@ export default function RecentPupdatesTab() {
             <div style={{ marginLeft: '1.5em', color: '#888', marginTop: '0.05em', marginBottom: '1.2em' }}>No new dogs today.</div>
           )}
         </div>
+        <div style={{ height: '1em' }} />
         {/* Returned Dogs Section */}
         <div className="mb-8">
           <h3 className="text-md font-bold mb-2" style={{ marginLeft: '0.5em' }}>Returned Dogs</h3>
@@ -166,7 +191,7 @@ export default function RecentPupdatesTab() {
           <div style={{ height: '0.6em' }} />
           {isLoadingReturned && <div>Loading returned dogs...</div>}
           {!isLoadingReturned && returnedDogs && returnedDogs.length > 0 && (
-            <div style={{ marginLeft: '1.5em', marginBottom: '1.2em' }}>
+            <div style={{ marginLeft: '0.5em', marginBottom: '1.2em', paddingLeft: '0.5em' }}>
               {returnedDogs.map(dog => (
                 <React.Fragment key={dog.id}>
                   <span
@@ -183,7 +208,7 @@ export default function RecentPupdatesTab() {
           )}
 
           {!isLoadingReturned && returnedDogs && returnedDogs.length === 0 && (
-            <div style={{ marginLeft: '1.5em', color: '#888', marginTop: '0.3em', marginBottom: '1.2em' }}>No returned dogs today.</div>
+            <div style={{ marginLeft: 'calc(1.5em - 12px)', color: '#888', marginTop: '0.3em', marginBottom: '1.2em' }}>No returned dogs today.</div>
           )}
         </div>
 
@@ -218,7 +243,7 @@ export default function RecentPupdatesTab() {
           <div style={{ height: '0.6em' }} />
           {isLoadingUnlisted && <div>Loading temporarily unlisted dogs...</div>}
           {!isLoadingUnlisted && temporarilyUnlistedDogs && temporarilyUnlistedDogs.length > 0 && (
-            <div style={{ marginLeft: '1.5em', marginBottom: '1.2em' }}>
+            <div style={{ marginLeft: 'calc(0.5em - 8px)', marginBottom: '1.2em', paddingLeft: '0.5em' }}>
               {temporarilyUnlistedDogs.map(dog => (
                 <React.Fragment key={dog.id}>
                   <span
@@ -246,7 +271,7 @@ export default function RecentPupdatesTab() {
           <div style={{ height: '0.6em' }} />
           {isLoadingAvailableSoon && <div>Loading available soon dogs...</div>}
           {!isLoadingAvailableSoon && availableSoonDogs && availableSoonDogs.length > 0 && (
-            <div style={{ marginLeft: '1.5em' }}>
+            <div style={{ marginLeft: 'calc(0.5em - 5px)', paddingLeft: '0.5em' }}>
               {[...availableSoonDogs]
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map(dog => (
@@ -358,7 +383,7 @@ function AdoptedTodayDogs({ setModalDog }: AdoptedTodayDogsProps) {
     <div style={{ marginLeft: '1.5em', color: '#888', marginTop: '0.3em' }}>No adoptions today.</div>
   );
   return (
-    <div style={{ marginLeft: '1.5em' }}>
+    <div style={{ marginLeft: 'calc(1.5em - 12px)' }}>
       {adoptedToday.map(dog => (
         <React.Fragment key={dog.dog_id}>
           <span
@@ -399,7 +424,7 @@ function TrialAdoptionsDogs({ setModalDog }: TrialAdoptionsDogsProps) {
     <div style={{ marginLeft: '1.5em', color: '#888', marginTop: '0.05em', marginBottom: '1.2em' }}>No trial adoptions today.</div>
   );
   return (
-    <div style={{ marginLeft: '1.5em', marginBottom: '1.2em' }}>
+    <div style={{ marginLeft: '0.5em', marginBottom: '1.2em' }}>
       {trialDogs.map(dog => (
         <React.Fragment key={dog.id}>
           <span
