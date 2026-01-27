@@ -24,6 +24,8 @@ function formatDateMST(dateString: string) {
   const mstDate = toZonedTime(utcDate, timeZone);
   return format(mstDate, 'MM/dd/yyyy', { timeZone });
 }
+
+export default function AdoptionsTab() {
   const [modalDog, setModalDog] = useState<AdoptedDog | null>(null);
   const { data: adoptedDogs, isLoading } = useQuery({
     queryKey: ['adoptedDogs'],
