@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "../lib/supabaseClient";
 import { toZonedTime, format } from 'date-fns-tz';
@@ -17,8 +17,8 @@ function formatDateMST(dateString: string) {
   const mstDate = toZonedTime(utcDate, timeZone);
   return format(mstDate, 'MM/dd/yyyy', { timeZone });
 }
-
 export default function AdoptionsTab() {
+  const [modalDog, setModalDog] = useState(null);
   const { data: adoptedDogs, isLoading } = useQuery({
     queryKey: ['adoptedDogs'],
     queryFn: async () => {
@@ -73,6 +73,7 @@ export default function AdoptionsTab() {
     staleTime: 1000 * 60 * 60 * 2,
   });
 
+  // Only one return statement for the component
   return (
     <div className="border border-[#ccc] p-4 rounded bg-[#fafafa]">
       <div className="flex items-center justify-between mt-[10px]">
@@ -103,7 +104,15 @@ export default function AdoptionsTab() {
               })
               .map(dog => (
                 <tr key={`${dog.id}-${dog.adopted_date}`} className="align-middle">
-                  <td>{dog.name}</td>
+                  <td>
+                    <span
+                      className="text-[#2a5db0] cursor-pointer font-bold"
+                      style={{ fontWeight: 700, display: 'inline-block', marginBottom: '0.5em' }}
+                      onClick={() => setModalDog(dog)}
+                    >
+                      {dog.name}
+                    </span>
+                  </td>
                   <td style={{ paddingLeft: '8ch', textAlign: 'center' }}>{formatDateMST(dog.adopted_date)}</td>
                   <td style={{ paddingLeft: '8ch', textAlign: 'center' }}>{dog.length_of_stay_days}</td>
                 </tr>
@@ -111,6 +120,55 @@ export default function AdoptionsTab() {
           </tbody>
         </table>
       </div>
+      {/* Modal for dog info with iframe */}
+      {modalDog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div
+            className="bg-white rounded-lg shadow-lg p-6 relative flex flex-col items-center justify-center"
+            style={{
+              width: 800,
+              height: 800,
+              maxWidth: 800,
+              maxHeight: 800,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'fixed',
+              left: '50%',
+              top: '10%',
+              transform: 'translate(-50%, 0)',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+              background: 'rgba(255,255,255,0.97)'
+            }}
+          >
+            <button
+              className="absolute text-gray-500 hover:text-gray-700 bg-white rounded-full flex items-center justify-center shadow-md"
+              onClick={() => setModalDog(null)}
+              aria-label="Close"
+              style={{
+                top: 10,
+                right: 10,
+                width: 36,
+                height: 36,
+                fontSize: 24,
+                border: 'none',
+                cursor: 'pointer',
+                zIndex: 10
+              }}
+            >
+              ×
+            </button>
+            <iframe
+              src={`https://new.shelterluv.com/embed/animal/${modalDog.id}`}
+              title={modalDog.name}
+              width="100%"
+              height="100%"
+              style={{ border: 'none', flex: 1 }}
+              allowFullScreen
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -63,10 +63,10 @@ export default function CurrentPopulationTab() {
           <div
             className="bg-white rounded-lg shadow-lg p-6 relative flex flex-col items-center justify-center"
             style={{
-              width: 750,
-              height: 750,
-              maxWidth: 750,
-              maxHeight: 750,
+              width: 800,
+              height: 800,
+              maxWidth: 800,
+              maxHeight: 800,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -83,25 +83,24 @@ export default function CurrentPopulationTab() {
               onClick={() => setModalDog(null)}
               aria-label="Close"
               style={{
-                zIndex: 10,
-                top: 16,
-                right: 16,
-                position: 'absolute',
-                lineHeight: 1,
-                width: 64,
-                height: 64,
-                fontSize: 48,
-                fontWeight: 900
+                top: 10,
+                right: 10,
+                width: 36,
+                height: 36,
+                fontSize: 24,
+                border: 'none',
+                cursor: 'pointer',
+                zIndex: 10
               }}
             >
               ×
             </button>
-            <h3 className="text-lg font-bold mb-2 text-center w-full">{modalDog.name}</h3>
             <iframe
-              src={`http://new.shelterluv.com/embed/animal/${modalDog.id}/`}
+              src={`https://new.shelterluv.com/embed/animal/${modalDog.id}`}
               title={modalDog.name}
-              className="rounded border"
-              style={{ width: 700, height: 650, border: '1px solid #ccc', background: '#fff' }}
+              width="100%"
+              height="100%"
+              style={{ border: 'none', flex: 1 }}
               allowFullScreen
             />
           </div>

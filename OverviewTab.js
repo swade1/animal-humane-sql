@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import Modal from 'react-modal';
 import { fetchOverviewStats, clearCache, getApiMode } from './api';
 
 function OverviewTab() {
@@ -96,19 +95,6 @@ function OverviewTab() {
       })
     : [];
 
-  // Add modal styles
-  const customStyles = {
-    content: {
-      top: '50%',
-      left: '50%',
-      right: 'auto',
-      bottom: 'auto',
-      marginRight: '-50%',
-      transform: 'translate(-50%, -50%)',
-      width: '80%',
-      height: '80%',
-    },
-  };
 
   return (
     <div>
@@ -200,22 +186,78 @@ function OverviewTab() {
       </table>
 
       {/* Add trend, alerts, small charts here */}
-      {/* Add the modal */}
-      <Modal
-        isOpen={isModalOpen}
-        onRequestClose={closeModal}
-        style={customStyles}
-        contentLabel="Dog Information"
-      >
-        <button onClick={closeModal} style={{ float: 'right' }}>Close</button>
-        <iframe
-          src={modalUrl}
-          width="100%"
-          height="100%"
-          title="Dog Information"
-          style={{ border: 'none' }}
-        ></iframe>
-      </Modal>
+      {/* Modal for dog info with iframe, styled to match other tabs */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div
+            className="bg-white rounded-lg shadow-lg p-6 relative flex flex-col items-center justify-center"
+            style={{
+              width: 800,
+              height: 800,
+              maxWidth: 800,
+              maxHeight: 800,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'fixed',
+              left: '50%',
+              top: '10%',
+              transform: 'translate(-50%, 0)',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+              background: 'rgba(255,255,255,0.97)'
+            }}
+          >
+            <button
+              className="absolute text-gray-500 hover:text-gray-700 bg-white rounded-full flex items-center justify-center shadow-md"
+              onClick={closeModal}
+              aria-label="Close"
+              style={{
+                top: 10,
+                right: 10,
+                width: 36,
+                height: 36,
+                fontSize: 24,
+                border: 'none',
+                cursor: 'pointer',
+                zIndex: 10
+              }}
+            >
+              ×
+            </button>
+            {/* Dog name heading above iframe, if available */}
+            {(() => {
+              try {
+                const url = new URL(modalUrl);
+                const name = url.searchParams.get('name');
+                if (name) {
+                  return (
+                    <h2
+                      className="text-2xl font-bold mb-4"
+                      style={{
+                        margin: 0,
+                        textAlign: 'center',
+                        width: '100%',
+                        fontWeight: 700
+                      }}
+                    >
+                      {name}
+                    </h2>
+                  );
+                }
+              } catch {}
+              return null;
+            })()}
+            <iframe
+              src={modalUrl}
+              title="Dog Information"
+              width="100%"
+              height="100%"
+              style={{ border: 'none', flex: 1 }}
+              allowFullScreen
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
