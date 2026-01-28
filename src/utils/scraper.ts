@@ -25,7 +25,7 @@ export async function checkForAdoptions() {
         try {
           const animalObj = JSON.parse(animalAttr);
           return animalObj.location || '';
-        } catch (e) {
+        } catch (_e) {
           return '';
         }
       });

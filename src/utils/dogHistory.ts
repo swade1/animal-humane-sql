@@ -28,7 +28,7 @@ export async function logDogHistory({
   adopted_date?: string | null;
 }) {
   // Check for recent identical event to prevent duplicates
-  const { data: recent, error: fetchError } = await supabase
+  const { data: recent, error: _fetchError } = await supabase
     .from('dog_history')
     .select('*')
     .eq('dog_id', dogId)
@@ -48,7 +48,15 @@ export async function logDogHistory({
     return;
   }
 
-  const insertObj: any = {
+  const insertObj: {
+    dog_id: number;
+    event_type: string;
+    old_value: string | null;
+    new_value: string | null;
+    notes?: string;
+    name?: string;
+    adopted_date?: string | null;
+  } = {
     dog_id: dogId,
     event_type: eventType,
     old_value: oldValue,
