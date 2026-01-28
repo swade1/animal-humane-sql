@@ -18,8 +18,17 @@ export async function checkForAdoptions() {
     try {
       const page = await browser.newPage();
       await page.goto(dog.url, { waitUntil: 'networkidle2', timeout: 60000 });
-      // Adjust selector as needed to match the location field on the dog's page
-      const location = await page.$eval('.location, .dog-location', el => el.textContent?.trim() || '');
+      // Extract location from <iframe-animal> element's animal attribute (JSON)
+      const location = await page.$eval('iframe-animal', el => {
+        const animalAttr = el.getAttribute('animal');
+        if (!animalAttr) return '';
+        try {
+          const animalObj = JSON.parse(animalAttr);
+          return animalObj.location || '';
+        } catch (e) {
+          return '';
+        }
+      });
       if (!location) {
         // Location is empty: dog has been adopted
         // 1. Find most recent location (prefer current, else from dog_history)
