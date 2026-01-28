@@ -41,23 +41,26 @@ export async function checkForAdoptions() {
         // Log location_change
         await logDogHistory({
           dogId: dog.id,
+          name: dog.name,
           eventType: 'location_change',
           oldValue: oldLocation,
-          newValue: '',
+          newValue: null,
           notes: `Location cleared (adopted) at ${adoptionDate}`
         });
         // Log status_change
         await logDogHistory({
           dogId: dog.id,
+          name: dog.name,
           eventType: 'status_change',
           oldValue: 'available',
           newValue: 'adopted',
-          notes: `Status set to adopted at ${adoptionDate}`
+          notes: `Status set to adopted at ${adoptionDate}`,
+          adopted_date: adoptionDate
         });
-        // Update dog record in DB
+        // Update dog record in DB (set location to NULL)
         await supabase
           .from('dogs')
-          .update({ status: 'adopted', location: '', adopted_date: adoptionDate })
+          .update({ status: 'adopted', location: null, adopted_date: adoptionDate })
           .eq('id', dog.id);
         console.log(`[adoption-check] Dog adopted: ${dog.name} (ID: ${dog.id}) at ${adoptionDate}`);
       }
@@ -182,12 +185,14 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]
       return [];
     }
     const today = new Date();
-    const mapped: Dog[] = data.animals.map((parsed: Record<string, unknown>) => {
+    const mapped: Dog[] = data.animals.map((parsed: Record<string, unknown>, idx: number) => {
       // Helper for safe property extraction
       const getString = (obj: Record<string, unknown>, key: string): string => typeof obj[key] === 'string' ? obj[key] as string : '';
       const getNumber = (obj: Record<string, unknown>, key: string): number => typeof obj[key] === 'number' ? obj[key] as number : (typeof obj[key] === 'string' ? parseInt(obj[key] as string, 10) : 0);
 
       const p = parsed;
+      // Log the raw JSON for each dog
+      console.log(`[SCRAPER][RAW] Dog #${idx + 1}:`, JSON.stringify(p));
       const intakeDate = p.intake_date ? new Date(getNumber(p, 'intake_date') * 1000) : null;
       let lengthOfStay: number | null = null;
       if (intakeDate) {
@@ -205,7 +210,7 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]
       if (typeof p.status === 'string' && p.status.trim().toLowerCase() === 'adopted') {
         status = 'adopted';
       }
-      return {
+      const dogObj = {
         id: getNumber(p, 'nid'),
         name: getString(p, 'name'),
         location: getString(p, 'location'),
@@ -230,6 +235,9 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]
         updated_at: new Date().toISOString(),
         scraped: true,
       };
+      // Log the mapped dog object
+      console.log(`[SCRAPER][MAPPED] Dog #${idx + 1}: id=${dogObj.id}, name=${dogObj.name}`);
+      return dogObj;
     });
     console.log('Mapped dog data from available-animals JSON:', mapped);
     return mapped;
@@ -245,17 +253,37 @@ export async function runScraper() {
   console.log('Using mainUrl:', mainUrl);
   try {
     const allUrls = await getIframeUrls(mainUrl);
+    console.log('[SCRAPER] All discovered URLs:', allUrls);
     // Filter for available-animals JSON endpoints
     const availableAnimalsUrls = allUrls.filter(url => url.includes('available-animals'));
+    console.log('[SCRAPER] available-animals JSON URLs:', availableAnimalsUrls);
     if (availableAnimalsUrls.length === 0) {
       console.error('No available-animals JSON URLs found.');
       return;
     }
     // Fetch and merge all dogs from all endpoints
     let allDogs: Dog[] = [];
-    for (const jsonUrl of availableAnimalsUrls) {
-      const dogDataArr = await scrapeAvailableAnimalsJson(jsonUrl);
-      allDogs = allDogs.concat(dogDataArr);
+    const fs = await import('fs');
+    const path = await import('path');
+    for (const [i, jsonUrl] of availableAnimalsUrls.entries()) {
+      try {
+        const res = await fetch(jsonUrl);
+        const text = await res.text();
+        // Save raw response to file for debugging
+        const filePath = path.join(process.cwd(), `public/debug-available-animals-${i + 1}.json`);
+        fs.writeFileSync(filePath, text);
+        console.log(`[SCRAPER] Saved raw JSON response for URL #${i + 1} to`, filePath);
+        // Parse and process as before
+        const data = JSON.parse(text);
+        if (!data.animals || !Array.isArray(data.animals)) {
+          console.error(`No animals array in JSON: ${jsonUrl}`);
+          continue;
+        }
+        const dogDataArr = await scrapeAvailableAnimalsJson(jsonUrl);
+        allDogs = allDogs.concat(dogDataArr);
+      } catch (err) {
+        console.error(`[SCRAPER] Error fetching/parsing JSON from ${jsonUrl}:`, err);
+      }
     }
     // De-duplicate by dog id
     const dogMap = new Map<number, Dog>();
@@ -512,23 +540,26 @@ export async function runScraper() {
               // Log location_change
               await logDogHistory({
                 dogId: prevDog.id,
+                name: prevDog.name,
                 eventType: 'location_change',
                 oldValue: prevDog.location,
-                newValue: '',
+                newValue: null,
                 notes: `Location cleared (adopted) at ${adoptionDate}`
               });
               // Log status_change
               await logDogHistory({
                 dogId: prevDog.id,
+                name: prevDog.name,
                 eventType: 'status_change',
                 oldValue: 'available',
                 newValue: 'adopted',
-                notes: `Dog no longer present in available-animals JSON and location is empty; likely adopted at ${adoptionDate}.`
+                notes: `Dog no longer present in available-animals JSON and location is empty; likely adopted at ${adoptionDate}.`,
+                adopted_date: adoptionDate
               });
-              // Update dog record in DB
+              // Update dog record in DB (set location to NULL)
               await supabase
                 .from('dogs')
-                .update({ status: 'adopted', location: '', adopted_date: adoptionDate })
+                .update({ status: 'adopted', location: null, adopted_date: adoptionDate })
                 .eq('id', prevDog.id);
               console.error(`Status/location change detected for dog ID ${prevDog.id} (${prevDog.name}): 'available' -> 'adopted', location cleared (missing from new scrape, location empty)`);
             } else if (location !== prevDog.location) {
