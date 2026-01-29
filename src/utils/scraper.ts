@@ -18,16 +18,14 @@ export async function checkForAdoptions() {
     try {
       const page = await browser.newPage();
       await page.goto(dog.url, { waitUntil: 'networkidle2', timeout: 60000 });
-      // Wait for <iframe-animal> to appear (up to 10 seconds)
-      await page.waitForSelector('iframe-animal', { timeout: 10000 });
-      // Extract location and AHNM-A number from <iframe-animal> element's animal attribute (JSON)
-      const { location, ahnmA } = await page.$eval('iframe-animal', el => {
-        const animalAttr = el.getAttribute('animal');
+      // Extract location and AHNM-A number from <iframe-animal> element's animal attribute (JSON) using page.evaluate (faster, more robust)
+      const { location, ahnmA } = await page.evaluate(() => {
+        const el = document.querySelector('iframe-animal');
         let location = '';
         let ahnmA = null;
-        if (animalAttr) {
+        if (el && el.hasAttribute('animal')) {
           try {
-            const animalObj = JSON.parse(animalAttr);
+            const animalObj = JSON.parse(el.getAttribute('animal'));
             location = animalObj.location || '';
             if (animalObj.uniqueId && typeof animalObj.uniqueId === 'string') {
               const match = animalObj.uniqueId.match(/AHNM-A-(\d+)/);
