@@ -18,17 +18,29 @@ export async function checkForAdoptions() {
     try {
       const page = await browser.newPage();
       await page.goto(dog.url, { waitUntil: 'networkidle2', timeout: 60000 });
-      // Extract location from <iframe-animal> element's animal attribute (JSON)
-      const location = await page.$eval('iframe-animal', el => {
+      // Wait for <iframe-animal> to appear (up to 10 seconds)
+      await page.waitForSelector('iframe-animal', { timeout: 10000 });
+      // Extract location and AHNM-A number from <iframe-animal> element's animal attribute (JSON)
+      const { location, ahnmA } = await page.$eval('iframe-animal', el => {
         const animalAttr = el.getAttribute('animal');
-        if (!animalAttr) return '';
-        try {
-          const animalObj = JSON.parse(animalAttr);
-          return animalObj.location || '';
-        } catch (_e) {
-          return '';
+        let location = '';
+        let ahnmA = null;
+        if (animalAttr) {
+          try {
+            const animalObj = JSON.parse(animalAttr);
+            location = animalObj.location || '';
+            if (animalObj.uniqueId && typeof animalObj.uniqueId === 'string') {
+              const match = animalObj.uniqueId.match(/AHNM-A-(\d+)/);
+              if (match) ahnmA = parseInt(match[1], 10);
+            }
+          } catch (_e) {}
         }
+        return { location, ahnmA };
       });
+      // Save AHNM-A number to dogs table if found
+      if (ahnmA) {
+        await supabase.from('dogs').update({ "AHNM-A": ahnmA }).eq('id', dog.id);
+      }
       if (!location) {
         // Location is empty: dog has been adopted
         // 1. Find most recent location (prefer current, else from dog_history)
@@ -566,10 +578,17 @@ export async function runScraper() {
                 adopted_date: adoptionDate
               });
               // Update dog record in DB (set location to NULL)
-              await supabase
+              const updateResult = await supabase
                 .from('dogs')
                 .update({ status: 'adopted', location: null, adopted_date: adoptionDate })
                 .eq('id', prevDog.id);
+              if (updateResult.error) {
+                console.error(`[adoption-update] ERROR updating dogs table for dog ID ${prevDog.id} (${prevDog.name}):`, updateResult.error);
+              } else if (updateResult.data && updateResult.data.length === 0) {
+                console.error(`[adoption-update] No rows updated for dog ID ${prevDog.id} (${prevDog.name}). id type:`, typeof prevDog.id);
+              } else {
+                console.log(`[adoption-update] Successfully updated status to 'adopted' for dog ID ${prevDog.id} (${prevDog.name}). id type:`, typeof prevDog.id);
+              }
               console.error(`Status/location change detected for dog ID ${prevDog.id} (${prevDog.name}): 'available' -> 'adopted', location cleared (missing from new scrape, location empty)`);
             } else if (location !== prevDog.location) {
               // If location changed but not adopted, update dogs table and log
@@ -611,6 +630,28 @@ export async function runScraper() {
       console.error(`Supabase upsert error:`, error, `Dog IDs: ${dogIds}`, `Dog Names: ${dogNames}`);
     } else {
       console.log(`Upserted ${mergedDogs.length} dogs to Supabase.`);
+    }
+
+    // --- NEW LOGIC: Update created_at and status for manually added dogs now scraped ---
+    // Find all dogs with status == NULL
+    const { data: manualDogs, error: manualError } = await supabase
+      .from('dogs')
+      .select('id, created_at, status, scraped')
+      .is('status', null);
+    if (manualError) {
+      console.error('Error fetching manually added dogs:', manualError);
+    } else if (manualDogs && manualDogs.length > 0) {
+      // For each, if the dog is now scraped, update created_at and status
+      const now = new Date().toISOString();
+      for (const dog of manualDogs) {
+        if (dog.scraped) {
+          await supabase
+            .from('dogs')
+            .update({ created_at: now, status: 'available' })
+            .eq('id', dog.id);
+          console.log(`[scraper] Updated manually added dog ID ${dog.id}: set created_at to now and status to 'available'`);
+        }
+      }
     }
 
     // Set scraped=false for all dogs not in the latest scrape

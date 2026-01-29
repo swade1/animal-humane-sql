@@ -22,6 +22,7 @@ CREATE TABLE dogs (
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),
   scraped BOOLEAN DEFAULT FALSE
+  ,verified_adoption INTEGER DEFAULT 0 -- 0 = not verified, 1 = verified
 );
 
 -- Indexes for faster queries
