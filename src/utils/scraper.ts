@@ -584,10 +584,8 @@ export async function runScraper() {
                 .eq('id', prevDog.id);
               if (updateResult.error) {
                 console.error(`[adoption-update] ERROR updating dogs table for dog ID ${prevDog.id} (${prevDog.name}):`, updateResult.error);
-              } else if (updateResult.data && updateResult.data.length === 0) {
-                console.error(`[adoption-update] No rows updated for dog ID ${prevDog.id} (${prevDog.name}). id type:`, typeof prevDog.id);
               } else {
-                console.log(`[adoption-update] Successfully updated status to 'adopted' for dog ID ${prevDog.id} (${prevDog.name}). id type:`, typeof prevDog.id);
+                console.log(`[adoption-update] Update result for dog ID ${prevDog.id} (${prevDog.name}):`, updateResult);
               }
               console.error(`Status/location change detected for dog ID ${prevDog.id} (${prevDog.name}): 'available' -> 'adopted', location cleared (missing from new scrape, location empty)`);
             } else if (location !== prevDog.location) {
