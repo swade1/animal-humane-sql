@@ -35,54 +35,8 @@ export async function checkForAdoptions() {
         }
         return { location, ahnmA };
       });
-      // Save AHNM-A number to dogs table if found
-      if (ahnmA) {
-        await supabase.from('dogs').update({ "AHNM-A": ahnmA }).eq('id', dog.id);
-      }
-      if (!location) {
-        // Location is empty: dog has been adopted
-        // 1. Find most recent location (prefer current, else from dog_history)
-        let oldLocation = dog.location;
-        if (!oldLocation) {
-          // Try to get last non-empty location from dog_history
-          const { data: history, error: histErr } = await supabase
-            .from('dog_history')
-            .select('old_value')
-            .eq('dog_id', dog.id)
-            .eq('event_type', 'location_change')
-            .order('id', { ascending: false })
-            .limit(1);
-          if (!histErr && history && history.length > 0) {
-            oldLocation = history[0].old_value;
-          }
-        }
-        const adoptionDate = new Date().toISOString();
-        // Log location_change
-        await logDogHistory({
-          dogId: dog.id,
-          name: dog.name,
-          eventType: 'location_change',
-          oldValue: oldLocation,
-          newValue: null,
-          notes: `Location cleared (adopted) at ${adoptionDate}`
-        });
-        // Log status_change
-        await logDogHistory({
-          dogId: dog.id,
-          name: dog.name,
-          eventType: 'status_change',
-          oldValue: 'available',
-          newValue: 'adopted',
-          notes: `Status set to adopted at ${adoptionDate}`,
-          adopted_date: adoptionDate
-        });
-        // Update dog record in DB (set location to NULL)
-        await supabase
-          .from('dogs')
-          .update({ status: 'adopted', location: null, adopted_date: adoptionDate })
-          .eq('id', dog.id);
-        console.log(`[adoption-check] Dog adopted: ${dog.name} (ID: ${dog.id}) at ${adoptionDate}`);
-      }
+      // Log the dog's name and the value of the location field
+      console.log(`[SCRAPER][LOCATION] Dog: ${dog.name} (ID: ${dog.id}), Location: '${location}'`);
       await page.close();
     } catch (err) {
       console.error(`[adoption-check] Error checking dog ${dog.name} (ID: ${dog.id}):`, err);
