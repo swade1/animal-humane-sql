@@ -25,7 +25,7 @@ export async function checkForAdoptions() {
         let ahnmA = null;
         if (el && el.hasAttribute('animal')) {
           try {
-            const animalObj = JSON.parse(el.getAttribute('animal'));
+            const animalObj = JSON.parse(el.getAttribute('animal') ?? '{}');
             location = animalObj.location || '';
             if (animalObj.uniqueId && typeof animalObj.uniqueId === 'string') {
               const match = animalObj.uniqueId.match(/AHNM-A-(\d+)/);
