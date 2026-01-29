@@ -21,6 +21,7 @@ CREATE TABLE dogs (
   notes TEXT,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW(),
+  adopted_date DATE,
   scraped BOOLEAN DEFAULT FALSE
   ,verified_adoption INTEGER DEFAULT 0 -- 0 = not verified, 1 = verified
 );

@@ -20,7 +20,8 @@ CREATE TABLE dogs (
   longitude DOUBLE PRECISION,
   notes TEXT,
   created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
+  updated_at TIMESTAMP DEFAULT NOW(),
+  adopted_date DATE
 );
 
 -- Indexes for faster queries
