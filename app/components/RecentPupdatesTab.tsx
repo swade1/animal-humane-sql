@@ -17,10 +17,11 @@ export default function RecentPupdatesTab() {
     queryFn: async () => {
       const { data: soonDogs, error: errorSoon } = await supabase
         .from('dogs')
-        .select('id, name, intake_date, created_at')
+        .select('id, name, intake_date, created_at, notes')
         .is('status', null);
       if (errorSoon || !soonDogs) return [];
-      return soonDogs;
+      // Only include dogs with 'Available Soon' in notes
+      return soonDogs.filter(dog => typeof dog.notes === 'string' && dog.notes.includes('Available Soon'));
     },
     staleTime: 1000 * 60 * 60 * 2
   });

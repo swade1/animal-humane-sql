@@ -509,37 +509,72 @@ export async function runScraper() {
             console.log(`[scraper] Raw location value for dog ID ${prevDog.id} (${prevDog.name}): '${location}'`);
             await page.close();
             if (!location) {
-              const adoptionDate = new Date().toISOString();
-              // Log location_change
-              await logDogHistory({
-                dogId: prevDog.id,
-                name: prevDog.name,
-                eventType: 'location_change',
-                oldValue: prevDog.location,
-                newValue: null,
-                notes: `Location cleared (adopted) at ${adoptionDate}`
-              });
-              // Log status_change
-              await logDogHistory({
-                dogId: prevDog.id,
-                name: prevDog.name,
-                eventType: 'status_change',
-                oldValue: 'available',
-                newValue: 'adopted',
-                notes: `Dog no longer present in available-animals JSON and location is empty; likely adopted at ${adoptionDate}.`,
-                adopted_date: adoptionDate
-              });
-              // Update dog record in DB (set location to NULL)
-              const updateResult = await supabase
-                .from('dogs')
-                .update({ status: 'adopted', location: null, adopted_date: adoptionDate })
-                .eq('id', prevDog.id);
-              if (updateResult.error) {
-                console.error(`[adoption-update] ERROR updating dogs table for dog ID ${prevDog.id} (${prevDog.name}):`, updateResult.error);
-              } else {
-                console.log(`[adoption-update] Update result for dog ID ${prevDog.id} (${prevDog.name}):`, updateResult);
+              // Check if most recent location (new_value) in dog_history contains 'Clinic'
+              let lastLocation = prevDog.location || '';
+              // Try to get last new_value from dog_history (location_change)
+              const { data: history, error: histErr } = await supabase
+                .from('dog_history')
+                .select('new_value')
+                .eq('dog_id', prevDog.id)
+                .eq('event_type', 'location_change')
+                .order('id', { ascending: false })
+                .limit(1);
+              if (!histErr && history && history.length > 0) {
+                lastLocation = history[0].new_value || lastLocation;
               }
-              console.error(`Status/location change detected for dog ID ${prevDog.id} (${prevDog.name}): 'available' -> 'adopted', location cleared (missing from new scrape, location empty)`);
+              if (lastLocation && lastLocation.toLowerCase().includes('clinic')) {
+                // Set status to pending_review and location to 'unknown'
+                await logDogHistory({
+                  dogId: prevDog.id,
+                  name: prevDog.name,
+                  eventType: 'status_change',
+                  oldValue: 'available',
+                  newValue: 'pending_review',
+                  notes: `Location empty and most recent location in dog_history contains 'Clinic'. Marked as pending_review.`
+                });
+                const updateResult = await supabase
+                  .from('dogs')
+                  .update({ status: 'pending_review', location: 'unknown' })
+                  .eq('id', prevDog.id);
+                if (updateResult.error) {
+                  console.error(`[pending-review-update] ERROR updating dogs table for dog ID ${prevDog.id} (${prevDog.name}):`, updateResult.error);
+                } else {
+                  console.log(`[pending-review-update] Update result for dog ID ${prevDog.id} (${prevDog.name}):`, updateResult);
+                }
+                console.error(`Status/location change detected for dog ID ${prevDog.id} (${prevDog.name}): 'available' -> 'pending_review', location set to 'unknown', most recent location in dog_history contains 'Clinic'.`);
+              } else {
+                const adoptionDate = new Date().toISOString();
+                // Log location_change
+                await logDogHistory({
+                  dogId: prevDog.id,
+                  name: prevDog.name,
+                  eventType: 'location_change',
+                  oldValue: prevDog.location,
+                  newValue: null,
+                  notes: `Location cleared (adopted) at ${adoptionDate}`
+                });
+                // Log status_change
+                await logDogHistory({
+                  dogId: prevDog.id,
+                  name: prevDog.name,
+                  eventType: 'status_change',
+                  oldValue: 'available',
+                  newValue: 'adopted',
+                  notes: `Dog no longer present in available-animals JSON and location is empty; likely adopted at ${adoptionDate}.`,
+                  adopted_date: adoptionDate
+                });
+                // Update dog record in DB (set location to NULL)
+                const updateResult = await supabase
+                  .from('dogs')
+                  .update({ status: 'adopted', location: null, adopted_date: adoptionDate })
+                  .eq('id', prevDog.id);
+                if (updateResult.error) {
+                  console.error(`[adoption-update] ERROR updating dogs table for dog ID ${prevDog.id} (${prevDog.name}):`, updateResult.error);
+                } else {
+                  console.log(`[adoption-update] Update result for dog ID ${prevDog.id} (${prevDog.name}):`, updateResult);
+                }
+                console.error(`Status/location change detected for dog ID ${prevDog.id} (${prevDog.name}): 'available' -> 'adopted', location cleared (missing from new scrape, location empty)`);
+              }
             } else if (location !== prevDog.location) {
               // If location changed but not adopted, update dogs table and log
               await logDogHistory({
