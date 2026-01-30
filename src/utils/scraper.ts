@@ -321,8 +321,10 @@ export async function runScraper() {
       // Preserve created_at for existing dogs, unless Available Soon and scraped for the first time
       const prevDog = prevDogs?.find(d => d.id === dog.id);
       if (prevDog && prevDog.created_at) {
-        // If dog was manually entered (scraped === false or missing) and is now scraped for the first time as Available Soon
-        if ((prevDog.scraped === false || prevDog.scraped === null || typeof prevDog.scraped === 'undefined') && (prevDog.status === null || prevDog.status === undefined) && dog.scraped === true) {
+        // Type assertion to allow access to scraped property if it exists
+        const prevDogWithScraped = prevDog as typeof prevDog & { scraped?: boolean };
+        const prevScraped = typeof prevDogWithScraped.scraped !== 'undefined' ? prevDogWithScraped.scraped : undefined;
+        if ((prevScraped === false || prevScraped === null || typeof prevScraped === 'undefined') && (prevDog.status === null || prevDog.status === undefined) && dog.scraped === true) {
           // Update created_at to now and mark as scraped
           const now = new Date();
           let iso = now.toISOString();
