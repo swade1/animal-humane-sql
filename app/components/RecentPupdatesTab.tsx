@@ -366,10 +366,14 @@ function AdoptedTodayDogs({ setModalDog }: AdoptedTodayDogsProps) {
         .from('dog_history')
         .select('dog_id, name, adopted_date')
         .eq('new_value', 'adopted');
-      if (error || !history) return [];
+      console.log('[ADOPTED_TODAY DEBUG] raw history:', history);
+      if (error || !history) {
+        console.log('[ADOPTED_TODAY DEBUG] error or no history:', error, history);
+        return [];
+      }
       // Deduplicate by dog_id and filter by MST date
       const seen = new Set();
-      return history.filter(h => {
+      const filtered = history.filter(h => {
         if (!h.adopted_date) return false;
         const adoptedMST = toZonedTime(parseISO(h.adopted_date), mstTimeZone);
         const isToday = isSameDay(adoptedMST, todayMST);
@@ -377,6 +381,8 @@ function AdoptedTodayDogs({ setModalDog }: AdoptedTodayDogsProps) {
         seen.add(h.dog_id);
         return true;
       });
+      console.log('[ADOPTED_TODAY DEBUG] filtered:', filtered);
+      return filtered;
     },
     staleTime: 1000 * 60 * 60 * 2,
   });
