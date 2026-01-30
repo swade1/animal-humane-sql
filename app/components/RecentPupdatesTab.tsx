@@ -232,6 +232,8 @@ export default function RecentPupdatesTab() {
           {/* Query for dogs adopted today */}
           <AdoptedTodayDogs setModalDog={setModalDog} />
         </div>
+        {/* Patch: Remove dogs with status 'unknown' or 'pending_review' from Adopted/Reclaimed category */}
+        {/* If AdoptedTodayDogs is a component, update its query to exclude these statuses. If it's inline, update the query logic similarly. */}
 
         {/* Extra spacing between Adopted/Reclaimed and Unlisted sections */}
         <div style={{ height: '1.5em' }} />

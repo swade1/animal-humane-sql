@@ -54,7 +54,7 @@ export default function AdoptionsTab() {
         .from('dogs')
         .select('id, name, length_of_stay_days, status')
         .in('id', adoptedDogIds)
-        .not('status', 'eq', 'pending_review');
+        .not('status', 'in', ['pending_review', 'unknown']);
       if (dogsError || !dogs) return [];
 
       // Map dog_id to dog info, only for non-pending_review
