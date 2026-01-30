@@ -655,16 +655,7 @@ export async function runScraper() {
     }
 
     // Set scraped=false for all dogs not in the latest scrape
-    const scrapedIds = mergedDogs.map(d => d.id);
-    const { error: updateUnscrapedError } = await supabase
-      .from('dogs')
-      .update({ scraped: false })
-      .not('id', 'in', `(${scrapedIds.join(',')})`);
-    if (updateUnscrapedError) {
-      console.error('Error updating unscraped dogs:', updateUnscrapedError);
-    } else {
-      console.log('Set scraped=false for all dogs not in the latest scrape.');
-    }
+    // (REMOVED) Do not set scraped=false for any dog. scraped only transitions from FALSE to TRUE.
   } catch (err) {
     console.error('Error in runScraper:', err);
   }
