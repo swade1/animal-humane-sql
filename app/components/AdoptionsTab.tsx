@@ -43,6 +43,7 @@ export default function AdoptionsTab() {
         .eq('new_value', 'adopted')
         .gte('adopted_date', eightDaysAgoStr)
         .order('adopted_date', { ascending: false });
+      console.log('[ADOPTIONS DEBUG] dog_history:', history);
       if (historyError || !history) return [];
 
       // Get unique dog_ids
@@ -55,6 +56,7 @@ export default function AdoptionsTab() {
         .select('id, name, length_of_stay_days, status')
         .in('id', adoptedDogIds)
         .not('status', 'in', ['pending_review', 'unknown']);
+      console.log('[ADOPTIONS DEBUG] dogs:', dogs);
       if (dogsError || !dogs) return [];
 
       // Map dog_id to dog info, only for non-pending_review
@@ -63,7 +65,7 @@ export default function AdoptionsTab() {
       // Compose rows: name, adopted date, length_of_stay_days
       // Deduplicate by dog id and adopted_date (ignore time)
       const seen = new Set<string>();
-      return history.map(h => {
+      const result = history.map(h => {
         const dog = dogMap[h.dog_id];
         if (!dog) return null;
         // Use only the date part for deduplication
@@ -78,6 +80,8 @@ export default function AdoptionsTab() {
           length_of_stay_days: dog.length_of_stay_days ?? '',
         };
       }).filter(Boolean);
+      console.log('[ADOPTIONS DEBUG] result:', result);
+      return result;
     },
     staleTime: 1000 * 60 * 60 * 2,
   });
