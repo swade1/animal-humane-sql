@@ -373,14 +373,14 @@ function AdoptedTodayDogs({ setModalDog }: AdoptedTodayDogsProps) {
       }
       // Fetch dog statuses for all adopted dog_ids
       const dogIds = Array.from(new Set(history.map(h => h.dog_id)));
-      let statusMap = {};
+      let statusMap: Record<number, string> = {};
       if (dogIds.length > 0) {
         const { data: dogs, error: dogsError } = await supabase
           .from('dogs')
           .select('id, status')
-          .in('id', dogIds);
+          .in('id', dogIds as number[]);
         if (dogs && !dogsError) {
-          statusMap = Object.fromEntries(dogs.map(d => [d.id, d.status]));
+          statusMap = Object.fromEntries(dogs.map((d: {id: number, status: string}) => [d.id, d.status]));
         }
       }
       // Deduplicate by dog_id and filter by MST date and status
