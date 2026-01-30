@@ -371,13 +371,27 @@ function AdoptedTodayDogs({ setModalDog }: AdoptedTodayDogsProps) {
         console.log('[ADOPTED_TODAY DEBUG] error or no history:', error, history);
         return [];
       }
-      // Deduplicate by dog_id and filter by MST date
+      // Fetch dog statuses for all adopted dog_ids
+      const dogIds = Array.from(new Set(history.map(h => h.dog_id)));
+      let statusMap = {};
+      if (dogIds.length > 0) {
+        const { data: dogs, error: dogsError } = await supabase
+          .from('dogs')
+          .select('id, status')
+          .in('id', dogIds);
+        if (dogs && !dogsError) {
+          statusMap = Object.fromEntries(dogs.map(d => [d.id, d.status]));
+        }
+      }
+      // Deduplicate by dog_id and filter by MST date and status
       const seen = new Set();
       const filtered = history.filter(h => {
         if (!h.adopted_date) return false;
         const adoptedMST = toZonedTime(parseISO(h.adopted_date), mstTimeZone);
         const isToday = isSameDay(adoptedMST, todayMST);
+        const status = statusMap[h.dog_id];
         if (seen.has(h.dog_id) || !isToday) return false;
+        if (status === 'pending_review' || status === 'unknown') return false;
         seen.add(h.dog_id);
         return true;
       });

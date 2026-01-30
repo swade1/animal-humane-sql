@@ -55,7 +55,7 @@ export default function AdoptionsTab() {
         .from('dogs')
         .select('id, name, length_of_stay_days, status')
         .in('id', adoptedDogIds)
-        .not('status', 'in', ['pending_review', 'unknown']);
+        .not('status', 'in', '(pending_review,unknown)');
       console.log('[ADOPTIONS DEBUG] dogs:', dogs);
       if (dogsError || !dogs) return [];
 
