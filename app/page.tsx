@@ -6,6 +6,7 @@ import OverviewTable from "./components/OverviewTable";
 import RecentPupdatesTab from "./components/RecentPupdatesTab";
 import CurrentPopulationTab from "./components/CurrentPopulationTab";
 import AdoptionsTab from "./components/AdoptionsTab";
+import InsightsSpotlightTab from "./components/InsightsSpotlightTab";
 
 const tabLabels = [
   "Overview",
@@ -45,6 +46,7 @@ export default function HomePage() {
             {activeTab === 1 && <RecentPupdatesTab />}
             {activeTab === 2 && <CurrentPopulationTab />}
             {activeTab === 3 && <AdoptionsTab />}
+            {activeTab === 4 && <InsightsSpotlightTab />}
           </div>
           {/* Add other tab content as needed */}
         </div>
