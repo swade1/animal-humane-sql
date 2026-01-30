@@ -139,8 +139,41 @@ export default function InsightsSpotlightTab() {
           <ResponsiveContainer width="100%" height={350}>
             <LineChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" tick={{ fontSize: 12, angle: -35, textAnchor: 'end' }} height={60} interval={0} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+              <XAxis
+                dataKey="date"
+                tick={props => {
+                  const { x, y, payload } = props;
+                  return (
+                    <text
+                      x={x}
+                      y={y}
+                      style={{ fontSize: 12, fill: "#222" }}
+                      transform={`rotate(-35,${x},${y})`}
+                      textAnchor="end"
+                    >
+                      {payload.value}
+                    </text>
+                  );
+                }}
+                height={60}
+                interval={0}
+              />
+              <YAxis
+                allowDecimals={false}
+                tick={props => {
+                  const { x, y, payload } = props;
+                  return (
+                    <text
+                      x={x}
+                      y={y}
+                      style={{ fontSize: 12, fill: "#222" }}
+                      textAnchor="end"
+                    >
+                      {payload.value}
+                    </text>
+                  );
+                }}
+              />
               <Tooltip content={<CustomTooltip />} />
               <Line type="monotone" dataKey="count" stroke="#b57edc" strokeWidth={2.5} dot={renderDot} activeDot={{ r: 5, fill: '#b57edc', stroke: '#b39ddb', strokeWidth: 2 }} />
             </LineChart>
@@ -157,8 +190,41 @@ export default function InsightsSpotlightTab() {
           <ResponsiveContainer width="100%" height={350}>
             <BarChart data={weeklyData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="week" tick={{ fontSize: 12, angle: -35, textAnchor: 'end' }} height={60} interval={0} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+              <XAxis
+                dataKey="week"
+                tick={props => {
+                  const { x, y, payload } = props;
+                  return (
+                    <text
+                      x={x}
+                      y={y}
+                      style={{ fontSize: 12, fill: "#222" }}
+                      transform={`rotate(-35,${x},${y})`}
+                      textAnchor="end"
+                    >
+                      {payload.value}
+                    </text>
+                  );
+                }}
+                height={60}
+                interval={0}
+              />
+              <YAxis
+                allowDecimals={false}
+                tick={props => {
+                  const { x, y, payload } = props;
+                  return (
+                    <text
+                      x={x}
+                      y={y}
+                      style={{ fontSize: 12, fill: "#222" }}
+                      textAnchor="end"
+                    >
+                      {payload.value}
+                    </text>
+                  );
+                }}
+              />
               <Tooltip content={({ active, payload }) => {
                 if (active && payload && payload.length) {
                   const d = payload[0].payload;
