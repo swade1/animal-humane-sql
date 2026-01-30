@@ -318,24 +318,37 @@ export async function runScraper() {
 
     // Preserve manual fields and created_at for mergedDogs
     for (const dog of mergedDogs) {
-            // Preserve created_at for existing dogs
-            const prevDog = prevDogs?.find(d => d.id === dog.id);
-            if (prevDog && prevDog.created_at) {
-              dog.created_at = prevDog.created_at;
-            } else {
-              const now = new Date();
-              let iso = now.toISOString();
-              // Ensure 'Z' is present for UTC
-              if (!iso.endsWith('Z')) iso = iso + 'Z';
-              dog.created_at = iso;
-              // Log the local and UTC time for visibility
-              console.log('[SCRAPER] New dog created:', {
-                id: dog.id,
-                name: dog.name,
-                local: now.toString(),
-                utc: dog.created_at
-              });
-            }
+      // Preserve created_at for existing dogs, unless Available Soon and scraped for the first time
+      const prevDog = prevDogs?.find(d => d.id === dog.id);
+      if (prevDog && prevDog.created_at) {
+        // If dog was manually entered (scraped === false or missing) and is now scraped for the first time as Available Soon
+        if ((prevDog.scraped === false || prevDog.scraped === null || typeof prevDog.scraped === 'undefined') && (prevDog.status === null || prevDog.status === undefined) && dog.scraped === true) {
+          // Update created_at to now and mark as scraped
+          const now = new Date();
+          let iso = now.toISOString();
+          if (!iso.endsWith('Z')) iso = iso + 'Z';
+          dog.created_at = iso;
+          console.log('[SCRAPER] Updated created_at for first-time scraped Available Soon dog:', {
+            id: dog.id,
+            name: dog.name,
+            local: now.toString(),
+            utc: dog.created_at
+          });
+        } else {
+          dog.created_at = prevDog.created_at;
+        }
+      } else {
+        const now = new Date();
+        let iso = now.toISOString();
+        if (!iso.endsWith('Z')) iso = iso + 'Z';
+        dog.created_at = iso;
+        console.log('[SCRAPER] New dog created:', {
+          id: dog.id,
+          name: dog.name,
+          local: now.toString(),
+          utc: dog.created_at
+        });
+      }
       const existingOrigin = originMap.get(dog.id);
       if (existingOrigin && existingOrigin.trim() !== '') {
         dog.origin = existingOrigin;
