@@ -9,6 +9,7 @@ import AdoptionsTab from "./components/AdoptionsTab";
 import InsightsSpotlightTab from "./components/InsightsSpotlightTab";
 import ShelterMap from "./components/ShelterMap";
 import ShelterBarChart from "./components/ShelterBarChart";
+import ShelterStackedBarChart from "./components/ShelterStackedBarChart";
 
 const tabLabels = [
   "Overview",
@@ -54,6 +55,9 @@ export default function HomePage() {
                 <div style={{ marginTop: 40, display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
                   <ShelterMap />
                   <ShelterBarChart />
+                </div>
+                <div style={{ marginTop: 40 }}>
+                  <ShelterStackedBarChart />
                 </div>
               </>
             )}

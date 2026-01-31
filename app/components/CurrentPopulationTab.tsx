@@ -9,12 +9,24 @@ export default function CurrentPopulationTab() {
   const { data: availableDogs, isLoading } = useQuery({
     queryKey: ['currentPopulation'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Get dogs with status 'available'
+      const { data: available, error: errorAvailable } = await supabase
         .from('dogs')
         .select('id, name, location')
         .eq('status', 'available');
-      if (error || !data) return [];
-      return data;
+      // Get dogs with status null and 'Available Soon' in notes
+      const { data: soon, error: errorSoon } = await supabase
+        .from('dogs')
+        .select('id, name, location, notes')
+        .is('status', null);
+      let availableSoon = [];
+      if (soon && Array.isArray(soon)) {
+        availableSoon = soon.filter(dog => typeof dog.notes === 'string' && dog.notes.includes('Available Soon'));
+      }
+      if ((errorAvailable && !available) && (errorSoon && !availableSoon)) return [];
+      // Remove notes property from availableSoon for consistency
+      const availableSoonClean = availableSoon.map(({ id, name, location }) => ({ id, name, location }));
+      return [...(available || []), ...availableSoonClean];
     },
     staleTime: 1000 * 60 * 60 * 2
   });
