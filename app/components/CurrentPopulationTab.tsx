@@ -19,7 +19,7 @@ export default function CurrentPopulationTab() {
         .from('dogs')
         .select('id, name, location, notes')
         .is('status', null);
-      let availableSoon = [];
+      let availableSoon: Array<{ id: number; name: string; location?: string; notes?: string }> = [];
       if (soon && Array.isArray(soon)) {
         availableSoon = soon.filter(dog => typeof dog.notes === 'string' && dog.notes.includes('Available Soon'));
       }
