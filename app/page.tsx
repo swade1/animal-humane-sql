@@ -34,7 +34,7 @@ export default function HomePage() {
           </h1>
         </div>
         <div className="p-5">
-          <div style={{ marginLeft: '20px' }}>
+          <div style={{ marginLeft: '20px', marginTop: 0, marginBottom: 0 }}>
             <Tabs
               tabs={tabLabels.map((label, idx) => ({
                 label,
@@ -43,7 +43,7 @@ export default function HomePage() {
               }))}
             />
           </div>
-          <div style={{ marginTop: '10px', marginLeft: '20px', marginRight: '20px' }}>
+          <div style={{ marginTop: '10px', marginLeft: '20px', marginRight: '20px', marginBottom: 0 }}>
             {activeTab === 0 && <OverviewTable />}
             {activeTab === 1 && <RecentPupdatesTab />}
             {activeTab === 2 && <CurrentPopulationTab />}
