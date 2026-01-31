@@ -41,7 +41,7 @@ export default function CurrentPopulationTab() {
           <thead>
             <tr>
               <th className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem' }}>Name</th>
-              <th className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '10ch', textAlign: 'left' }}>Location</th>
+              <th className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '10ch', textAlign: 'left', minWidth: '260px', whiteSpace: 'nowrap' }}>Location</th>
             </tr>
           </thead>
           <tbody>
@@ -52,7 +52,35 @@ export default function CurrentPopulationTab() {
               <tr><td colSpan={2} style={{ color: '#888' }}>No available dogs.</td></tr>
             )}
             {!isLoading && availableDogs && [...availableDogs]
-              .sort((a, b) => (a.location || '').localeCompare(b.location || ''))
+              .sort((a, b) => {
+                const foster = 'foster home';
+                const locA = (a.location || '').toLowerCase();
+                const locB = (b.location || '').toLowerCase();
+                // Place 'Foster Home' last
+                const isFosterA = locA === foster;
+                const isFosterB = locB === foster;
+                if (isFosterA && !isFosterB) return 1;
+                if (!isFosterA && isFosterB) return -1;
+
+                // Place 'Main Campus- Big Blue' locations after 'Main Campus - Behavior Office'
+                const bigBluePrefix = 'main campus- big blue';
+                const behaviorOffice = 'main campus - behavior office';
+                const isBigBlueA = locA.startsWith(bigBluePrefix);
+                const isBigBlueB = locB.startsWith(bigBluePrefix);
+                const isBehaviorA = locA === behaviorOffice;
+                const isBehaviorB = locB === behaviorOffice;
+                if (isBehaviorA && isBigBlueB) return -1;
+                if (isBigBlueA && isBehaviorB) return 1;
+
+                if (locA < locB) return -1;
+                if (locA > locB) return 1;
+                // If locations are the same, sort by name
+                const nameA = (a.name || '').toLowerCase();
+                const nameB = (b.name || '').toLowerCase();
+                if (nameA < nameB) return -1;
+                if (nameA > nameB) return 1;
+                return 0;
+              })
               .map(dog => (
                 <tr key={dog.id} className="align-middle">
                   <td>
@@ -64,7 +92,7 @@ export default function CurrentPopulationTab() {
                       {dog.name}
                     </span>
                   </td>
-                  <td style={{ paddingLeft: '11ch' }}>{dog.location}</td>
+                  <td style={{ paddingLeft: '11ch', minWidth: '260px', whiteSpace: 'nowrap' }}>{dog.location}</td>
                 </tr>
               ))}
           </tbody>
