@@ -93,7 +93,7 @@ export default function ShelterStackedBarChart() {
               <LabelList
                 dataKey="total"
                 position="top"
-                content={({ x, y, width, value, payload }) => {
+                content={({ x, y, width, value, payload }: any) => {
                   if (payload && payload.available > 0) {
                     return (
                       <text
@@ -115,7 +115,7 @@ export default function ShelterStackedBarChart() {
               <LabelList
                 dataKey="total"
                 position="top"
-                content={({ x, y, width, value, payload }) => {
+                content={({ x, y, width, value, payload }: any) => {
                   if (payload && payload.available === 0 && payload.adopted > 0) {
                     return (
                       <text
