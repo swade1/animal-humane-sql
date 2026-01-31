@@ -103,40 +103,42 @@ export default function ShelterMap() {
   ];
 
   return (
-    <div style={{ width: 700, marginRight: 24, marginLeft: 0, display: "inline-block", verticalAlign: "top" }}>
-      <div style={{ width: 680, marginLeft: 0, marginBottom: 8, textAlign: "left", display: "flex", justifyContent: "center" }}>
+    <div style={{ width: '900px', maxWidth: '100%', marginRight: 24, marginLeft: 20, display: "inline-block", verticalAlign: "top" }}>
+      <div style={{ width: '100%', maxWidth: 880, marginLeft: 0, marginBottom: 8, textAlign: "left", display: "flex", justifyContent: "center" }}>
         <span style={{ fontWeight: 700, fontSize: 22, letterSpacing: 0.5, paddingLeft: 0 }}>Shelter Transfer Map</span>
       </div>
-      <div style={{ width: 680, marginLeft: 0, marginBottom: 18, textAlign: "left", fontSize: 15, color: "#444", opacity: 0.92, lineHeight: 1.6 }}>
+      <div style={{ width: '100%', maxWidth: 880, marginLeft: 20, marginBottom: 18, textAlign: "left", fontSize: 15, color: "#444", opacity: 0.92, lineHeight: 1.6 }}>
         {`Since January 1, 2026, `}
         <span style={{ fontWeight: 700 }}>{data.length} shelters and rescues</span>
         {` throughout New Mexico have partnered with Animal Humane to find homes for their dogs. Click on each pin to view shelter/rescue name and the number of dogs transferred from that location.`}
       </div>
-      <MapContainer
-        center={center}
-        zoom={zoom}
-        style={{ width: 680, height: 700, borderRadius: 16, border: "1px solid #ccc", boxSizing: "border-box" }}
-        scrollWheelZoom={true}
-        maxBounds={bounds}
-        maxBoundsViscosity={1.0}
-        minZoom={7}
-        maxZoom={12}
-      >
+      <div style={{ width: '100%', maxWidth: 880, minWidth: 320, margin: '0 auto' }}>
+        <MapContainer
+          center={center}
+          zoom={zoom}
+          style={{ width: '100%', height: '60vw', minHeight: 350, maxHeight: 700, borderRadius: 16, border: "1px solid #ccc", boxSizing: "border-box" }}
+          scrollWheelZoom={true}
+          maxBounds={bounds}
+          maxBoundsViscosity={1.0}
+          minZoom={7}
+          maxZoom={12}
+        >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {data.map((shelter, i) => (
-          <Marker key={i} position={[shelter.latitude, shelter.longitude]}>
-            <Popup>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>{shelter.origin}</div>
-                <div>Dogs: {shelter.count}</div>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+          {data.map((shelter, i) => (
+            <Marker key={i} position={[shelter.latitude, shelter.longitude]}>
+              <Popup>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>{shelter.origin}</div>
+                  <div>Dogs: {shelter.count}</div>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+      </div>
     </div>
   );
 }
