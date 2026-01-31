@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../lib/supabaseClient";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart, Bar, Legend, LegendProps } from "recharts";
 import { startOfWeek, format as formatDate, addDays } from 'date-fns';
+import { toZonedTime, format as formatTz } from 'date-fns-tz';
 // Data type for each week's adoptions by age group
 type WeeklyAdoptions = {
   week: string; // formatted as MM/dd/yyyy
@@ -60,13 +61,15 @@ export default function InsightsSpotlightTab() {
         .select("id, name, adopted_date")
         .not("adopted_date", "is", null);
       if (error || !dogs) return [];
-      // Group by date
+      // Group by MST date
+      const timeZone = 'America/Denver';
       const map: Record<string, string[]> = {};
       for (const dog of dogs) {
         if (!dog.adopted_date) continue;
-        const date = dog.adopted_date.slice(0, 10); // YYYY-MM-DD
-        if (!map[date]) map[date] = [];
-        map[date].push(dog.name);
+        // Always use the date part (first 10 chars) for grouping
+        const dateStr = dog.adopted_date.slice(0, 10);
+        if (!map[dateStr]) map[dateStr] = [];
+        map[dateStr].push(dog.name);
       }
       // Convert to array and sort by date
       return Object.entries(map)

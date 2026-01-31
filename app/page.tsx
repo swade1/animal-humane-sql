@@ -7,6 +7,8 @@ import RecentPupdatesTab from "./components/RecentPupdatesTab";
 import CurrentPopulationTab from "./components/CurrentPopulationTab";
 import AdoptionsTab from "./components/AdoptionsTab";
 import InsightsSpotlightTab from "./components/InsightsSpotlightTab";
+import ShelterMap from "./components/ShelterMap";
+import ShelterBarChart from "./components/ShelterBarChart";
 
 const tabLabels = [
   "Overview",
@@ -46,7 +48,15 @@ export default function HomePage() {
             {activeTab === 1 && <RecentPupdatesTab />}
             {activeTab === 2 && <CurrentPopulationTab />}
             {activeTab === 3 && <AdoptionsTab />}
-            {activeTab === 4 && <InsightsSpotlightTab />}
+            {activeTab === 4 && (
+              <>
+                <InsightsSpotlightTab />
+                <div style={{ marginTop: 40, display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
+                  <ShelterMap />
+                  <ShelterBarChart />
+                </div>
+              </>
+            )}
           </div>
           {/* Add other tab content as needed */}
         </div>
