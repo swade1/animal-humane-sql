@@ -36,7 +36,7 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
         // eslint-disable-next-line
       }, []);
     // Map of origin to lat/lng
-    const originLatLng: Record<string, { latitude: string; longitude: string }> = {
+    const originLatLng: Record<string, { latitude: number; longitude: number }> = {
       "ABQ Animal Welfare Department":{"latitude":35.1102,"longitude":-106.5823},
       "ACTion Programs for Animals":{"latitude":32.315292,"longitude":-106.767102},
       "Artesia Animal Shelter (Paws & Claws Humane Society)":{"latitude":32.8423,"longitude":-104.4033},
