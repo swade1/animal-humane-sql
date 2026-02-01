@@ -18,10 +18,23 @@ type Dog = {
 function AdminPage() {
   const [dogs, setDogs] = useState<Dog[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  // Removed unused selectedDogId
   const [editDog, setEditDog] = useState<Dog | null>(null);
+  const [user, setUser] = useState<any>(null);
+  const [loginError, setLoginError] = useState<string>('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   useEffect(() => {
+    const session = supabase.auth.getSession ? supabase.auth.getSession() : null;
+    if (session && session.user) {
+      setUser(session.user);
+      fetchDogs();
+    } else {
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        setUser(user);
+        if (user) fetchDogs();
+      });
+    }
     async function fetchDogs() {
       setLoading(true);
       const { data, error } = await supabase.from('dogs').select('*');
@@ -34,8 +47,20 @@ function AdminPage() {
       }
       setLoading(false);
     }
-    fetchDogs();
   }, []);
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setLoginError('');
+    const { error, data } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setLoginError(error.message);
+    } else if (data && data.user) {
+      setUser(data.user);
+      // Fetch dogs after login
+      const { data: dogsData } = await supabase.from('dogs').select('*');
+      setDogs(dogsData as Dog[]);
+    }
+  }
 
   function handleSelectDog(id: number) {
     const dog = dogs.find((d) => d.id === id);
@@ -68,6 +93,25 @@ function AdminPage() {
     setEditDog(null);
   }
 
+  if (!user) {
+    return (
+      <div style={{ maxWidth: 400, margin: '40px auto', padding: 32, border: '1px solid #ccc', borderRadius: 8, background: '#fafafa' }}>
+        <h2>Admin Login</h2>
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <label>
+            Email
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required style={{ width: '100%', padding: 8, marginTop: 4 }} />
+          </label>
+          <label>
+            Password
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required style={{ width: '100%', padding: 8, marginTop: 4 }} />
+          </label>
+          <button type="submit" style={{ padding: '10px 0', background: '#2a5db0', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 700 }}>Log In</button>
+          {loginError && <div style={{ color: 'red', marginTop: 8 }}>{loginError}</div>}
+        </form>
+      </div>
+    );
+  }
   return (
     <div style={{ display: 'flex', gap: 32 }}>
       <div>
