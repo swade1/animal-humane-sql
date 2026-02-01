@@ -8,6 +8,14 @@ type DogFormFields = {
   bite_quarantine: number;
   returned: number;
   notes: string;
+  birthdate?: string | null;
+  intake_date?: string | null;
+  adopted_date?: string | null;
+  length_of_stay_days?: string | number;
+  id?: number;
+  name?: string;
+  status?: string;
+  [key: string]: any; // Allow additional fields
 };
 
 type DogEditFormProps = {
