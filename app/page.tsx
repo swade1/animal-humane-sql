@@ -13,6 +13,8 @@ import ShelterTransferChart from "./components/ShelterTransferChart";
 // ...existing code...
 import OwnerSurrenderHeatmap from "./components/OwnerSurrenderHeatmap";
 import LengthOfStayHistogram from "./components/LengthOfStayHistogram";
+import LengthOfStayByAgeGroupChart from "./components/LengthOfStayByAgeGroupChart";
+import AverageLengthOfStayByAgeGroupChart from "./components/AverageLengthOfStayByAgeGroupChart";
 
 const tabLabels = [
   "Overview",
@@ -69,6 +71,16 @@ export default function HomePage() {
                 </div>
                 <div style={{ marginTop: 32 }}>
                   <LengthOfStayHistogram />
+                </div>
+                <div style={{ marginTop: 32, display: 'flex', flexDirection: 'row', gap: 32, alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {/* Grouped bar chart for length of stay by age group */}
+                    <LengthOfStayByAgeGroupChart />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {/* Average length of stay bar chart by age group */}
+                    <AverageLengthOfStayByAgeGroupChart />
+                  </div>
                 </div>
               </>
             )}
