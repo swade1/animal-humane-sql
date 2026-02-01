@@ -213,10 +213,12 @@ export default function InsightsSpotlightTab() {
                 dataKey="week"
                 tick={props => {
                   const { x, y, payload } = props;
+                  // Ensure y is a number before adding offset
+                  const yNum = typeof y === 'number' ? y : Number(y);
                   return (
                     <text
                       x={x}
-                      y={y + 12}
+                      y={yNum + 12}
                       style={{ fontSize: 12, fill: "#222" }}
                       textAnchor="middle"
                     >
