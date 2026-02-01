@@ -94,7 +94,7 @@ export default function LengthOfStayHistogram() {
                   <div style={{ marginBottom: 4 }}>Range: {bucket.range} days</div>
                   <div style={{ fontWeight: 600, color: '#2a5db0', marginBottom: 4 }}>Dog Names:</div>
                   <ul style={{ color: '#444', fontSize: 14, lineHeight: 1.5, paddingLeft: 18, margin: 0 }}>
-                    {bucket.dogs.slice(0, 9).map(d => (
+                    {bucket.dogs.slice(0, 9).map((d: Dog) => (
                       <li key={d.id} style={{ marginBottom: 2 }}>
                         {d.name} ({d.length_of_stay_days ?? 0} days)
                       </li>
