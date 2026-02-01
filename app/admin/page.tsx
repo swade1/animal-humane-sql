@@ -223,8 +223,7 @@ function AdminPage() {
         </ul>
         <button
           onClick={() => {
-            // Use all fields from the first available dog, or fallback to Dog type defaults
-            const template = dogs.find(dog => dog.status === 'available');
+            // Create a new dog with default values
             setEditDog({
               id: 0,
               name: '',
@@ -235,7 +234,6 @@ function AdminPage() {
               returned: 0,
               notes: '',
               status: 'available',
-              ...(template ? Object.fromEntries(Object.keys(template).map(key => [key, key === 'id' ? 0 : (typeof template[key] === 'number' ? 0 : '')])) : {})
             });
           }}
           style={{
