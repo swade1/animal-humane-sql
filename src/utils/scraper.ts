@@ -491,9 +491,13 @@ export async function runScraper() {
             }
             await page.goto(urlToCheck, { waitUntil: 'networkidle2', timeout: 60000 });
             let location = '';
+            let nameFromPage = '';
             try {
-              // Try to extract location from visible HTML structure
-              location = await page.evaluate(() => {
+              // Extract both location and name from visible HTML structure
+              const pageData = await page.evaluate(() => {
+                let location = '';
+                let name = '';
+                
                 // Find all divs with class 'inline-flex' and text 'Location'
                 const labelDivs = Array.from(document.querySelectorAll('div.inline-flex'));
                 for (const labelDiv of labelDivs) {
@@ -502,15 +506,27 @@ export async function runScraper() {
                     let sibling = labelDiv.nextElementSibling;
                     while (sibling) {
                       if (sibling.classList.contains('pl-2')) {
-                        return sibling.textContent?.trim() || '';
+                        location = sibling.textContent?.trim() || '';
+                        break;
                       }
                       sibling = sibling.nextElementSibling;
                     }
                   }
                 }
-                return '';
+                
+                // Extract name from h1 or title element
+                const h1Element = document.querySelector('h1');
+                if (h1Element) {
+                  name = h1Element.textContent?.trim() || '';
+                }
+                
+                return { location, name };
               });
-              if (!location) {
+              
+              location = pageData.location;
+              nameFromPage = pageData.name;
+              
+              if (!location || !nameFromPage) {
                 // Fallback: Use :animal attribute if visible HTML extraction fails
                 const animalJson = await page.evaluate(() => {
                   const allElements = document.querySelectorAll('*');
@@ -526,7 +542,8 @@ export async function runScraper() {
                   // Unescape HTML entities and parse JSON
                   const decoded = animalJson.replace(/&quot;/g, '"');
                   const animalObj = JSON.parse(decoded);
-                  location = animalObj.location || '';
+                  if (!location) location = animalObj.location || '';
+                  if (!nameFromPage) nameFromPage = animalObj.name || '';
                 } else {
                   // If :animal attribute is missing, log the page HTML for debugging
                   const pageHtml = await page.content();
@@ -535,10 +552,29 @@ export async function runScraper() {
               }
             } catch (selErr) {
               // If extraction fails, log the error
-              console.error(`[scraper] Could not extract location for dog ${prevDog.name} (ID: ${prevDog.id}):`, selErr);
+              console.error(`[scraper] Could not extract location/name for dog ${prevDog.name} (ID: ${prevDog.id}):`, selErr);
               location = '';
+              nameFromPage = '';
             }
             console.log(`[scraper] Raw location value for dog ID ${prevDog.id} (${prevDog.name}): '${location}'`);
+            console.log(`[scraper] Raw name value for dog ID ${prevDog.id} (${prevDog.name}): '${nameFromPage}'`);
+            
+            // Check for name change
+            if (nameFromPage && nameFromPage !== prevDog.name) {
+              await logDogHistory({
+                dogId: prevDog.id,
+                eventType: 'name_change',
+                oldValue: prevDog.name,
+                newValue: nameFromPage,
+                notes: `Name updated for missing dog during scrape.`
+              });
+              await supabase
+                .from('dogs')
+                .update({ name: nameFromPage })
+                .eq('id', prevDog.id);
+              console.log(`[scraper] Updated name for missing dog ID ${prevDog.id}: '${prevDog.name}' -> '${nameFromPage}'`);
+            }
+            
             await page.close();
             if (!location) {
               // Check if most recent location (new_value) in dog_history contains 'Clinic'
