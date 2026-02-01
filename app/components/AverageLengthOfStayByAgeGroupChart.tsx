@@ -8,7 +8,14 @@ const AGE_GROUPS = ["puppy", "adult", "senior"];
 const AGE_LABELS = { puppy: "Puppy", adult: "Adult", senior: "Senior" };
 const AGE_COLORS = { puppy: "#7fc8f8", adult: "#2a5db0", senior: "#f8b07f" };
 
-function calculateAverages(dogs) {
+type Dog = {
+  id: string;
+  age_group: string;
+  length_of_stay_days?: number;
+  status: string;
+};
+
+function calculateAverages(dogs: Dog[]) {
   const sums = { puppy: 0, adult: 0, senior: 0 };
   const counts = { puppy: 0, adult: 0, senior: 0 };
   for (const dog of dogs) {
