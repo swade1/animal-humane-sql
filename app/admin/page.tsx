@@ -224,9 +224,18 @@ function AdminPage() {
         <button
           onClick={() => {
             // Use all fields from the first available dog, or fallback to Dog type defaults
-            const template = dogs.find(dog => dog.status === 'available') || {};
+            const template = dogs.find(dog => dog.status === 'available');
             setEditDog({
-              ...Object.fromEntries(Object.keys(template).map(key => [key, key === 'id' ? 0 : (typeof template[key] === 'number' ? 0 : '')])),
+              id: 0,
+              name: '',
+              origin: '',
+              latitude: null,
+              longitude: null,
+              bite_quarantine: 0,
+              returned: 0,
+              notes: '',
+              status: 'available',
+              ...(template ? Object.fromEntries(Object.keys(template).map(key => [key, key === 'id' ? 0 : (typeof template[key] === 'number' ? 0 : '')])) : {})
             });
           }}
           style={{
