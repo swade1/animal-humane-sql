@@ -159,12 +159,15 @@ export default function InsightsSpotlightTab() {
                     formatted = `${m}-${d}-${y}`;
                   }
                   // Shift label slightly to the right and down (e.g., +8px right, +8px down)
+                  // Ensure x and y are numbers before adding offset
+                  const xNum = typeof x === 'number' ? x : Number(x);
+                  const yNum = typeof y === 'number' ? y : Number(y);
                   return (
                     <text
-                      x={x + 8}
-                      y={y + 8}
+                      x={xNum + 8}
+                      y={yNum + 8}
                       style={{ fontSize: 12, fill: "#222" }}
-                      transform={`rotate(-35,${x + 8},${y + 8})`}
+                      transform={`rotate(-35,${xNum + 8},${yNum + 8})`}
                       textAnchor="end"
                     >
                       {formatted}
