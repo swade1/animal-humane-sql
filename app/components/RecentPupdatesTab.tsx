@@ -392,11 +392,11 @@ function AdoptedTodayDogs({ setModalDog }: AdoptedTodayDogsProps) {
   return (
     <div style={{ marginLeft: 'calc(1.5em - 12px)' }}>
       {adoptedToday.map(dog => (
-        <React.Fragment key={`${dog.dog_id}-${dog.adopted_date}`}>
+        <React.Fragment key={`${dog.id}-${dog.adopted_date}`}>
           <span
             className="text-[#2a5db0] cursor-pointer font-bold"
             style={{ fontWeight: 700, display: 'inline-block', marginBottom: '0.5em' }}
-            onClick={() => setModalDog({ ...dog, id: dog.dog_id })}
+            onClick={() => setModalDog(dog)}
           >
             {dog.name}
           </span>
