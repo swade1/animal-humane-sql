@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 
 type DogFormFields = {
   origin: string;
-  latitude: string;
-  longitude: string;
+  latitude: string | null;
+  longitude: string | null;
   bite_quarantine: number;
   returned: number;
   notes: string;
