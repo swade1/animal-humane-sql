@@ -49,14 +49,12 @@ export default function AverageLengthOfStayByAgeGroupChart() {
         Average Length of Stay by Age Group
       </div>
       <ResponsiveContainer width="99%" minWidth={0} height={260}>
-        <BarChart data={data} margin={{ top: 20, right: 30, left: 30, bottom: 30 }} barCategoryGap={40}>
+        <BarChart data={data} margin={{ top: 20, right: 30, left: 30, bottom: 30 }} barCategoryGap="50%" barGap={0}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
           <XAxis dataKey="label" tick={{ fontSize: 15, fill: '#222' }} />
-          <YAxis allowDecimals={true} tick={{ fontSize: 15, fill: '#222' }} label={{ value: 'Avg Days', angle: -90, position: 'insideLeft', fontSize: 15, fill: '#222' }} />
+          <YAxis allowDecimals={true} tick={{ fontSize: 15, fill: '#222' }} />
           <Tooltip formatter={(value) => `${value} days`} />
-          {AGE_GROUPS.map(age => (
-            <Bar key={age} dataKey={age === 'puppy' ? 'average' : undefined} fill={AGE_COLORS[age]} barSize={60} />
-          ))}
+          <Bar dataKey="average" fill="#2a5db0" barSize={60} />
         </BarChart>
       </ResponsiveContainer>
     </div>
