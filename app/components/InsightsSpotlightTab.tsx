@@ -93,7 +93,7 @@ export default function InsightsSpotlightTab() {
     const { cx, cy, payload } = props;
     if (payload && payload.count === maxCount) {
       return (
-        <circle cx={cx} cy={cy} r={5.5} fill="#ef4444" stroke="#b57edc" strokeWidth={2} />
+        <circle cx={cx} cy={cy} r={5.5} fill="#ef4444" />
       );
     }
     return (
@@ -152,18 +152,19 @@ export default function InsightsSpotlightTab() {
                 dataKey="date"
                 tick={props => {
                   const { x, y, payload } = props;
-                  // Convert YYYY-MM-DD to DD-MM-YYYY
+                  // Convert YYYY-MM-DD to MM-DD-YYYY
                   let formatted = payload.value;
                   if (/^\d{4}-\d{2}-\d{2}$/.test(payload.value)) {
                     const [y, m, d] = payload.value.split('-');
-                    formatted = `${d}-${m}-${y}`;
+                    formatted = `${m}-${d}-${y}`;
                   }
+                  // Shift label slightly to the right and down (e.g., +8px right, +8px down)
                   return (
                     <text
-                      x={x}
-                      y={y}
+                      x={x + 8}
+                      y={y + 8}
                       style={{ fontSize: 12, fill: "#222" }}
-                      transform={`rotate(-35,${x},${y})`}
+                      transform={`rotate(-35,${x + 8},${y + 8})`}
                       textAnchor="end"
                     >
                       {formatted}
@@ -212,7 +213,7 @@ export default function InsightsSpotlightTab() {
                   return (
                     <text
                       x={x}
-                      y={y}
+                      y={y + 12}
                       style={{ fontSize: 12, fill: "#222" }}
                       textAnchor="middle"
                     >
@@ -220,7 +221,7 @@ export default function InsightsSpotlightTab() {
                     </text>
                   );
                 }}
-                height={40}
+                height={52}
                 interval={0}
               />
               <YAxis
