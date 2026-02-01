@@ -25,11 +25,14 @@ function calculateAverages(dogs: Dog[]) {
       counts[age]++;
     }
   }
-  return AGE_GROUPS.map(age => ({
-    age,
-    label: AGE_LABELS[age],
-    average: counts[age] ? Math.round((sums[age] / counts[age]) * 10) / 10 : 0,
-  }));
+  return AGE_GROUPS.map(age => {
+    const ageKey = age as 'puppy' | 'adult' | 'senior';
+    return {
+      age: ageKey,
+      label: AGE_LABELS[ageKey],
+      average: counts[ageKey] ? Math.round((sums[ageKey] / counts[ageKey]) * 10) / 10 : 0,
+    };
+  });
 }
 
 export default function AverageLengthOfStayByAgeGroupChart() {
