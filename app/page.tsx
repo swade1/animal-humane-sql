@@ -12,6 +12,7 @@ import ShelterBarChart from "./components/ShelterBarChart";
 import ShelterTransferChart from "./components/ShelterTransferChart";
 // ...existing code...
 import OwnerSurrenderHeatmap from "./components/OwnerSurrenderHeatmap";
+import LengthOfStayHistogram from "./components/LengthOfStayHistogram";
 
 const tabLabels = [
   "Overview",
@@ -65,6 +66,9 @@ export default function HomePage() {
                 </div>
                 <div style={{ clear: 'both', width: '100%' }}>
                   <ShelterTransferChart />
+                </div>
+                <div style={{ marginTop: 32 }}>
+                  <LengthOfStayHistogram />
                 </div>
               </>
             )}
