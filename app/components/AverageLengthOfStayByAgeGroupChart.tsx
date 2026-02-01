@@ -19,7 +19,7 @@ function calculateAverages(dogs: Dog[]) {
   const sums = { puppy: 0, adult: 0, senior: 0 };
   const counts = { puppy: 0, adult: 0, senior: 0 };
   for (const dog of dogs) {
-    const age = dog.age_group?.toLowerCase();
+    const age = dog.age_group?.toLowerCase() as 'puppy' | 'adult' | 'senior';
     if (AGE_GROUPS.includes(age)) {
       sums[age] += dog.length_of_stay_days ?? 0;
       counts[age]++;
