@@ -13,6 +13,7 @@ type Dog = {
   bite_quarantine: number;
   returned: number;
   notes: string;
+  status: string;
 };
 
 function AdminPage() {
