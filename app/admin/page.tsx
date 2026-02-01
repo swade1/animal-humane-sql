@@ -23,6 +23,7 @@ function AdminPage() {
   const [loginError, setLoginError] = useState<string>('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [letterGroup, setLetterGroup] = useState('A-E');
 
   useEffect(() => {
     const session = supabase.auth.getSession ? supabase.auth.getSession() : null;
@@ -69,15 +70,40 @@ function AdminPage() {
 
   async function handleSave(updatedFields: Partial<Dog>) {
     if (!editDog) return;
-    const { id, ...fields } = { ...editDog, ...updatedFields };
-    const { error } = await supabase
-      .from('dogs')
-      .update(fields)
-      .eq('id', id);
-    if (error) {
-      alert('Error updating dog: ' + error.message);
+    let error, data;
+    const mergedData = { ...editDog, ...updatedFields };
+    // Ensure latitude/longitude are null if empty string (for double precision columns)
+    if (mergedData.latitude === '' || mergedData.latitude == null) mergedData.latitude = null;
+    if (mergedData.longitude === '' || mergedData.longitude == null) mergedData.longitude = null;
+    
+    if (editDog.id === 0) {
+      // Add new dog
+      // If user provided an ID, use it; otherwise remove id field for auto-generation
+      if (!mergedData.id || mergedData.id === 0) {
+        const { id, ...fields } = mergedData;
+        ({ error, data } = await supabase
+          .from('dogs')
+          .insert([fields]));
+      } else {
+        // User provided a specific ID
+        ({ error, data } = await supabase
+          .from('dogs')
+          .insert([mergedData]));
+      }
+      if (!error) alert('Dog added!');
     } else {
-      alert('Dog updated!');
+      // Update existing dog
+      const { id, ...fields } = mergedData;
+      ({ error, data } = await supabase
+        .from('dogs')
+        .update(fields)
+        .eq('id', id));
+      if (!error) alert('Dog updated!');
+    }
+    if (error) {
+      // Throw error so DogEditForm can display and persist form
+      throw new Error(error.message);
+    } else {
       // Refresh dog list
       const { data } = await supabase.from('dogs').select('*');
       if (Array.isArray(data)) {
@@ -85,8 +111,8 @@ function AdminPage() {
       } else {
         setDogs([]);
       }
+      setEditDog(null);
     }
-    setEditDog(null);
   }
 
   function handleCancel() {
@@ -113,27 +139,113 @@ function AdminPage() {
     );
   }
   return (
-    <div style={{ display: 'flex', gap: 32 }}>
-      <div>
-        <h2>Dog List</h2>
-        {loading ? (
-          <div>Loading...</div>
-        ) : (
-          <ul>
-            {dogs.map((dog) => (
+    <>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+        <button
+          onClick={async () => {
+            await supabase.auth.signOut();
+            setUser(null);
+            setDogs([]);
+            setEditDog(null);
+          }}
+          style={{
+            fontWeight: 700,
+            color: '#2a5db0',
+            background: '#fff',
+            border: '2px solid #2a5db0',
+            borderRadius: 6,
+            padding: '8px 24px',
+            fontSize: 16,
+            cursor: 'pointer',
+            boxShadow: '0 1px 4px rgba(42,93,176,0.08)'
+          }}
+        >
+          Log Out
+        </button>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 48, marginTop: 32 }}>
+      {/* Move dog list and controls to the right */}
+      <div style={{ marginLeft: 96 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 16 }}>Currently Available Dogs</h2>
+        <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+          {['A-E', 'F-J', 'K-O', 'P-T', 'U-Z'].map(group => (
+            <button
+              key={group}
+              onClick={() => setLetterGroup(group)}
+              style={{
+                fontWeight: 700,
+                color: letterGroup === group ? '#fff' : '#2a5db0',
+                background: letterGroup === group ? '#2a5db0' : '#fff',
+                border: '1px solid #2a5db0',
+                borderRadius: 4,
+                padding: '4px 12px',
+                cursor: 'pointer',
+                outline: 'none',
+                transition: 'background 0.2s, color 0.2s',
+              }}
+            >
+              {group}
+            </button>
+          ))}
+        </div>
+        <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 18, fontWeight: 500 }}>
+          {[...dogs]
+            .filter(dog => dog.status === 'available')
+            .filter(dog => {
+              if (!letterGroup) return true;
+              const first = dog.name[0]?.toUpperCase() || '';
+              if (letterGroup === 'A-E') return first >= 'A' && first <= 'E';
+              if (letterGroup === 'F-J') return first >= 'F' && first <= 'J';
+              if (letterGroup === 'K-O') return first >= 'K' && first <= 'O';
+              if (letterGroup === 'P-T') return first >= 'P' && first <= 'T';
+              if (letterGroup === 'U-Z') return first >= 'U' && first <= 'Z';
+              return true;
+            })
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map((dog) => (
               <li key={dog.id}>
-                <button onClick={() => handleSelectDog(dog.id)}>{dog.name}</button>
+                <a
+                  href="#"
+                  onClick={e => { e.preventDefault(); handleSelectDog(dog.id); }}
+                  style={{ color: '#2a5db0', fontWeight: 700, textDecoration: 'none', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+                >
+                  {dog.name}
+                </a>
               </li>
             ))}
-          </ul>
-        )}
+        </ul>
+        <button
+          onClick={() => {
+            // Use all fields from the first available dog, or fallback to Dog type defaults
+            const template = dogs.find(dog => dog.status === 'available') || {};
+            setEditDog({
+              ...Object.fromEntries(Object.keys(template).map(key => [key, key === 'id' ? 0 : (typeof template[key] === 'number' ? 0 : '')])),
+            });
+          }}
+          style={{
+            fontWeight: 700,
+            color: '#fff',
+            background: '#2a5db0',
+            border: 'none',
+            borderRadius: 6,
+            padding: '8px 20px',
+            fontSize: 16,
+            cursor: 'pointer',
+            marginTop: 20,
+            boxShadow: '0 1px 4px rgba(42,93,176,0.08)'
+          }}
+        >
+          + Add New Dog
+        </button>
       </div>
-      <div>
-        {editDog && (
+      {/* Dog list and controls are now on the left, form is on the right */}
+      {editDog && (
+        <div style={{ minWidth: 420, marginLeft: 80, marginTop: 24, padding: 24, background: '#f8fafc', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
           <DogEditForm dog={editDog} onSave={handleSave} onCancel={handleCancel} />
-        )}
+        </div>
+      )}
       </div>
-    </div>
+    </>
   );
 }
 
