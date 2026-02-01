@@ -8,8 +8,8 @@ type Dog = {
   id: number;
   name: string;
   origin: string;
-  latitude: string;
-  longitude: string;
+  latitude: string | null;
+  longitude: string | null;
   bite_quarantine: number;
   returned: number;
   notes: string;
@@ -76,15 +76,17 @@ function AdminPage() {
     if (!editDog) return;
     let error, data;
     const mergedData = { ...editDog, ...updatedFields };
-    // Ensure latitude/longitude are null if empty string (for double precision columns)
-    if (mergedData.latitude === '' || mergedData.latitude == null) mergedData.latitude = null;
-    if (mergedData.longitude === '' || mergedData.longitude == null) mergedData.longitude = null;
-    
+    // Prepare data for DB: convert empty string latitude/longitude to null
+    const dbData = {
+      ...mergedData,
+      latitude: mergedData.latitude === '' || mergedData.latitude == null ? null : mergedData.latitude,
+      longitude: mergedData.longitude === '' || mergedData.longitude == null ? null : mergedData.longitude,
+    };
     if (editDog.id === 0) {
       // Add new dog
       // If user provided an ID, use it; otherwise remove id field for auto-generation
-      if (!mergedData.id || mergedData.id === 0) {
-        const { id, ...fields } = mergedData;
+      if (!dbData.id || dbData.id === 0) {
+        const { id, ...fields } = dbData;
         ({ error, data } = await supabase
           .from('dogs')
           .insert([fields]));
@@ -92,12 +94,12 @@ function AdminPage() {
         // User provided a specific ID
         ({ error, data } = await supabase
           .from('dogs')
-          .insert([mergedData]));
+          .insert([dbData]));
       }
       if (!error) alert('Dog added!');
     } else {
       // Update existing dog
-      const { id, ...fields } = mergedData;
+      const { id, ...fields } = dbData;
       ({ error, data } = await supabase
         .from('dogs')
         .update(fields)
