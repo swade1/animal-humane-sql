@@ -66,8 +66,12 @@ export default function InsightsSpotlightTab() {
       const map: Record<string, string[]> = {};
       for (const dog of dogs) {
         if (!dog.adopted_date) continue;
-        // Always use the date part (first 10 chars) for grouping
-        const dateStr = dog.adopted_date.slice(0, 10);
+        // Convert adopted_date to MST (America/Denver) and use that date for grouping
+        const utcDate = new Date(dog.adopted_date);
+        // Use date-fns-tz to convert to MST
+        const { toZonedTime, format: formatTz } = await import('date-fns-tz');
+        const mstDate = toZonedTime(utcDate, timeZone);
+        const dateStr = formatTz(mstDate, 'yyyy-MM-dd', { timeZone });
         if (!map[dateStr]) map[dateStr] = [];
         map[dateStr].push(dog.name);
       }
