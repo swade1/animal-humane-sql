@@ -23,8 +23,8 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
         if (form.origin && originLatLng[form.origin]) {
           setForm(prev => ({
             ...prev,
-            latitude: originLatLng[form.origin].latitude,
-            longitude: originLatLng[form.origin].longitude,
+            latitude: String(originLatLng[form.origin].latitude),
+            longitude: String(originLatLng[form.origin].longitude),
           }));
         } else if (form.origin && !originLatLng[form.origin]) {
           setForm(prev => ({
@@ -212,8 +212,8 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
       setForm((prev) => ({
         ...prev,
         origin: value,
-        latitude: originLatLng[value].latitude,
-        longitude: originLatLng[value].longitude,
+        latitude: String(originLatLng[value].latitude),
+        longitude: String(originLatLng[value].longitude),
       }));
     } else {
       setForm((prev) => ({
