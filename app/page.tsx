@@ -10,6 +10,8 @@ import InsightsSpotlightTab from "./components/InsightsSpotlightTab";
 import ShelterMap from "./components/ShelterMap";
 import ShelterBarChart from "./components/ShelterBarChart";
 import ShelterTransferChart from "./components/ShelterTransferChart";
+// ...existing code...
+import OwnerSurrenderHeatmap from "./components/OwnerSurrenderHeatmap";
 
 const tabLabels = [
   "Overview",
@@ -52,9 +54,14 @@ export default function HomePage() {
             {activeTab === 4 && (
               <>
                 <InsightsSpotlightTab />
-                <div style={{ marginTop: 40, display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
+                <div style={{ marginTop: 40, display: "flex", flexDirection: "row", alignItems: "flex-end", gap: 32 }}>
                   <ShelterMap />
-                  <ShelterBarChart />
+                  <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', width: '600px', maxWidth: '100%' }}>
+                    <ShelterBarChart />
+                    <div style={{ marginTop: 32 }}>
+                      <OwnerSurrenderHeatmap />
+                    </div>
+                  </div>
                 </div>
                 <div style={{ clear: 'both', width: '100%' }}>
                   <ShelterTransferChart />
