@@ -26,16 +26,20 @@ function AdminPage() {
   const [letterGroup, setLetterGroup] = useState('A-E');
 
   useEffect(() => {
-    const session = supabase.auth.getSession ? supabase.auth.getSession() : null;
-    if (session && session.user) {
-      setUser(session.user);
-      fetchDogs();
-    } else {
-      supabase.auth.getUser().then(({ data: { user } }) => {
-        setUser(user);
-        if (user) fetchDogs();
-      });
+    // Use async/await for getSession
+    async function checkSession() {
+      const { data, error } = await supabase.auth.getSession();
+      const session = data?.session;
+      if (session && session.user) {
+        setUser(session.user);
+        fetchDogs();
+      } else {
+        const { data: userData } = await supabase.auth.getUser();
+        setUser(userData?.user ?? null);
+        if (userData?.user) fetchDogs();
+      }
     }
+    checkSession();
     async function fetchDogs() {
       setLoading(true);
       const { data, error } = await supabase.from('dogs').select('*');
