@@ -169,7 +169,7 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
   }, [form.intake_date]);
   const lengthOfStay = form.length_of_stay_days || '';
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const checked = 'checked' in e.target ? e.target.checked : false;
     if (name === 'origin' && originLatLng[value]) {
