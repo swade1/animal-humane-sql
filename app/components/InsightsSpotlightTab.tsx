@@ -96,8 +96,9 @@ export default function InsightsSpotlightTab() {
         <circle cx={cx} cy={cy} r={5.5} fill="#ef4444" />
       );
     }
+    // Cobalt blue for all other points
     return (
-      <circle cx={cx} cy={cy} r={3.5} fill="#b57edc" stroke="#b57edc" strokeWidth={1.5} />
+      <circle cx={cx} cy={cy} r={3.5} fill="#0047AB" stroke="#0047AB" strokeWidth={1.5} />
     );
   };
 
@@ -114,7 +115,7 @@ export default function InsightsSpotlightTab() {
       return (
         <div style={{
           background: 'rgba(255,255,255,0.97)',
-          border: '1px solid #a855f7',
+          border: '1px solid #0047AB',
           borderRadius: 8,
           boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
           padding: 14,
@@ -194,7 +195,23 @@ export default function InsightsSpotlightTab() {
                 }}
               />
               <Tooltip content={<CustomTooltip />} />
-              <Line type="monotone" dataKey="count" stroke="#b57edc" strokeWidth={2.5} dot={renderDot} activeDot={{ r: 5, fill: '#b57edc', stroke: '#b39ddb', strokeWidth: 2 }} />
+              <Line
+                type="monotone"
+                dataKey="count"
+                stroke="#0047AB"
+                strokeWidth={2.5}
+                dot={renderDot}
+                activeDot={props => {
+                  // Highlight hovered point in red and increase size
+                  const { cx, cy, payload } = props;
+                  // If this is the high point, keep it red and large
+                  if (payload && payload.count === maxCount) {
+                    return <circle cx={cx} cy={cy} r={7} fill="#ef4444" stroke="#ef4444" strokeWidth={2} />;
+                  }
+                  // Otherwise, red and slightly larger on hover
+                  return <circle cx={cx} cy={cy} r={6} fill="#ef4444" stroke="#ef4444" strokeWidth={2} />;
+                }}
+              />
             </LineChart>
           </ResponsiveContainer>
         )}
