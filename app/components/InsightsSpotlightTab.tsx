@@ -105,6 +105,12 @@ export default function InsightsSpotlightTab() {
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const { date, names, count } = payload[0].payload;
+      // Format date as DD-MM-YYYY
+      let formattedDate = date;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        const [y, m, d] = date.split('-');
+        formattedDate = `${d}-${m}-${y}`;
+      }
       return (
         <div style={{
           background: 'rgba(255,255,255,0.97)',
@@ -118,7 +124,7 @@ export default function InsightsSpotlightTab() {
           color: '#222',
           whiteSpace: 'normal',
         }}>
-          <div style={{ fontWeight: 700, marginBottom: 4 }}><span>Date:</span> <span style={{ fontWeight: 400 }}>{date}</span></div>
+          <div style={{ fontWeight: 700, marginBottom: 4 }}><span>Date:</span> <span style={{ fontWeight: 400 }}>{formattedDate}</span></div>
           <div style={{ fontWeight: 700, marginBottom: 4 }}><span>Adoptions:</span> <span style={{ fontWeight: 400 }}>{count}</span></div>
           <div style={{ fontWeight: 700, marginBottom: 2 }}>Dogs Adopted:</div>
           <div style={{ fontWeight: 400, marginLeft: 8 }}>
@@ -146,6 +152,12 @@ export default function InsightsSpotlightTab() {
                 dataKey="date"
                 tick={props => {
                   const { x, y, payload } = props;
+                  // Convert YYYY-MM-DD to DD-MM-YYYY
+                  let formatted = payload.value;
+                  if (/^\d{4}-\d{2}-\d{2}$/.test(payload.value)) {
+                    const [y, m, d] = payload.value.split('-');
+                    formatted = `${d}-${m}-${y}`;
+                  }
                   return (
                     <text
                       x={x}
@@ -154,7 +166,7 @@ export default function InsightsSpotlightTab() {
                       transform={`rotate(-35,${x},${y})`}
                       textAnchor="end"
                     >
-                      {payload.value}
+                      {formatted}
                     </text>
                   );
                 }}
@@ -202,14 +214,13 @@ export default function InsightsSpotlightTab() {
                       x={x}
                       y={y}
                       style={{ fontSize: 12, fill: "#222" }}
-                      transform={`rotate(-35,${x},${y})`}
-                      textAnchor="end"
+                      textAnchor="middle"
                     >
                       {payload.value}
                     </text>
                   );
                 }}
-                height={60}
+                height={40}
                 interval={0}
               />
               <YAxis

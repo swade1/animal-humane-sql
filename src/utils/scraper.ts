@@ -173,10 +173,21 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]
         const diffTime = today.setHours(0,0,0,0) - intakeDate.setHours(0,0,0,0);
         lengthOfStay = Math.floor(diffTime / (1000 * 60 * 60 * 24));
       }
-      // Handle age_group as nested object
-      let ageGroup = '';
+      // Handle age_group as nested object and normalize to 'Puppy', 'Adult', or 'Senior'
+      let ageGroupRaw = '';
       if (typeof p.age_group === 'object' && p.age_group !== null && 'name' in p.age_group) {
-        ageGroup = (p.age_group as { name?: string }).name || '';
+        ageGroupRaw = (p.age_group as { name?: string }).name || '';
+      }
+      let ageGroup = '';
+      const ag = ageGroupRaw.toLowerCase();
+      if (ag.includes('puppy')) {
+        ageGroup = 'Puppy';
+      } else if (ag.includes('senior')) {
+        ageGroup = 'Senior';
+      } else if (ag.includes('adult')) {
+        ageGroup = 'Adult';
+      } else {
+        ageGroup = ageGroupRaw || '';
       }
       // All dogs are adoptable unless their status is 'adopted'
       let status = 'available';

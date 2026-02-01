@@ -127,26 +127,16 @@ export default function ShelterMap() {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-          {data.map((shelter, i) => {
-            // Assume shelter.adopted and shelter.available are present or default to 0
-            const adopted = shelter.adopted ?? 0;
-            const available = shelter.available ?? 0;
-            return (
-              <Marker key={i} position={[shelter.latitude, shelter.longitude]}>
-                <Popup>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>{shelter.origin}</div>
-                    <div style={{ marginBottom: 2 }}>
-                      <span style={{ color: '#22c55e', fontWeight: 600 }}>Adopted: {adopted}</span>
-                    </div>
-                    <div>
-                      <span style={{ color: '#a855f7', fontWeight: 600 }}>Available: {available}</span>
-                    </div>
-                  </div>
-                </Popup>
-              </Marker>
-            );
-          })}
+          {data.map((shelter, i) => (
+            <Marker key={i} position={[shelter.latitude, shelter.longitude]}>
+              <Popup>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>{shelter.origin}</div>
+                  <div>Dogs: {shelter.count}</div>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
         </MapContainer>
       </div>
     </div>

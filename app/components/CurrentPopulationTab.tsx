@@ -40,7 +40,7 @@ export default function CurrentPopulationTab() {
         <table className="w-1/2 mt-4 text-left border-separate" style={{ borderSpacing: '0 20px' }}>
           <thead>
             <tr>
-              <th className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem' }}>Name</th>
+              <th className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem', minWidth: '180px', whiteSpace: 'nowrap' }}>Name</th>
               <th className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '10ch', textAlign: 'left', minWidth: '260px', whiteSpace: 'nowrap' }}>Location</th>
             </tr>
           </thead>
@@ -62,15 +62,16 @@ export default function CurrentPopulationTab() {
                 if (isFosterA && !isFosterB) return 1;
                 if (!isFosterA && isFosterB) return -1;
 
-                // Place 'Main Campus- Big Blue' locations after 'Main Campus - Behavior Office'
+
+                // Place 'Main Campus- Big Blue' locations before 'Main Campus - Main Kennel South'
                 const bigBluePrefix = 'main campus- big blue';
-                const behaviorOffice = 'main campus - behavior office';
+                const mainKennelSouth = 'main campus - main kennel south';
                 const isBigBlueA = locA.startsWith(bigBluePrefix);
                 const isBigBlueB = locB.startsWith(bigBluePrefix);
-                const isBehaviorA = locA === behaviorOffice;
-                const isBehaviorB = locB === behaviorOffice;
-                if (isBehaviorA && isBigBlueB) return -1;
-                if (isBigBlueA && isBehaviorB) return 1;
+                const isMainKennelSouthA = locA === mainKennelSouth;
+                const isMainKennelSouthB = locB === mainKennelSouth;
+                if (isBigBlueA && !isBigBlueB && isMainKennelSouthB) return -1;
+                if (isBigBlueB && !isBigBlueA && isMainKennelSouthA) return 1;
 
                 if (locA < locB) return -1;
                 if (locA > locB) return 1;
@@ -83,7 +84,7 @@ export default function CurrentPopulationTab() {
               })
               .map(dog => (
                 <tr key={dog.id} className="align-middle">
-                  <td>
+                  <td style={{ minWidth: '180px', whiteSpace: 'nowrap' }}>
                     <span
                       className="text-[#2a5db0] cursor-pointer font-bold"
                       style={{ fontWeight: 700 }}
