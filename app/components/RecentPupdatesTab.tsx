@@ -361,41 +361,26 @@ function AdoptedTodayDogs({ setModalDog }: AdoptedTodayDogsProps) {
   const { data: adoptedToday, isLoading } = useQuery({
     queryKey: ['adoptedToday', todayMST.toISOString().slice(0, 10)],
     queryFn: async () => {
-      // Get all dog_history events with new_value 'adopted'
-      const { data: history, error } = await supabase
-        .from('dog_history')
-        .select('dog_id, name, adopted_date')
-        .eq('new_value', 'adopted');
-      console.log('[ADOPTED_TODAY DEBUG] raw history:', history);
-      if (error || !history) {
-        console.log('[ADOPTED_TODAY DEBUG] error or no history:', error, history);
+      // Get all dogs with adopted_date set (adopted)
+      const { data: dogs, error } = await supabase
+        .from('dogs')
+        .select('id, name, adopted_date, status')
+        .not('adopted_date', 'is', null)
+        .not('status', 'in', '(pending_review,unknown)');
+      if (error || !dogs) {
         return [];
       }
-      // Fetch dog statuses for all adopted dog_ids
-      const dogIds = Array.from(new Set(history.map(h => h.dog_id)));
-      let statusMap: Record<number, string> = {};
-      if (dogIds.length > 0) {
-        const { data: dogs, error: dogsError } = await supabase
-          .from('dogs')
-          .select('id, status')
-          .in('id', dogIds as number[]);
-        if (dogs && !dogsError) {
-          statusMap = Object.fromEntries(dogs.map((d: {id: number, status: string}) => [d.id, d.status]));
-        }
-      }
-      // Deduplicate by dog_id and filter by MST date and status
+      // Deduplicate by dog id and filter by MST date
       const seen = new Set();
-      const filtered = history.filter(h => {
-        if (!h.adopted_date) return false;
-        const adoptedMST = toZonedTime(parseISO(h.adopted_date), mstTimeZone);
-        const isToday = isSameDay(adoptedMST, todayMST);
-        const status = statusMap[h.dog_id];
-        if (seen.has(h.dog_id) || !isToday) return false;
-        if (status === 'pending_review' || status === 'unknown') return false;
-        seen.add(h.dog_id);
+      const filtered = dogs.filter(dog => {
+        if (!dog.adopted_date) return false;
+        // adopted_date is already in MST as YYYY-MM-DD, so compare directly
+        const adoptedDateStr = dog.adopted_date.slice(0, 10);
+        const todayStr = todayMST.toISOString().slice(0, 10);
+        if (seen.has(dog.id) || adoptedDateStr !== todayStr) return false;
+        seen.add(dog.id);
         return true;
       });
-      console.log('[ADOPTED_TODAY DEBUG] filtered:', filtered);
       return filtered;
     },
     staleTime: 1000 * 60 * 60 * 2,
@@ -407,7 +392,7 @@ function AdoptedTodayDogs({ setModalDog }: AdoptedTodayDogsProps) {
   return (
     <div style={{ marginLeft: 'calc(1.5em - 12px)' }}>
       {adoptedToday.map(dog => (
-        <React.Fragment key={dog.dog_id}>
+        <React.Fragment key={`${dog.dog_id}-${dog.adopted_date}`}>
           <span
             className="text-[#2a5db0] cursor-pointer font-bold"
             style={{ fontWeight: 700, display: 'inline-block', marginBottom: '0.5em' }}

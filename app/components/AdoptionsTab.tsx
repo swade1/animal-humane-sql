@@ -36,51 +36,31 @@ export default function AdoptionsTab() {
       eightDaysAgo.setDate(today.getDate() - 8);
       const eightDaysAgoStr = eightDaysAgo.toISOString().split('T')[0];
 
-      // Query dog_history for adoptions in last 8 days
-      const { data: history, error: historyError } = await supabase
-        .from('dog_history')
-        .select('dog_id, new_value, adopted_date')
-        .eq('new_value', 'adopted')
-        .gte('adopted_date', eightDaysAgoStr)
-        .order('adopted_date', { ascending: false });
-      console.log('[ADOPTIONS DEBUG] dog_history:', history);
-      if (historyError || !history) return [];
-
-      // Get unique dog_ids
-      const adoptedDogIds = Array.from(new Set(history.map(h => h.dog_id)));
-      if (adoptedDogIds.length === 0) return [];
-
-      // Fetch dog details
+      // Query dogs table for adoptions in last 8 days
       const { data: dogs, error: dogsError } = await supabase
         .from('dogs')
-        .select('id, name, length_of_stay_days, status')
-        .in('id', adoptedDogIds)
-        .not('status', 'in', '(pending_review,unknown)');
-      console.log('[ADOPTIONS DEBUG] dogs:', dogs);
+        .select('id, name, adopted_date, length_of_stay_days, status')
+        .not('adopted_date', 'is', null)
+        .not('status', 'in', '(pending_review,unknown)')
+        .gte('adopted_date', eightDaysAgoStr)
+        .order('adopted_date', { ascending: false });
       if (dogsError || !dogs) return [];
 
-      // Map dog_id to dog info, only for non-pending_review
-      const dogMap = Object.fromEntries(dogs.map(d => [d.id, d]));
-
-      // Compose rows: name, adopted date, length_of_stay_days
       // Deduplicate by dog id and adopted_date (ignore time)
       const seen = new Set<string>();
-      const result = history.map(h => {
-        const dog = dogMap[h.dog_id];
-        if (!dog) return null;
+      const result = dogs.map(dog => {
         // Use only the date part for deduplication
-        const dateOnly = h.adopted_date ? h.adopted_date.slice(0, 10) : '';
-        const key = `${h.dog_id}-${dateOnly}`;
+        const dateOnly = dog.adopted_date ? dog.adopted_date.slice(0, 10) : '';
+        const key = `${dog.id}-${dateOnly}`;
         if (seen.has(key)) return null;
         seen.add(key);
         return {
-          id: h.dog_id,
+          id: dog.id,
           name: dog.name,
-          adopted_date: h.adopted_date,
+          adopted_date: dog.adopted_date,
           length_of_stay_days: dog.length_of_stay_days ?? '',
         };
       }).filter(Boolean);
-      console.log('[ADOPTIONS DEBUG] result:', result);
       return result;
     },
     staleTime: 1000 * 60 * 60 * 2,
