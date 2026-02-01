@@ -463,14 +463,20 @@ export async function runScraper() {
       }
     }
 
-    // Log status_change for dogs previously available but now missing (check web page location before marking as adopted)
-    if (prevAvailableDogs) {
+    // Log status_change for dogs previously available or Available Soon but now missing (check web page location before marking as adopted)
+    // Include both status='available' and status=null (Available Soon) dogs
+    const prevAvailableAndSoonDogs = prevDogs ? prevDogs.filter(d => {
+      const status = typeof d.status === 'string' ? d.status.trim() : d.status;
+      return status === 'available' || status === null || status === undefined;
+    }) : [];
+    
+    if (prevAvailableAndSoonDogs.length > 0) {
       const mergedDogIds = new Set(mergedDogs.map(d => d.id));
       // Debug: log all missing dogs being checked
-      const missingDogs = prevAvailableDogs.filter(prevDog => !mergedDogIds.has(prevDog.id));
-      console.log(`[debug] Missing dogs to check (not in mergedDogs, status=available):`, missingDogs.map(d => ({ id: d.id, name: d.name, location: d.location, status: d.status })));
+      const missingDogs = prevAvailableAndSoonDogs.filter(prevDog => !mergedDogIds.has(prevDog.id));
+      console.log(`[debug] Missing dogs to check (not in mergedDogs, status=available or null):`, missingDogs.map(d => ({ id: d.id, name: d.name, location: d.location, status: d.status })));
       const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
-      for (const prevDog of prevAvailableDogs) {
+      for (const prevDog of prevAvailableAndSoonDogs) {
         if (!mergedDogIds.has(prevDog.id)) {
           try {
             const page = await browser.newPage();
@@ -607,18 +613,35 @@ export async function runScraper() {
               }
             } else if (location !== prevDog.location) {
               // If location changed but not adopted, update dogs table and log
+              // For Available Soon dogs (status=null), also set status to 'available' when they get a real location
+              const prevStatus = typeof prevDog.status === 'string' ? prevDog.status.trim() : prevDog.status;
+              const shouldUpdateStatus = (prevStatus === null || prevStatus === undefined) && location && location.trim() !== '';
+              
               await logDogHistory({
                 dogId: prevDog.id,
                 eventType: 'location_change',
                 oldValue: prevDog.location,
                 newValue: location,
-                notes: `Location updated for missing dog during scrape.`
+                notes: `Location updated for missing dog during scrape${shouldUpdateStatus ? ' (Available Soon -> Available)' : ''}.`
               });
+              
+              const updateFields: { location: string; status?: string } = { location };
+              if (shouldUpdateStatus) {
+                updateFields.status = 'available';
+                await logDogHistory({
+                  dogId: prevDog.id,
+                  eventType: 'status_change',
+                  oldValue: prevStatus,
+                  newValue: 'available',
+                  notes: `Status updated from Available Soon (null) to available due to location assignment.`
+                });
+              }
+              
               await supabase
                 .from('dogs')
-                .update({ location })
+                .update(updateFields)
                 .eq('id', prevDog.id);
-              console.log(`[scraper] Updated location for missing dog ID ${prevDog.id} (${prevDog.name}): '${prevDog.location}' -> '${location}'`);
+              console.log(`[scraper] Updated location for missing dog ID ${prevDog.id} (${prevDog.name}): '${prevDog.location}' -> '${location}'${shouldUpdateStatus ? ' and status: null -> available' : ''}`);
             } else {
               console.log(`[scraper] Dog ID ${prevDog.id} (${prevDog.name}) missing from JSON but location is not empty and unchanged; not marking as adopted.`);
             }
