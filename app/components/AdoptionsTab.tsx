@@ -106,7 +106,11 @@ export default function AdoptionsTab() {
                       {dog.name}
                     </span>
                   </td>
-                  <td style={{ paddingLeft: '8ch', textAlign: 'center' }}>{formatDateMST(dog.adopted_date)}</td>
+                  <td style={{ paddingLeft: '8ch', textAlign: 'center' }}>
+                    {/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(dog.adopted_date)
+                      ? dog.adopted_date.replace(/-/g, '/')
+                      : formatDateMST(dog.adopted_date)}
+                  </td>
                   <td style={{ paddingLeft: '8ch', textAlign: 'center' }}>{dog.length_of_stay_days}</td>
                 </tr>
               ))}
