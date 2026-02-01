@@ -103,7 +103,7 @@ export default function ShelterMap() {
   ];
 
   return (
-    <div style={{ width: '900px', maxWidth: '100%', marginRight: 24, marginLeft: 20, display: "inline-block", verticalAlign: "top" }}>
+    <div style={{ width: '900px', maxWidth: '100%', marginRight: 12, marginLeft: 20, display: "inline-block", verticalAlign: "top" }}>
       <div style={{ width: '100%', maxWidth: 880, marginLeft: 0, marginBottom: 8, textAlign: "left", display: "flex", justifyContent: "center" }}>
         <span style={{ fontWeight: 700, fontSize: 22, letterSpacing: 0.5, paddingLeft: 0 }}>Shelter Transfer Map</span>
       </div>
