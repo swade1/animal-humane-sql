@@ -66,12 +66,8 @@ export default function InsightsSpotlightTab() {
       const map: Record<string, string[]> = {};
       for (const dog of dogs) {
         if (!dog.adopted_date) continue;
-        // Convert adopted_date to MST (America/Denver) and use that date for grouping
-        const utcDate = new Date(dog.adopted_date);
-        // Use date-fns-tz to convert to MST
-        const { toZonedTime, format: formatTz } = await import('date-fns-tz');
-        const mstDate = toZonedTime(utcDate, timeZone);
-        const dateStr = formatTz(mstDate, 'yyyy-MM-dd', { timeZone });
+        // adopted_date is already a date in MST, so use as-is for grouping
+        const dateStr = dog.adopted_date;
         if (!map[dateStr]) map[dateStr] = [];
         map[dateStr].push(dog.name);
       }
@@ -109,11 +105,11 @@ export default function InsightsSpotlightTab() {
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const { date, names, count } = payload[0].payload;
-      // Format date as DD-MM-YYYY
+      // Format date as MM-DD-YYYY
       let formattedDate = date;
       if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
         const [y, m, d] = date.split('-');
-        formattedDate = `${d}-${m}-${y}`;
+        formattedDate = `${m}-${d}-${y}`;
       }
       return (
         <div style={{

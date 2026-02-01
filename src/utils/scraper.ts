@@ -569,7 +569,12 @@ export async function runScraper() {
                 }
                 console.error(`Status/location change detected for dog ID ${prevDog.id} (${prevDog.name}): 'available' -> 'pending_review', location set to 'unknown', most recent location in dog_history contains 'Clinic'.`);
               } else {
-                const adoptionDate = new Date().toISOString();
+                // Get current date in America/Denver (MST) as YYYY-MM-DD
+                const { zonedTimeToUtc, format: formatTz, utcToZonedTime } = await import('date-fns-tz');
+                const now = new Date();
+                const timeZone = 'America/Denver';
+                const mstDate = utcToZonedTime(now, timeZone);
+                const adoptionDate = formatTz(mstDate, 'yyyy-MM-dd', { timeZone });
                 // Log location_change
                 await logDogHistory({
                   dogId: prevDog.id,
