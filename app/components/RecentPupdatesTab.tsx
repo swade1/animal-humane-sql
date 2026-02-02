@@ -359,7 +359,7 @@ function AdoptedTodayDogs({ setModalDog }: AdoptedTodayDogsProps) {
   // Get today's date as YYYY-MM-DD (local system date)
   const todayStr = format(new Date(), 'yyyy-MM-dd');
   const { data: adoptedToday, isLoading } = useQuery({
-    queryKey: ['adoptedToday', todayMSTStr],
+    queryKey: ['adoptedToday', todayStr],
     queryFn: async () => {
       // Get all dogs with adopted_date set (adopted)
       const { data: dogs, error } = await supabase
