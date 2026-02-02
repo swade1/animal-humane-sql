@@ -734,8 +734,27 @@ export async function runScraper() {
     // (REMOVED) Do not set scraped=false for any dog. scraped only transitions from FALSE to TRUE.
     // Automatic backup after scraping
     try {
-      const { backupDogsAndHistory } = await import('../../scripts/backup-tables');
-      await backupDogsAndHistory();
+      const fs = await import('fs');
+      const path = await import('path');
+      const supabaseUrl = process.env.SUPABASE_URL!;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabaseBackup = createClient(supabaseUrl, supabaseKey);
+
+      async function backupTable(table: string, outFile: string) {
+        const { data, error } = await supabaseBackup.rpc('pg_export_table', { table_name: table });
+        if (error) {
+          console.error(`[SCRAPER][BACKUP] Error exporting ${table}:`, error);
+          return;
+        }
+        fs.writeFileSync(outFile, data);
+        console.log(`[SCRAPER][BACKUP] Backed up ${table} to ${outFile}`);
+      }
+
+      const backupDir = path.join(process.cwd(), 'backups');
+      if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir);
+      await backupTable('dogs', path.join(backupDir, 'dogs_rows.sql'));
+      await backupTable('dog_history', path.join(backupDir, 'dog_history_rows.sql'));
       console.log('[SCRAPER] Backed up dogs and dog_history tables after scrape.');
     } catch (backupErr) {
       console.error('[SCRAPER] Error during automatic backup:', backupErr);
