@@ -415,13 +415,6 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
             />
           </label>
         );
-            // Set empty latitude/longitude to null for database (must be null, not empty string, for double precision columns)
-            if (formDataToSave.latitude === '' || formDataToSave.latitude == null) {
-              formDataToSave.latitude = null;
-            }
-            if (formDataToSave.longitude === '' || formDataToSave.longitude == null) {
-              formDataToSave.longitude = null;
-            }
       })}
       <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
           <button
