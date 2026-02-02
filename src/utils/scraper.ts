@@ -615,9 +615,8 @@ export async function runScraper() {
                 // Get current date in America/Denver (MST) as YYYY-MM-DD
                 const { format: formatTz } = await import('date-fns-tz');
                 const now = new Date();
-                import { toZonedTime } from 'date-fns-tz';
                 const timeZone = 'America/Denver';
-                const mstNow = toZonedTime(new Date(), timeZone);
+                const mstNow = toZonedTime(now, timeZone);
                 const adoptionDate = formatTz(mstNow, 'yyyy-MM-dd', { timeZone });
                 // Log location_change
                 await logDogHistory({
