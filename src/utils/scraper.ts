@@ -48,6 +48,7 @@ export async function checkForAdoptions() {
 // Uses node-fetch and cheerio for HTML parsing
 
 import puppeteer from 'puppeteer';
+import { toZonedTime } from 'date-fns-tz';
 
 // Define Dog type for mapping
 type Dog = {
