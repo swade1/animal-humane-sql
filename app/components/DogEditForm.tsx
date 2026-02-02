@@ -315,6 +315,24 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
             </label>
           );
         }
+        if (key === 'AHNM-A') {
+          return (
+            <label key={key} style={{ fontWeight: 600, marginBottom: 6 }}>
+              AHNM-A Number:
+              <input
+                name={key}
+                type="text"
+                value={value == null ? '' : value}
+                onChange={handleChange}
+                placeholder="e.g., 83495"
+                style={{ width: '100%', fontSize: 17, borderRadius: 6, border: '1px solid #bcd', padding: 10, marginTop: 6, background: '#fff' }}
+              />
+              <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>
+                The unique identifier number (e.g., 83495 for AHNM-A-83495)
+              </div>
+            </label>
+          );
+        }
         if (key === 'origin') {
           const isCustomOrigin = value && !originLatLng[value];
           return (
