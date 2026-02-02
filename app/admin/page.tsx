@@ -14,6 +14,7 @@ type Dog = {
   returned: number;
   notes: string;
   status: string;
+  'AHNM-A'?: string;
 };
 
 function AdminPage() {
@@ -247,6 +248,7 @@ function AdminPage() {
               adopted_date: '',
               scraped: false,
               verified_adoption: 0,
+              'AHNM-A': '',
             } as any);
           }}
           style={{
