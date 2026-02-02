@@ -3,7 +3,7 @@ import React, { useState } from "react";
 type Dog = { id: number; name: string; intake_date: string; created_at: string };
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "../lib/supabaseClient";
-import { parseISO, isSameDay } from 'date-fns';
+import { parseISO, isSameDay, format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 
 export default function RecentPupdatesTab() {
@@ -356,10 +356,10 @@ interface AdoptedTodayDogsProps {
   setModalDog: SetModalDog;
 }
 function AdoptedTodayDogs({ setModalDog }: AdoptedTodayDogsProps) {
-  const mstTimeZone = 'America/Denver';
-  const todayMST = toZonedTime(new Date(), mstTimeZone);
+  // Get today's date as YYYY-MM-DD (local system date)
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
   const { data: adoptedToday, isLoading } = useQuery({
-    queryKey: ['adoptedToday', todayMST.toISOString().slice(0, 10)],
+    queryKey: ['adoptedToday', todayMSTStr],
     queryFn: async () => {
       // Get all dogs with adopted_date set (adopted)
       const { data: dogs, error } = await supabase
@@ -374,9 +374,8 @@ function AdoptedTodayDogs({ setModalDog }: AdoptedTodayDogsProps) {
       const seen = new Set();
       const filtered = dogs.filter(dog => {
         if (!dog.adopted_date) return false;
-        // adopted_date is already in MST as YYYY-MM-DD, so compare directly
+        // Direct string comparison, no conversion
         const adoptedDateStr = dog.adopted_date.slice(0, 10);
-        const todayStr = todayMST.toISOString().slice(0, 10);
         if (seen.has(dog.id) || adoptedDateStr !== todayStr) return false;
         seen.add(dog.id);
         return true;
