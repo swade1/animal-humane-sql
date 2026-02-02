@@ -47,10 +47,10 @@
     - [x] Handle loading, error, and empty states.
     - [x] Add responsive styles and accessibility features.
 - [x] Add clickable dog names linking to public shelter pages
-- [ ] Implement manual entry/editing UI (developer-only access)
-- [ ] Add authentication for manual entry (developer-only)
+- [x] Implement manual entry/editing UI (developer-only access)
+- [x] Add authentication for manual entry (developer-only)
 - [ ] Ensure responsive and accessible design
-- [ ] Add support for additional notes per dog
+- [x] Add support for additional notes per dog
 
 ### 4. Implement an Admin Interface [x]
  - [x] Design admin interface for on-site shelter updates
