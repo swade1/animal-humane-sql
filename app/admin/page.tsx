@@ -223,10 +223,11 @@ function AdminPage() {
         </ul>
         <button
           onClick={() => {
-            // Create a new dog with default values
+            // Create a new dog with all available fields
             setEditDog({
               id: 0,
               name: '',
+              location: '',
               origin: '',
               latitude: null,
               longitude: null,
@@ -234,7 +235,19 @@ function AdminPage() {
               returned: 0,
               notes: '',
               status: 'available',
-            });
+              url: '',
+              intake_date: '',
+              length_of_stay_days: 0,
+              birthdate: '',
+              age_group: '',
+              breed: '',
+              secondary_breed: '',
+              weight_group: '',
+              color: '',
+              adopted_date: '',
+              scraped: false,
+              verified_adoption: 0,
+            } as any);
           }}
           style={{
             fontWeight: 700,
