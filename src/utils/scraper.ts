@@ -614,8 +614,10 @@ export async function runScraper() {
                 // Get current date in America/Denver (MST) as YYYY-MM-DD
                 const { format: formatTz } = await import('date-fns-tz');
                 const now = new Date();
+                import { toZonedTime } from 'date-fns-tz';
                 const timeZone = 'America/Denver';
-                const adoptionDate = formatTz(now, 'yyyy-MM-dd', { timeZone });
+                const mstNow = toZonedTime(new Date(), timeZone);
+                const adoptionDate = formatTz(mstNow, 'yyyy-MM-dd', { timeZone });
                 // Log location_change
                 await logDogHistory({
                   dogId: prevDog.id,
@@ -730,6 +732,14 @@ export async function runScraper() {
 
     // Set scraped=false for all dogs not in the latest scrape
     // (REMOVED) Do not set scraped=false for any dog. scraped only transitions from FALSE to TRUE.
+    // Automatic backup after scraping
+    try {
+      const { backupDogsAndHistory } = await import('../../scripts/backup-tables');
+      await backupDogsAndHistory();
+      console.log('[SCRAPER] Backed up dogs and dog_history tables after scrape.');
+    } catch (backupErr) {
+      console.error('[SCRAPER] Error during automatic backup:', backupErr);
+    }
   } catch (err) {
     console.error('Error in runScraper:', err);
   }
