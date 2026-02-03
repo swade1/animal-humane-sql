@@ -1,3 +1,5 @@
+console.log('=== TOP OF run-scraper-pipeline.ts ===');
+throw new Error('Test error: pipeline script executed');
 // run-scraper-pipeline.ts
 // Orchestrates the full animal data pipeline: fetch, enrich/upsert, adoption check
 
