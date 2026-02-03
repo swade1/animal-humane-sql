@@ -84,10 +84,13 @@ async function main() {
 			const iframeAnimal = $('iframe-animal');
 			let raw = '';
 			if (iframeAnimal.length) {
-				if (iframeAnimal.attr('animal')) {
-					raw = iframeAnimal.attr('animal');
-				} else if (iframeAnimal.attr(':animal')) {
-					raw = he.decode(iframeAnimal.attr(':animal'));
+				const animalAttr = iframeAnimal.attr('animal') ?? '';
+				const colonAnimalAttr = iframeAnimal.attr(':animal') ?? '';
+				if (animalAttr) {
+					raw = animalAttr;
+				} else if (colonAnimalAttr) {
+					raw = he.decode(colonAnimalAttr);
+				}
 				}
 				if (raw) {
 					try {
