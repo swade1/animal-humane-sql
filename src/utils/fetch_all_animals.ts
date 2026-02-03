@@ -2,31 +2,23 @@
 // Fetches and combines all available-animals JSON endpoints for animalhumanenm.org
 // To be used for enrichment and upsert pipeline
 
+
 import fetch from 'node-fetch';
 
-const MAIN_URL = 'https://animalhumanenm.org/adopt/adoptable-dogs';
-
-// Helper to extract all available-animals JSON URLs from the main page
-export async function getAvailableAnimalsJsonUrls(): Promise<string[]> {
-  const res = await fetch(MAIN_URL);
-  const html = await res.text();
-  // Regex to find all available-animals JSON URLs
-    const urlRegex = /https:\/\/new\.shelterluv\.com\/api\/v3\/available-animals\/[0-9]+\?saved_query=[0-9]+[^"']*/g;
-    // Diagnostic: print a summary of the HTML
-    console.log('[getAvailableAnimalsJsonUrls] Main page HTML length:', html.length);
-    console.log('[getAvailableAnimalsJsonUrls] Main page HTML preview:', html.slice(0, 500));
-  const matches = html.match(urlRegex) || [];
-  // Remove duplicates
-    console.log('[getAvailableAnimalsJsonUrls] Matched URLs:', matches);
-  return Array.from(new Set(matches));
-    console.log('[getAvailableAnimalsJsonUrls] Unique URLs:', Array.from(new Set(matches)));
-}
+// Always use the 6 provided API URLs
+const ANIMAL_API_URLS = [
+  'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=12363&embedded=1&iframeId=shelterluv_wrap_1761166982&columns=1',
+  'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=8888&embedded=1&iframeId=shelterluv_wrap_1764539234&columns=1',
+  'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=9274&embedded=1&iframeId=shelterluv_wrap_1742914295&columns=1',
+  'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=12946&embedded=1&iframeId=shelterluv_wrap_1764539274&columns=1',
+  'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=8889&embedded=1&iframeId=shelterluv_wrap_1741279482&columns=1',
+  'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=8887&embedded=1&iframeId=shelterluv_wrap_1741279189&columns=1',
+];
 
 // Fetch and combine all animals from all endpoints
 export async function fetchAllAnimals(): Promise<Record<string, unknown>[]> {
-  const urls = await getAvailableAnimalsJsonUrls();
   let allAnimals: Record<string, unknown>[] = [];
-  for (const url of urls) {
+  for (const url of ANIMAL_API_URLS) {
     try {
       const res = await fetch(url);
       const data = await res.json() as { animals?: Array<Record<string, unknown>> };
