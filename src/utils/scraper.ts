@@ -34,7 +34,7 @@ export async function checkForAdoptionsApiOnly(apiUrl: string) {
       console.error(`[adoption-check-api] No animals array in JSON: ${apiUrl}`);
       return;
     }
-    apiDogIds = new Set(data.animals.map((a: any) => typeof a.nid === 'number' ? a.nid : parseInt(a.nid, 10)));
+    apiDogIds = new Set(data.animals.map((a: Record<string, unknown>) => typeof a.nid === 'number' ? a.nid : parseInt(a.nid as string, 10)));
   } catch (err) {
     console.error('[adoption-check-api] Error fetching/parsing API data:', err);
     return;
@@ -73,21 +73,21 @@ export async function checkForAdoptions() {
       const page = await browser.newPage();
       await page.goto(dog.url, { waitUntil: 'networkidle2', timeout: 60000 });
       // Extract location and AHNM-A number from <iframe-animal> element's animal attribute (JSON) using page.evaluate (faster, more robust)
-      const { location, ahnmA } = await page.evaluate(() => {
+      const { location } = await page.evaluate(() => {
         const el = document.querySelector('iframe-animal');
         let location = '';
-        let ahnmA = null;
+        // let ahnmA = null; // removed unused variable
         if (el && el.hasAttribute('animal')) {
           try {
             const animalObj = JSON.parse(el.getAttribute('animal') ?? '{}');
             location = animalObj.location || '';
             if (animalObj.uniqueId && typeof animalObj.uniqueId === 'string') {
               const match = animalObj.uniqueId.match(/AHNM-A-(\d+)/);
-              if (match) ahnmA = parseInt(match[1], 10);
+              // if (match) ahnmA = parseInt(match[1], 10); // removed unused variable
             }
-          } catch (_e) {}
+          } catch {}
         }
-        return { location, ahnmA };
+        return { location };
       });
       // Log the dog's name and the value of the location field
       console.log(`[SCRAPER][LOCATION] Dog: ${dog.name} (ID: ${dog.id}), Location: '${location}'`);
@@ -442,7 +442,7 @@ export async function runScraper() {
     // Log changes for dogs still present
 
       // Prepare prevAvailableDogs for adoption/status-change logic (always trim status)
-      const prevAvailableDogs = prevDogs ? prevDogs.filter(d => typeof d.status === 'string' && d.status.trim() === 'available') : [];
+      // const prevAvailableDogs = prevDogs ? prevDogs.filter(d => typeof d.status === 'string' && d.status.trim() === 'available') : []; // removed unused variable
     for (const dog of mergedDogs) {
       // Location change with extra logging
       const oldLocation = locationMap.get(dog.id) ?? null;

@@ -28,7 +28,7 @@ export async function logDogHistory({
   adopted_date?: string | null;
 }) {
   // Check for recent identical event to prevent duplicates
-  const { data: recent, error: _fetchError } = await supabase
+  const { data: recent } = await supabase
     .from('dog_history')
     .select('*')
     .eq('dog_id', dogId)

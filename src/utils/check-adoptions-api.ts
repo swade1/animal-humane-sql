@@ -11,7 +11,7 @@ if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('Supabase env vars not set')
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const MAIN_URL = 'https://animalhumanenm.org/adopt/adoptable-dogs';
-const EMBED_URL_BASE = 'https://new.shelterluv.com/embed/animals/';
+
 
 // Helper to extract all available-animals JSON URLs from the main page
 async function getAvailableAnimalsJsonUrls() {
@@ -25,7 +25,7 @@ async function getAvailableAnimalsJsonUrls() {
 // Get all available animal IDs from all endpoints
 async function getCurrentAvailableAnimalIds() {
 	const urls = await getAvailableAnimalsJsonUrls();
-	let ids = new Set();
+	const ids = new Set();
 	for (const url of urls) {
 		try {
 			const res = await fetch(url);
@@ -94,7 +94,7 @@ async function main() {
 					try {
 						const animalObj = JSON.parse(raw);
 						location = animalObj.location || '';
-					} catch (e) {
+					} catch {
 						console.warn(`[adoption-check-api] Could not parse animal JSON for dog ID ${dog.id}:`, raw);
 					}
 				}

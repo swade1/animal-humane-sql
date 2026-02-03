@@ -18,9 +18,9 @@ export async function getAvailableAnimalsJsonUrls(): Promise<string[]> {
 }
 
 // Fetch and combine all animals from all endpoints
-export async function fetchAllAnimals(): Promise<any[]> {
+export async function fetchAllAnimals(): Promise<Record<string, unknown>[]> {
   const urls = await getAvailableAnimalsJsonUrls();
-  let allAnimals: any[] = [];
+  let allAnimals: Record<string, unknown>[] = [];
   for (const url of urls) {
     try {
       const res = await fetch(url);

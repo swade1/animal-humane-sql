@@ -16,7 +16,7 @@ const locationInfoPath = path.resolve(__dirname, '../../../../animal-humane/loca
 const locationInfoLines = fs.readFileSync(locationInfoPath, 'utf-8').split('\n').filter(Boolean);
 const locationInfo = locationInfoLines.map(line => JSON.parse(line));
 
-function enrichAnimal(animal: any) {
+function enrichAnimal(animal: Record<string, unknown>) {
   // Match by location string
   const loc = animal.location || '';
   const match = locationInfo.find(l => l.location === loc);
