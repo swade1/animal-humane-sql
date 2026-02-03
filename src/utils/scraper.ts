@@ -29,7 +29,7 @@ export async function checkForAdoptionsApiOnly(apiUrl: string) {
       console.error(`[adoption-check-api] Failed to fetch available-animals JSON: ${apiUrl} (status: ${res.status})`);
       return;
     }
-    const data = await res.json();
+    const data = await res.json() as { animals?: Array<Record<string, unknown>> };
     if (!data.animals || !Array.isArray(data.animals)) {
       console.error(`[adoption-check-api] No animals array in JSON: ${apiUrl}`);
       return;
