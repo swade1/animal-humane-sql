@@ -41,7 +41,7 @@ export async function enrichAndUpsertAnimals() {
     url: a.public_url,
     intake_date: a.intake_date || null,
     birthdate: a.birthday || null,
-    age_group: a.age_group?.name || null,
+    age_group: (a.age_group && typeof a.age_group === 'object' && 'name' in a.age_group) ? (a.age_group as { name?: string }).name ?? null : null,
     breed: a.breed,
     secondary_breed: a.secondary_breed,
     weight_group: a.weight_group,
