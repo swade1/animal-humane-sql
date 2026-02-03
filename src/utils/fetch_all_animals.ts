@@ -42,10 +42,4 @@ export async function fetchAllAnimals(): Promise<Record<string, unknown>[]> {
   return deduped;
 }
 
-if (require.main === module) {
-  fetchAllAnimals().then((animals) => {
-    console.log(`Fetched ${animals.length} unique animals.`);
-    // Optionally print sample
-    console.log(JSON.stringify(animals.slice(0, 2), null, 2));
-  });
-}
+
