@@ -37,7 +37,8 @@ export async function fetchAllAnimals(): Promise<Record<string, unknown>[]> {
       console.error(`[fetch_all_animals] Error fetching/parsing ${url}:`, err);
     }
   }
-  console.log('[fetch_all_animals] Fetched animals (pre-deduplication):', allAnimals.map(a => ({ nid: a.nid, name: a.name })));
+  console.log('[fetch_all_animals] Fetched animals (pre-deduplication, full objects):', allAnimals);
+  console.log('[fetch_all_animals] Fetched animals (pre-deduplication, summary):', allAnimals.map(a => ({ nid: a.nid, name: a.name })));
   // Deduplicate by nid
   const seen = new Set();
   const deduped = allAnimals.filter((a) => {

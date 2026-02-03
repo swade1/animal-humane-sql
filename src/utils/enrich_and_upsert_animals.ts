@@ -40,6 +40,7 @@ export async function enrichAndUpsertAnimals() {
     updated_at: new Date().toISOString(),
     scraped: true
   }));
+  console.log('[enrich_and_upsert_animals] Upsert rows:', upsertRows);
   const { error } = await supabase.from('dogs').upsert(upsertRows, { onConflict: 'id' });
   if (error) {
     console.error('Supabase upsert error:', error);
