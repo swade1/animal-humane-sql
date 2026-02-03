@@ -91,7 +91,6 @@ async function main() {
 				} else if (colonAnimalAttr) {
 					raw = he.decode(colonAnimalAttr);
 				}
-				}
 				if (raw) {
 					try {
 						const animalObj = JSON.parse(raw);
