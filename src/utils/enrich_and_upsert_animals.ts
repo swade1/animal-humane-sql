@@ -12,7 +12,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Directly use animal data as-is for upsert
 function enrichAnimal(animal: Record<string, unknown>) {
-  // Convert intake_date and birthday from Unix timestamp (seconds) to ISO string if present
+  // Convert intake_date and birthday from Unix timestamp (seconds) to ISO string if present, but preserve all properties
   const convertTimestamp = (val: unknown) => {
     if (typeof val === 'string' && /^\d{9,}$/.test(val)) {
       // Convert seconds to milliseconds
