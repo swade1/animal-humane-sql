@@ -37,7 +37,8 @@ import { enrichAndUpsertAnimals } from './enrich_and_upsert_animals';
   console.log('Pipeline completed successfully.');
 }
 
-// Invoke main if this script is run directly
+
+// Invoke main if this script is run directly (ESM-safe)
 if (typeof require !== 'undefined' && require.main === module) {
   main();
 }
