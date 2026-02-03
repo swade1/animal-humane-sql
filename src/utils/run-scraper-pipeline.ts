@@ -4,6 +4,7 @@
 import { enrichAndUpsertAnimals } from './enrich_and_upsert_animals';
 
 async function main() {
+  console.log('=== Scraper pipeline started ===');
   try {
     console.log('Step 1: Fetch, enrich, and upsert animal data...');
     await enrichAndUpsertAnimals();

@@ -1,16 +1,32 @@
 import { supabase } from '../lib/supabaseClient';
-
-/**
- * Logs a change to a dog's data in the dog_history table.
- * @param dogId The dog's id
- * @param name The dog's name (optional)
- * @param eventType e.g. 'location_change', 'status_update'
- * @param oldValue The previous value (e.g. old location)
- * @param newValue The new value (e.g. new location)
- * @param notes Optional notes
- * @param adopted_date Optional adopted date (for adoptions)
- */
-export async function logDogHistory({
+  if (
+    recent && recent.length > 0 &&
+    recent[0].old_value === oldValue &&
+    recent[0].new_value === newValue &&
+    (name ? recent[0].name === name : true) &&
+    (adopted_date ? recent[0].adopted_date === adopted_date : true)
+  ) {
+    // Duplicate found, skip insert
+    console.log('[dogHistory] Duplicate event detected, skipping log:', {
+      dogId,
+      eventType,
+      oldValue,
+      newValue,
+      name,
+      adopted_date,
+      recent: recent[0]
+    });
+    return;
+  } else {
+    console.log('[dogHistory] Logging new event:', {
+      dogId,
+      eventType,
+      oldValue,
+      newValue,
+      name,
+      adopted_date
+    });
+  }
   dogId,
   name,
   eventType,
