@@ -28,7 +28,7 @@ async function getCurrentAvailableAnimalIds() {
 	for (const url of urls) {
 		try {
 			const res = await fetch(url);
-			const data = await res.json();
+			const data = await res.json() as { animals?: Array<{ nid: number | string }> };
 			if (data.animals && Array.isArray(data.animals)) {
 				for (const a of data.animals) {
 					ids.add(typeof a.nid === 'number' ? a.nid : parseInt(a.nid, 10));
