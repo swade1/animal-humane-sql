@@ -2,8 +2,6 @@
 // Enriches animals with location_info.jsonl and upserts into Supabase
 
 import { createClient } from '@supabase/supabase-js';
-import fs from 'fs';
-import path from 'path';
 import { fetchAllAnimals } from './fetch_all_animals';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -50,6 +48,4 @@ export async function enrichAndUpsertAnimals() {
   }
 }
 
-if (require.main === module) {
-  enrichAndUpsertAnimals();
-}
+
