@@ -12,7 +12,21 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Directly use animal data as-is for upsert
 function enrichAnimal(animal: Record<string, unknown>) {
-  return animal;
+  // Convert intake_date and birthday from Unix timestamp (seconds) to ISO string if present
+  const convertTimestamp = (val: unknown) => {
+    if (typeof val === 'string' && /^\d{9,}$/.test(val)) {
+      // Convert seconds to milliseconds
+      const ms = parseInt(val, 10) * 1000;
+      const d = new Date(ms);
+      if (!isNaN(d.getTime())) return d.toISOString();
+    }
+    return val;
+  };
+  return {
+    ...animal,
+    intake_date: convertTimestamp(animal.intake_date),
+    birthday: convertTimestamp(animal.birthday),
+  };
 }
 
 export async function enrichAndUpsertAnimals() {
@@ -28,7 +42,7 @@ export async function enrichAndUpsertAnimals() {
     url: a.public_url,
     intake_date: a.intake_date || null,
     birthdate: a.birthday || null,
-    age_group: (a.age_group && typeof a.age_group === 'object' && 'name' in a.age_group) ? (a.age_group as { name?: string }).name ?? null : null,
+    age_group: (a.age_group && typeof a.age_group === 'object' && 'name' in a.age_group) ? (a.age_group as { name?: string }).name ?? null : (a.age_group ?? null),
     breed: a.breed,
     secondary_breed: a.secondary_breed,
     weight_group: a.weight_group,
