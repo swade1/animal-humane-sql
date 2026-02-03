@@ -1,3 +1,12 @@
+// Global error handlers for diagnostics
+process.on('uncaughtException', (err) => {
+  console.error('[GLOBAL ERROR] Uncaught Exception:', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[GLOBAL ERROR] Unhandled Rejection:', reason);
+});
+
+console.log('=== File loaded: run-scraper-pipeline.ts ===');
 
 // run-scraper-pipeline.ts
 // Orchestrates the full animal data pipeline: fetch, enrich/upsert, adoption check
@@ -5,6 +14,7 @@
 import { enrichAndUpsertAnimals } from './enrich_and_upsert_animals';
 
 export async function main() {
+  console.log('=== Entered main() in run-scraper-pipeline.ts ===');
   console.log('=== Scraper pipeline main() started ===');
   try {
     console.log('[STEP] About to call enrichAndUpsertAnimals');
