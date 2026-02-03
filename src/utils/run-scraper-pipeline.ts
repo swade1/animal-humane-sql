@@ -4,6 +4,7 @@
 
 import { enrichAndUpsertAnimals } from './enrich_and_upsert_animals';
 
+export async function main() {
   console.log('=== Scraper pipeline main() started ===');
   try {
     console.log('[STEP] About to call enrichAndUpsertAnimals');
@@ -36,7 +37,6 @@ import { enrichAndUpsertAnimals } from './enrich_and_upsert_animals';
   }
   console.log('Pipeline completed successfully.');
 }
-
 
 // Invoke main if this script is run directly (ESM-safe)
 if (typeof require !== 'undefined' && require.main === module) {
