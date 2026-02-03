@@ -82,8 +82,7 @@ export async function checkForAdoptions() {
             const animalObj = JSON.parse(el.getAttribute('animal') ?? '{}');
             location = animalObj.location || '';
             if (animalObj.uniqueId && typeof animalObj.uniqueId === 'string') {
-              const match = animalObj.uniqueId.match(/AHNM-A-(\d+)/);
-              // if (match) ahnmA = parseInt(match[1], 10); // removed unused variable
+              // const match = animalObj.uniqueId.match(/AHNM-A-(\d+)/); // removed unused variable
             }
           } catch {}
         }
