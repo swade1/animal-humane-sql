@@ -1,5 +1,7 @@
 
 import { createClient } from '@supabase/supabase-js';
+import { logDogHistory } from './dogHistory';
+import { format as formatTz, toZonedTime } from 'date-fns-tz';
 import fetch from 'node-fetch';
 import { load } from 'cheerio';
 import he from 'he';
@@ -102,11 +104,52 @@ async function main() {
 			} else {
 				console.warn(`[adoption-check-api] <iframe-animal> not found for dog ID ${dog.id}`);
 			}
-			if (!location || location.trim() === '') {
-				console.log(`LIKELY ADOPTED: ID: ${dog.id}, Name: ${dog.name}, Location: [empty], URL: ${embedUrl}`);
-				if (raw) {
-					console.log(`[adoption-check-api] Raw animal attribute for dog ID ${dog.id}:`, raw);
-				}
+						if (!location || location.trim() === '') {
+								console.log(`LIKELY ADOPTED: ID: ${dog.id}, Name: ${dog.name}, Location: [empty], URL: ${embedUrl}`);
+								if (raw) {
+										console.log(`[adoption-check-api] Raw animal attribute for dog ID ${dog.id}:`, raw);
+								}
+								// Log status/location change and update DB
+								const timeZone = 'America/Denver';
+								const now = new Date();
+								const mstNow = toZonedTime(now, timeZone);
+								const adoptionDate = formatTz(mstNow, 'yyyy-MM-dd', { timeZone });
+								// Fetch previous dog record for old status/location
+								const { data: prevDog, error: prevDogErr } = await supabase
+									.from('dogs')
+									.select('id, name, status, location')
+									.eq('id', dog.id)
+									.single();
+								if (prevDogErr) {
+									console.error(`[adoption-check-api] Error fetching previous dog record for history logging:`, prevDogErr);
+								} else if (prevDog) {
+									await logDogHistory({
+										dogId: dog.id,
+										name: dog.name,
+										eventType: 'location_change',
+										oldValue: prevDog.location,
+										newValue: null,
+										notes: `Location cleared (adopted) at ${adoptionDate}`
+									});
+									await logDogHistory({
+										dogId: dog.id,
+										name: dog.name,
+										eventType: 'status_change',
+										oldValue: prevDog.status,
+										newValue: 'adopted',
+										notes: `Dog no longer present in available-animals JSON and location is empty; likely adopted at ${adoptionDate}.`,
+										adopted_date: adoptionDate
+									});
+									const { error: updateErr } = await supabase
+										.from('dogs')
+										.update({ status: 'adopted', location: null, adopted_date: adoptionDate })
+										.eq('id', dog.id);
+									if (updateErr) {
+										console.error(`[adoption-check-api] Error updating dogs table for dog ID ${dog.id}:`, updateErr);
+									} else {
+										console.log(`[adoption-check-api] Updated dogs table for adopted dog ID ${dog.id}`);
+									}
+								}
 			} else {
 				console.log(`STILL PRESENT: ID: ${dog.id}, Name: ${dog.name}, Location: '${location}', URL: ${embedUrl}`);
 			}
