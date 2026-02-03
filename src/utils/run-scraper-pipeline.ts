@@ -48,10 +48,9 @@ export async function main() {
   console.log('Pipeline completed successfully.');
 }
 
-// Invoke main if this script is run directly (ESM-safe)
-if (typeof require !== 'undefined' && require.main === module) {
-  main();
-}
+
+// Always invoke main (ESM-compatible)
+main();
 
 
 
