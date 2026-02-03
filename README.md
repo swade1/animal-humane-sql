@@ -21,7 +21,28 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Learn More
+
+## Animal Data Scraper Pipeline
+
+The animal data pipeline is automated and runs on a schedule via GitHub Actions. The workflow is defined in `.github/workflows/scraper-schedule.yml` and performs the following steps:
+
+1. **Fetch animal data** from the Animal Humane API endpoints.
+2. **Enrich and upsert** the data into the Supabase `dogs` table.
+3. **Check for adoptions** and update the status of animals in Supabase.
+
+This is orchestrated by the script:
+
+```bash
+npx tsx src/utils/run-scraper-pipeline.ts
+```
+
+You can run this pipeline locally (with the correct environment variables set) or let it run automatically on the GitHub schedule.
+
+**Environment variables required:**
+- `SUPABASE_URL` or `NEXT_PUBLIC_SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY` or `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+See `.env.local.example` for details.
 
 To learn more about Next.js, take a look at the following resources:
 

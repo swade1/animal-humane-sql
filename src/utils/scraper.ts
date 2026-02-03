@@ -1,3 +1,57 @@
+// Logs suspected adoptions by comparing Supabase and API data (no DB changes)
+import { createClient } from '@supabase/supabase-js';
+
+export async function checkForAdoptionsApiOnly(apiUrl: string) {
+  const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('Supabase env vars not set');
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // 1. Get all dogs with status 'available' from Supabase
+  const { data: availableDogs, error } = await supabase
+    .from('dogs')
+    .select('id, name, location, url, status')
+    .eq('status', 'available');
+  if (error) {
+    console.error('[adoption-check-api] Error fetching available dogs:', error);
+    return;
+  }
+  if (!availableDogs || availableDogs.length === 0) {
+    console.log('[adoption-check-api] No available dogs to check.');
+    return;
+  }
+
+  // 2. Fetch the latest available-animals JSON from the API endpoint
+  let apiDogIds: Set<number> = new Set();
+  try {
+    const res = await fetch(apiUrl);
+    if (!res.ok) {
+      console.error(`[adoption-check-api] Failed to fetch available-animals JSON: ${apiUrl} (status: ${res.status})`);
+      return;
+    }
+    const data = await res.json();
+    if (!data.animals || !Array.isArray(data.animals)) {
+      console.error(`[adoption-check-api] No animals array in JSON: ${apiUrl}`);
+      return;
+    }
+    apiDogIds = new Set(data.animals.map((a: any) => typeof a.nid === 'number' ? a.nid : parseInt(a.nid, 10)));
+  } catch (err) {
+    console.error('[adoption-check-api] Error fetching/parsing API data:', err);
+    return;
+  }
+
+  // 3. Compare IDs and log suspected adoptions
+  const suspectedAdoptions = availableDogs.filter(dog => !apiDogIds.has(dog.id));
+  if (suspectedAdoptions.length === 0) {
+    console.log('[adoption-check-api] No suspected adoptions. All available dogs are present in the API data.');
+  } else {
+    console.log(`[adoption-check-api] Suspected adoptions (present in DB, missing from API):`);
+    for (const dog of suspectedAdoptions) {
+      console.log(`  - ID: ${dog.id}, Name: ${dog.name}, Location: ${dog.location}, URL: ${dog.url}`);
+    }
+    console.log(`[adoption-check-api] Total suspected adoptions: ${suspectedAdoptions.length}`);
+  }
+}
 // Check for adoptions by scraping each available dog's page
 export async function checkForAdoptions() {
   // 1. Get all dogs with status 'available'
