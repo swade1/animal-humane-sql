@@ -32,6 +32,7 @@ export async function fetchAllAnimals(): Promise<Record<string, unknown>[]> {
       console.error(`[fetch_all_animals] Error fetching/parsing ${url}:`, err);
     }
   }
+  console.log('[fetch_all_animals] Fetched animals (pre-deduplication):', allAnimals.map(a => ({ nid: a.nid, name: a.name })));
   // Deduplicate by nid
   const seen = new Set();
   const deduped = allAnimals.filter((a) => {
@@ -39,6 +40,7 @@ export async function fetchAllAnimals(): Promise<Record<string, unknown>[]> {
     seen.add(a.nid);
     return true;
   });
+  console.log('[fetch_all_animals] Deduped animals:', deduped.map(a => ({ nid: a.nid, name: a.name })));
   return deduped;
 }
 
