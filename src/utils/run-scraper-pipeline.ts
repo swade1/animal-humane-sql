@@ -3,7 +3,7 @@
 
 import { enrichAndUpsertAnimals } from './enrich_and_upsert_animals';
 
-async function main() {
+export async function main() {
   console.log('=== Scraper pipeline started ===');
   try {
     console.log('Step 1: Fetch, enrich, and upsert animal data...');
@@ -21,6 +21,11 @@ async function main() {
     console.error('Pipeline failed:', err);
     process.exit(1);
   }
+}
+
+// Invoke main if this script is run directly
+if (typeof require !== 'undefined' && require.main === module) {
+  main();
 }
 
 

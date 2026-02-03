@@ -95,7 +95,7 @@ async function main() {
 					try {
 						const animalObj = JSON.parse(raw);
 						location = animalObj.location || '';
-					} catch (err) {
+					} catch {
 						console.warn(`[adoption-check-api] Could not parse animal JSON for dog ID ${dog.id}:`, raw);
 					}
 				}

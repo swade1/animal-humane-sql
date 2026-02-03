@@ -1,32 +1,6 @@
 import { supabase } from '../lib/supabaseClient';
-  if (
-    recent && recent.length > 0 &&
-    recent[0].old_value === oldValue &&
-    recent[0].new_value === newValue &&
-    (name ? recent[0].name === name : true) &&
-    (adopted_date ? recent[0].adopted_date === adopted_date : true)
-  ) {
-    // Duplicate found, skip insert
-    console.log('[dogHistory] Duplicate event detected, skipping log:', {
-      dogId,
-      eventType,
-      oldValue,
-      newValue,
-      name,
-      adopted_date,
-      recent: recent[0]
-    });
-    return;
-  } else {
-    console.log('[dogHistory] Logging new event:', {
-      dogId,
-      eventType,
-      oldValue,
-      newValue,
-      name,
-      adopted_date
-    });
-  }
+
+export async function logDogHistory({
   dogId,
   name,
   eventType,
