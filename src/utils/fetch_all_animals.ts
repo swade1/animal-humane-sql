@@ -24,7 +24,7 @@ export async function fetchAllAnimals(): Promise<Record<string, unknown>[]> {
   for (const url of urls) {
     try {
       const res = await fetch(url);
-      const data = await res.json();
+      const data = await res.json() as { animals?: Array<Record<string, unknown>> };
       if (data.animals && Array.isArray(data.animals)) {
         allAnimals = allAnimals.concat(data.animals);
       }
