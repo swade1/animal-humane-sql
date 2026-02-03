@@ -10,12 +10,10 @@ async function main() {
     console.log('Step 2: Check for adoptions and update statuses...');
     // Dynamically import to avoid circular dependency
     const adoptionCheck = await import('./check-adoptions-api');
-    if (adoptionCheck && typeof adoptionCheck.default === 'function') {
-      await adoptionCheck.default();
-    } else if (adoptionCheck && typeof adoptionCheck.main === 'function') {
+    if (adoptionCheck && typeof adoptionCheck.main === 'function') {
       await adoptionCheck.main();
     } else {
-      throw new Error('Could not find a callable main/default export in check-adoptions-api.ts');
+      throw new Error('Could not find a callable main export in check-adoptions-api.ts');
     }
     console.log('Pipeline completed successfully.');
   } catch (err) {
