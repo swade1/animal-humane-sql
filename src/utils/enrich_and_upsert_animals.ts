@@ -11,7 +11,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 
 // Directly use animal data as-is for upsert
-function enrichAnimal(animal: Record<string, unknown>) {
+function enrichAnimal(animal: Record<string, unknown>): Record<string, unknown> {
   // Convert intake_date and birthday from Unix timestamp (seconds) to ISO string if present, but preserve all properties
   const convertTimestamp = (val: unknown) => {
     if (typeof val === 'string' && /^\d{9,}$/.test(val)) {
@@ -30,8 +30,8 @@ function enrichAnimal(animal: Record<string, unknown>) {
 }
 
 export async function enrichAndUpsertAnimals() {
-  const animals = await fetchAllAnimals();
-  const enriched = animals.map(enrichAnimal);
+  const animals: Record<string, unknown>[] = await fetchAllAnimals();
+  const enriched: Record<string, unknown>[] = animals.map(enrichAnimal);
   // Upsert into Supabase (by id/nid)
   const upsertRows = enriched.map(a => ({
     id: a.nid,
