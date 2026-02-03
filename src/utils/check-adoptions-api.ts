@@ -1,7 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
 import fetch from 'node-fetch';
-import fetch from 'node-fetch';
 import { load } from 'cheerio';
 import he from 'he';
 
