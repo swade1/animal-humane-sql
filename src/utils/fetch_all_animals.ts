@@ -11,10 +11,15 @@ export async function getAvailableAnimalsJsonUrls(): Promise<string[]> {
   const res = await fetch(MAIN_URL);
   const html = await res.text();
   // Regex to find all available-animals JSON URLs
-  const urlRegex = /https:\/\/animalhumanenm\.org\/available-animals\?location=[^"']+/g;
+    const urlRegex = /https:\/\/new\.shelterluv\.com\/api\/v3\/available-animals\/[0-9]+\?saved_query=[0-9]+[^"']*/g;
+    // Diagnostic: print a summary of the HTML
+    console.log('[getAvailableAnimalsJsonUrls] Main page HTML length:', html.length);
+    console.log('[getAvailableAnimalsJsonUrls] Main page HTML preview:', html.slice(0, 500));
   const matches = html.match(urlRegex) || [];
   // Remove duplicates
+    console.log('[getAvailableAnimalsJsonUrls] Matched URLs:', matches);
   return Array.from(new Set(matches));
+    console.log('[getAvailableAnimalsJsonUrls] Unique URLs:', Array.from(new Set(matches)));
 }
 
 // Fetch and combine all animals from all endpoints

@@ -1,4 +1,5 @@
 // Logs suspected adoptions by comparing Supabase and API data (no DB changes)
+// Logs suspected adoptions by comparing Supabase and API data (no DB changes)
 import { createClient } from '@supabase/supabase-js';
 
 export async function checkForAdoptionsApiOnly(apiUrl: string) {
