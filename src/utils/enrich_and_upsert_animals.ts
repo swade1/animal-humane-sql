@@ -11,23 +11,9 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_P
 if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('Supabase env vars not set');
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Load location_info.jsonl (from parent project)
-import { fileURLToPath } from 'url';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const locationInfoPath = path.resolve(__dirname, '../../../../animal-humane/location_info.jsonl');
-const locationInfoLines = fs.readFileSync(locationInfoPath, 'utf-8').split('\n').filter(Boolean);
-const locationInfo = locationInfoLines.map(line => JSON.parse(line));
 
+// Directly use animal data as-is for upsert
 function enrichAnimal(animal: Record<string, unknown>) {
-  // Match by location string
-  const loc = animal.location || '';
-  const match = locationInfo.find(l => l.location === loc);
-  if (match) {
-    animal.origin = match.origin || animal.origin;
-    animal.latitude = match.latitude || animal.latitude;
-    animal.longitude = match.longitude || animal.longitude;
-  }
   return animal;
 }
 
