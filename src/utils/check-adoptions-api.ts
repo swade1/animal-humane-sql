@@ -74,7 +74,7 @@ async function main() {
 		let location = '';
 		try {
 			console.log(`[adoption-check-api] Checking dog ID ${dog.id}, Name: ${dog.name}, URL: ${embedUrl}`);
-			const res = await fetch(embedUrl, { timeout: 20000 });
+			const res = await fetch(embedUrl);
 			if (!res.ok) {
 				console.warn(`[adoption-check-api] Failed to fetch embed page for dog ID ${dog.id}: HTTP ${res.status}`);
 				continue;
