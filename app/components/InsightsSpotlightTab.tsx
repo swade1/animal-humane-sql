@@ -51,25 +51,28 @@ export default function InsightsSpotlightTab() {
       },
       staleTime: 1000 * 60 * 60,
     });
-  // Fetch adoption data grouped by date
+  // Fetch adoption events from dog_history grouped by date
   const { data, isLoading } = useQuery<DailyAdoptions[]>({
     queryKey: ["dailyAdoptions"],
     queryFn: async () => {
-      // Get all adopted dogs with adopted_date and name
-      const { data: dogs, error } = await supabase
-        .from("dogs")
-        .select("id, name, adopted_date")
-        .not("adopted_date", "is", null);
-      if (error || !dogs) return [];
-      // Group by MST date
+      // Get all adoption events from dog_history
+      const { data: events, error } = await supabase
+        .from("dog_history")
+        .select("dog_id, new_value, event_time, name")
+        .eq("event_type", "adoption")
+        .order("event_time", { ascending: true });
+      if (error || !events) return [];
+      // Group by date (YYYY-MM-DD in America/Denver)
       const timeZone = 'America/Denver';
       const map: Record<string, string[]> = {};
-      for (const dog of dogs) {
-        if (!dog.adopted_date) continue;
-        // adopted_date is already a date in MST, so use as-is for grouping
-        const dateStr = dog.adopted_date;
+      for (const event of events) {
+        const eventDate = event.event_time ? new Date(event.event_time) : null;
+        if (!eventDate) continue;
+        // Convert to MST date string (YYYY-MM-DD)
+        const dateStr = eventDate.toLocaleDateString('en-CA', { timeZone });
+        const dogName = event.name || event.new_value || `Dog ${event.dog_id}`;
         if (!map[dateStr]) map[dateStr] = [];
-        map[dateStr].push(dog.name);
+        map[dateStr].push(dogName);
       }
       // Convert to array and sort by date
       return Object.entries(map)
