@@ -56,7 +56,7 @@ export default function InsightsSpotlightTab() {
           // For each dog, prefer the dogs table record if present, otherwise use dog_history and lookup name
           ...Array.from(
             new Map<number, { adopted_date: string; age_group: string; id: number; name?: string }>([
-              ...dogs.map(d => [d.id, { adopted_date: d.adopted_date, age_group: d.age_group, id: d.id, name: d.name }]),
+              ...dogs.map(d => [d.id, { adopted_date: d.adopted_date, age_group: d.age_group, id: d.id, name: d.name }] as const),
               ...history
                 .filter(h => h.adopted_date)
                 .map(h => [h.dog_id, {
@@ -64,8 +64,8 @@ export default function InsightsSpotlightTab() {
                   age_group: dogIdToAgeGroup.get(h.dog_id) || null,
                   id: h.dog_id,
                   name: dogIdToName.get(h.dog_id) || h.name || undefined
-                }])
-            ]).values()
+                }] as const)
+            ] as ReadonlyArray<readonly [number, { adopted_date: string; age_group: string; id: number; name?: string }]>).values()
           )
         ];
 
