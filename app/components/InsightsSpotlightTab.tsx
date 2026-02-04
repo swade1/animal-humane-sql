@@ -22,27 +22,102 @@ type DailyAdoptions = {
 };
 
 export default function InsightsSpotlightTab() {
-    // Fetch weekly adoptions by age group
+    // Fetch weekly adoptions by age group (hybrid: dogs table + dog_history)
     const { data: weeklyData, isLoading: isLoadingWeekly } = useQuery<WeeklyAdoptions[]>({
-      queryKey: ["weeklyAdoptionsByAgeGroup"],
+      queryKey: ["weeklyAdoptionsByAgeGroupHybrid"],
       queryFn: async () => {
-        const { data: dogs, error } = await supabase
+
+        // Get all adopted dogs with adopted_date and age_group from dogs table
+        const { data: dogs, error: dogsError } = await supabase
           .from("dogs")
           .select("id, adopted_date, age_group")
           .not("adopted_date", "is", null);
-        if (error || !dogs) return [];
+        if (dogsError || !dogs) return [];
+
+        // Build a map of dog_id to age_group for lookup
+        const dogIdToAgeGroup = new Map<number, string>();
+        const dogIdToName = new Map<number, string>();
+        for (const d of dogs) {
+          dogIdToAgeGroup.set(d.id, d.age_group);
+          dogIdToName.set(d.id, d.name);
+        }
+        const adoptedDogIds = new Set(dogs.map(d => d.id));
+
+        // Get all adoption events from dog_history (status_change to adopted)
+        const { data: history, error: historyError } = await supabase
+          .from("dog_history")
+          .select("dog_id, adopted_date")
+          .eq("event_type", "status_change")
+          .eq("new_value", "adopted");
+        if (historyError || !history) return [];
+
+        // Merge: start with dogs table, then add any dog_history adoptions not in dogs table
+        const allAdoptions: { adopted_date: string; age_group: string; id: number }[] = [
+          // For each dog, prefer the dogs table record if present, otherwise use dog_history and lookup name
+          ...[...new Map([
+            ...dogs.map(d => [d.id, { adopted_date: d.adopted_date, age_group: d.age_group, id: d.id, name: d.name }]),
+            ...history
+              .filter(h => h.adopted_date)
+              .map(h => [h.dog_id, {
+                adopted_date: h.adopted_date,
+                age_group: dogIdToAgeGroup.get(h.dog_id) || null,
+                id: h.dog_id,
+                name: dogIdToName.get(h.dog_id) || h.name || undefined
+              }])
+          ]).values()]
+        ];
+
         // Group by week (Monday) and age group
         const weekMap: Record<string, { Puppies: number; Adults: number; Seniors: number }> = {};
-        for (const dog of dogs) {
-          if (!dog.adopted_date || !dog.age_group) continue;
-          const dateObj = new Date(dog.adopted_date);
-          // Get Monday of the week
-          const weekStart = startOfWeek(dateObj, { weekStartsOn: 1 });
-          const weekStr = formatDate(weekStart, 'MM/dd/yyyy');
+        for (const dog of allAdoptions) {
+          // Debug: log every dog considered for aggregation, including calculated weekStr
+          // Convert adopted_date to America/Denver timezone before grouping
+          const timeZone = 'America/Denver';
+          let localDateObj: Date | undefined = undefined;
+          if (dog.adopted_date) {
+            // Use date-fns-tz to convert to MST
+            try {
+              localDateObj = toZonedTime(new Date(dog.adopted_date), timeZone);
+            } catch {
+              localDateObj = new Date(dog.adopted_date.slice(0, 10));
+            }
+          }
+          const weekStart = localDateObj ? startOfWeek(localDateObj, { weekStartsOn: 1 }) : undefined;
+          const weekStr = weekStart ? formatDate(weekStart, 'MM/dd/yyyy') : undefined;
+          console.log('[WEEKLY DEBUG][ALL] Considering:', { id: dog.id, name: dog.name, age_group: dog.age_group, adopted_date: dog.adopted_date, weekStr });
+          if (!dog.adopted_date) continue;
+          if (!dog.age_group) {
+            // Warn if missing age_group for debugging
+            console.warn('Adopted dog missing age_group:', dog);
+            continue;
+          }
+          if (weekStr === '02/02/2026') {
+            // Use the local date string for adopted_date
+            const debugDateStr = localDateObj ? formatDate(localDateObj, 'yyyy-MM-dd') : dog.adopted_date;
+            console.log('[WEEKLY DEBUG] Counting dog for week of 2/2:', { id: dog.id, name: dog.name, age_group: dog.age_group, adopted_date: debugDateStr });
+          }
           if (!weekMap[weekStr]) weekMap[weekStr] = { Puppies: 0, Adults: 0, Seniors: 0 };
           if (dog.age_group === 'Puppy') weekMap[weekStr].Puppies++;
           else if (dog.age_group === 'Adult') weekMap[weekStr].Adults++;
           else if (dog.age_group === 'Senior') weekMap[weekStr].Seniors++;
+        }
+        // After aggregation, log the full list of dogs counted for week of 2/2
+        if (weekMap['02/02/2026']) {
+          const countedAdults = allAdoptions.filter(dog => {
+            const timeZone = 'America/Denver';
+            let localDateObj: Date | undefined = undefined;
+            if (dog.adopted_date) {
+              try {
+                localDateObj = toZonedTime(new Date(dog.adopted_date), timeZone);
+              } catch {
+                localDateObj = new Date(dog.adopted_date.slice(0, 10));
+              }
+            }
+            const weekStart = localDateObj ? startOfWeek(localDateObj, { weekStartsOn: 1 }) : undefined;
+            const weekStr = weekStart ? formatDate(weekStart, 'MM/dd/yyyy') : undefined;
+            return weekStr === '02/02/2026' && dog.age_group === 'Adult';
+          });
+          console.log('[WEEKLY DEBUG][ADULTS] Adults counted for week of 2/2:', countedAdults.map(d => ({ id: d.id, name: d.name })));
         }
         // Convert to array and sort by week
         return Object.entries(weekMap)

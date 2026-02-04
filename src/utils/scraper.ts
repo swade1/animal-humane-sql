@@ -242,7 +242,11 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]
       } else if (ag.includes('adult')) {
         ageGroup = 'Adult';
       } else {
-        ageGroup = ageGroupRaw || '';
+        ageGroup = '';
+      }
+      // Final strict enforcement: only allow 'Puppy', 'Adult', 'Senior'
+      if (!['Puppy', 'Adult', 'Senior'].includes(ageGroup)) {
+        ageGroup = '';
       }
       // All dogs are adoptable unless their status is 'adopted'
       let status = 'available';
