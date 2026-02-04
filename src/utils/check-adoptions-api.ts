@@ -45,6 +45,77 @@ async function getCurrentAvailableAnimalIds() {
 
 // Main adoption check logic
 async function main() {
+		// 4. Check and update location for all Available Soon dogs
+		// Available Soon: status is null and notes contains 'Available Soon'
+		const { data: soonDogs, error: soonError } = await supabase
+			.from('dogs')
+			.select('id, name, location, url, notes')
+			.is('status', null);
+		if (soonError) {
+			console.error('[adoption-check-api] Error fetching Available Soon dogs:', soonError);
+		} else if (soonDogs && Array.isArray(soonDogs)) {
+			const availableSoonDogs = soonDogs.filter(dog => typeof dog.notes === 'string' && dog.notes.includes('Available Soon'));
+			for (const dog of availableSoonDogs) {
+				const embedUrl = dog.url;
+				let location = '';
+				try {
+					console.log(`[adoption-check-api] Checking Available Soon dog ID ${dog.id}, Name: ${dog.name}, URL: ${embedUrl}`);
+					const res = await fetch(embedUrl);
+					if (!res.ok) {
+						console.warn(`[adoption-check-api] Failed to fetch embed page for Available Soon dog ID ${dog.id}: HTTP ${res.status}`);
+						continue;
+					}
+					const html = await res.text();
+					const $ = load(html);
+					const iframeAnimal = $('iframe-animal');
+					let raw = '';
+					if (iframeAnimal.length) {
+						const animalAttr = iframeAnimal.attr('animal') ?? '';
+						const colonAnimalAttr = iframeAnimal.attr(':animal') ?? '';
+						if (animalAttr) {
+							raw = animalAttr;
+						} else if (colonAnimalAttr) {
+							raw = he.decode(colonAnimalAttr);
+						}
+						if (raw) {
+							try {
+								const animalObj = JSON.parse(raw);
+								location = animalObj.location || '';
+							} catch {
+								console.warn(`[adoption-check-api] Could not parse animal JSON for Available Soon dog ID ${dog.id}:`, raw);
+							}
+						}
+					} else {
+						console.warn(`[adoption-check-api] <iframe-animal> not found for Available Soon dog ID ${dog.id}`);
+					}
+					// Always check for location change
+					if ((dog.location || '').trim() !== (location || '').trim()) {
+						await logDogHistory({
+							dogId: dog.id,
+							name: dog.name,
+							eventType: 'location_change',
+							oldValue: dog.location,
+							newValue: location,
+							notes: `Location updated for Available Soon dog by adoption-check-api`
+						});
+						// Update the dogs table location field
+						const { error: updateLocationErr } = await supabase
+							.from('dogs')
+							.update({ location })
+							.eq('id', dog.id);
+						if (updateLocationErr) {
+							console.error(`[adoption-check-api] Error updating location for Available Soon dog ID ${dog.id}:`, updateLocationErr);
+						} else {
+							console.log(`[adoption-check-api] Updated location for Available Soon dog ID ${dog.id} to '${location}'`);
+						}
+					} else {
+						console.log(`[adoption-check-api] No location change for Available Soon dog ID ${dog.id}`);
+					}
+				} catch (err) {
+					console.error(`[adoption-check-api] Error fetching/parsing embed page for Available Soon dog ID ${dog.id}:`, err);
+				}
+			}
+		}
 	// 1. Get all dogs with status 'available' from Supabase
 	const { data: availableDogs, error } = await supabase
 		.from('dogs')
