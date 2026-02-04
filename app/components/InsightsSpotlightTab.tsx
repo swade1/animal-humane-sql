@@ -30,7 +30,7 @@ export default function InsightsSpotlightTab() {
         // Get all adopted dogs with adopted_date and age_group from dogs table
         const { data: dogs, error: dogsError } = await supabase
           .from("dogs")
-          .select("id, adopted_date, age_group")
+          .select("id, adopted_date, age_group, name")
           .not("adopted_date", "is", null);
         if (dogsError || !dogs) return [];
 
