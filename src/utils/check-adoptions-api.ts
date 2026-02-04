@@ -122,7 +122,16 @@ async function main() {
 									newValue: location,
 									notes: `Location updated by adoption-check-api` 
 								});
-								// Optionally update the dogs table here if needed
+								// Update the dogs table location field
+								const { error: updateLocationErr } = await supabase
+									.from('dogs')
+									.update({ location })
+									.eq('id', dog.id);
+								if (updateLocationErr) {
+									console.error(`[adoption-check-api] Error updating location for dog ID ${dog.id}:`, updateLocationErr);
+								} else {
+									console.log(`[adoption-check-api] Updated location for dog ID ${dog.id} to '${location}'`);
+								}
 							}
 							if (!location || location.trim() === '') {
 								// Only log status_change and update DB if adopted
