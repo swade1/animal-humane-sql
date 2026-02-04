@@ -98,6 +98,7 @@ export default function InsightsSpotlightTab() {
             const debugDateStr = localDateObj ? formatDate(localDateObj, 'yyyy-MM-dd') : dog.adopted_date;
             console.log('[WEEKLY DEBUG] Counting dog for week of 2/2:', { id: dog.id, name: dog.name ?? "(unknown)", age_group: dog.age_group, adopted_date: debugDateStr });
           }
+          if (!weekStr) continue;
           if (!weekMap[weekStr]) weekMap[weekStr] = { Puppies: 0, Adults: 0, Seniors: 0 };
           if (dog.age_group === 'Puppy') weekMap[weekStr].Puppies++;
           else if (dog.age_group === 'Adult') weekMap[weekStr].Adults++;
