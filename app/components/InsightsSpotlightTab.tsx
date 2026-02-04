@@ -52,7 +52,7 @@ export default function InsightsSpotlightTab() {
         if (historyError || !history) return [];
 
         // Merge: start with dogs table, then add any dog_history adoptions not in dogs table
-        const allAdoptions: { adopted_date: string; age_group: string; id: number }[] = [
+        const allAdoptions: { adopted_date: string; age_group: string; id: number; name?: string }[] = [
           // For each dog, prefer the dogs table record if present, otherwise use dog_history and lookup name
           ...Array.from(
             new Map<number, { adopted_date: string; age_group: string; id: number; name?: string }>([
@@ -63,7 +63,7 @@ export default function InsightsSpotlightTab() {
                   adopted_date: h.adopted_date,
                   age_group: dogIdToAgeGroup.get(h.dog_id) || null,
                   id: h.dog_id,
-                  name: dogIdToName.get(h.dog_id) || h.name || undefined
+                    name: dogIdToName.get(h.dog_id) || undefined
                 }] as const)
             ] as ReadonlyArray<readonly [number, { adopted_date: string; age_group: string; id: number; name?: string }]>).values()
           )
@@ -86,7 +86,7 @@ export default function InsightsSpotlightTab() {
           }
           const weekStart = localDateObj ? startOfWeek(localDateObj, { weekStartsOn: 1 }) : undefined;
           const weekStr = weekStart ? formatDate(weekStart, 'MM/dd/yyyy') : undefined;
-          console.log('[WEEKLY DEBUG][ALL] Considering:', { id: dog.id, name: dog.name, age_group: dog.age_group, adopted_date: dog.adopted_date, weekStr });
+          console.log('[WEEKLY DEBUG][ALL] Considering:', { id: dog.id, name: dog.name ?? "(unknown)", age_group: dog.age_group, adopted_date: dog.adopted_date, weekStr });
           if (!dog.adopted_date) continue;
           if (!dog.age_group) {
             // Warn if missing age_group for debugging
@@ -96,7 +96,7 @@ export default function InsightsSpotlightTab() {
           if (weekStr === '02/02/2026') {
             // Use the local date string for adopted_date
             const debugDateStr = localDateObj ? formatDate(localDateObj, 'yyyy-MM-dd') : dog.adopted_date;
-            console.log('[WEEKLY DEBUG] Counting dog for week of 2/2:', { id: dog.id, name: dog.name, age_group: dog.age_group, adopted_date: debugDateStr });
+            console.log('[WEEKLY DEBUG] Counting dog for week of 2/2:', { id: dog.id, name: dog.name ?? "(unknown)", age_group: dog.age_group, adopted_date: debugDateStr });
           }
           if (!weekMap[weekStr]) weekMap[weekStr] = { Puppies: 0, Adults: 0, Seniors: 0 };
           if (dog.age_group === 'Puppy') weekMap[weekStr].Puppies++;
