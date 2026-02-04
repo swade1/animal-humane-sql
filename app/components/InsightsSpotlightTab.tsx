@@ -54,17 +54,19 @@ export default function InsightsSpotlightTab() {
         // Merge: start with dogs table, then add any dog_history adoptions not in dogs table
         const allAdoptions: { adopted_date: string; age_group: string; id: number }[] = [
           // For each dog, prefer the dogs table record if present, otherwise use dog_history and lookup name
-          ...[...new Map([
-            ...dogs.map(d => [d.id, { adopted_date: d.adopted_date, age_group: d.age_group, id: d.id, name: d.name }]),
-            ...history
-              .filter(h => h.adopted_date)
-              .map(h => [h.dog_id, {
-                adopted_date: h.adopted_date,
-                age_group: dogIdToAgeGroup.get(h.dog_id) || null,
-                id: h.dog_id,
-                name: dogIdToName.get(h.dog_id) || h.name || undefined
-              }])
-          ]).values()]
+          ...Array.from(
+            new Map<number, { adopted_date: string; age_group: string; id: number; name?: string }>([
+              ...dogs.map(d => [d.id, { adopted_date: d.adopted_date, age_group: d.age_group, id: d.id, name: d.name }]),
+              ...history
+                .filter(h => h.adopted_date)
+                .map(h => [h.dog_id, {
+                  adopted_date: h.adopted_date,
+                  age_group: dogIdToAgeGroup.get(h.dog_id) || null,
+                  id: h.dog_id,
+                  name: dogIdToName.get(h.dog_id) || h.name || undefined
+                }])
+            ]).values()
+          )
         ];
 
         // Group by week (Monday) and age group
