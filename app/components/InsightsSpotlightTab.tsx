@@ -51,28 +51,41 @@ export default function InsightsSpotlightTab() {
       },
       staleTime: 1000 * 60 * 60,
     });
-  // Fetch adoption events from dog_history grouped by date
+  // Fetch adoption data from dogs table grouped by adopted_date
   const { data, isLoading } = useQuery<DailyAdoptions[]>({
     queryKey: ["dailyAdoptions"],
     queryFn: async () => {
-      // Get all adoption events from dog_history
-      const { data: events, error } = await supabase
+      // Get all adopted dogs with adopted_date and name
+      const { data: dogs, error: dogsError } = await supabase
+        .from("dogs")
+        .select("id, name, adopted_date")
+        .not("adopted_date", "is", null);
+      if (dogsError || !dogs) return [];
+
+      // Build a set of adopted dog IDs from the dogs table
+      const adoptedDogIds = new Set(dogs.map(d => d.id));
+
+      // Get all adoption events from dog_history (status_change to adopted)
+      const { data: history, error: historyError } = await supabase
         .from("dog_history")
-        .select("dog_id, new_value, event_time, name")
-        .eq("event_type", "adoption")
-        .order("event_time", { ascending: true });
-      if (error || !events) return [];
-      // Group by date (YYYY-MM-DD in America/Denver)
-      const timeZone = 'America/Denver';
+        .select("dog_id, name, adopted_date")
+        .eq("event_type", "status_change")
+        .eq("new_value", "adopted");
+      if (historyError || !history) return [];
+
+      // Merge: start with dogs table, then add any dog_history adoptions not in dogs table
+      const allAdoptions: { name: string; adopted_date: string; id: number }[] = [
+        ...dogs.map(d => ({ name: d.name, adopted_date: d.adopted_date, id: d.id })),
+        ...history.filter(h => h.adopted_date && !adoptedDogIds.has(h.dog_id)).map(h => ({ name: h.name, adopted_date: h.adopted_date, id: h.dog_id }))
+      ];
+
+      // Group by date (YYYY-MM-DD)
       const map: Record<string, string[]> = {};
-      for (const event of events) {
-        const eventDate = event.event_time ? new Date(event.event_time) : null;
-        if (!eventDate) continue;
-        // Convert to MST date string (YYYY-MM-DD)
-        const dateStr = eventDate.toLocaleDateString('en-CA', { timeZone });
-        const dogName = event.name || event.new_value || `Dog ${event.dog_id}`;
+      for (const dog of allAdoptions) {
+        if (!dog.adopted_date) continue;
+        const dateStr = dog.adopted_date.slice(0, 10);
         if (!map[dateStr]) map[dateStr] = [];
-        map[dateStr].push(dogName);
+        map[dateStr].push(dog.name);
       }
       // Convert to array and sort by date
       return Object.entries(map)
