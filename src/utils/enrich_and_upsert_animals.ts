@@ -49,22 +49,28 @@ export async function enrichAndUpsertAnimals() {
   const ids = enriched.map(a => a.nid).filter(Boolean);
   const { data: existingDogs } = await supabase
     .from('dogs')
-    .select('id, origin')
+    .select('id, origin, latitude, longitude')
     .in('id', ids);
-  const originMap = new Map();
+  const manualMap = new Map();
   if (existingDogs && Array.isArray(existingDogs)) {
     for (const dog of existingDogs) {
-      originMap.set(dog.id, dog.origin);
+      manualMap.set(dog.id, {
+        origin: dog.origin,
+        latitude: dog.latitude,
+        longitude: dog.longitude
+      });
     }
   }
   const upsertRows = enriched.map(a => {
-    const manualOrigin = originMap.get(a.nid);
+    const manual = manualMap.get(a.nid) || {};
     return {
       id: a.nid,
       name: a.name,
       location: a.location,
-      // Only set origin if not already present in DB
-      origin: manualOrigin !== undefined ? manualOrigin : (a.origin || null),
+      // Only set origin, latitude, longitude if not already present in DB
+      origin: manual.origin !== undefined ? manual.origin : (a.origin || null),
+      latitude: manual.latitude !== undefined ? manual.latitude : (a.latitude || null),
+      longitude: manual.longitude !== undefined ? manual.longitude : (a.longitude || null),
       status: a.status || 'available',
       url: a.public_url,
       intake_date: a.intake_date || null,
@@ -75,8 +81,6 @@ export async function enrichAndUpsertAnimals() {
       weight_group: a.weight_group,
       color: a.primary_color + (a.secondary_color ? ` and ${a.secondary_color}` : ''),
       notes: a.kennel_description || '',
-      latitude: a.latitude || null,
-      longitude: a.longitude || null,
       // Add more fields as needed
       updated_at: new Date().toISOString(),
       scraped: true

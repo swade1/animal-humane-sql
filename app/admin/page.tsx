@@ -198,7 +198,7 @@ function AdminPage() {
         </div>
         <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 18, fontWeight: 500 }}>
           {[...dogs]
-            .filter(dog => dog.status === 'available')
+            .filter(dog => dog.status === 'available' || dog.status == null)
             .filter(dog => {
               if (!letterGroup) return true;
               const first = dog.name[0]?.toUpperCase() || '';
