@@ -2,7 +2,7 @@
 process.on('uncaughtException', (err) => {
   console.error('[GLOBAL ERROR] Uncaught Exception:', err);
 });
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason) => {
   console.error('[GLOBAL ERROR] Unhandled Rejection:', reason);
 });
 

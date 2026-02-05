@@ -23,7 +23,7 @@ function enrichAnimal(animal: Record<string, unknown>): Record<string, unknown> 
     return val;
   };
   // Strict normalization for age_group
-  const normalizeAgeGroup = (val: any) => {
+  const normalizeAgeGroup = (val: string | { name?: string } | null) => {
     if (!val) return null;
     const name = typeof val === 'object' && 'name' in val ? val.name : val;
     if (!name) return null;
@@ -47,7 +47,7 @@ export async function enrichAndUpsertAnimals() {
   // Upsert into Supabase (by id/nid)
   // Fetch current origins from Supabase to preserve manual edits
   const ids = enriched.map(a => a.nid).filter(Boolean);
-  const { data: existingDogs, error: fetchError } = await supabase
+  const { data: existingDogs } = await supabase
     .from('dogs')
     .select('id, origin')
     .in('id', ids);
