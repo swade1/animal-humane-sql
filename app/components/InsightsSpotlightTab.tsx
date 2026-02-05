@@ -56,15 +56,15 @@ export default function InsightsSpotlightTab() {
           // For each dog, prefer the dogs table record if present, otherwise use dog_history and lookup name
           ...Array.from(
             new Map<number, { adopted_date: string; age_group: string; id: number; name?: string }>([
-              ...dogs.map(d => [d.id, { adopted_date: d.adopted_date, age_group: d.age_group, id: d.id, name: d.name }] as const),
               ...history
                 .filter(h => h.adopted_date)
                 .map(h => [h.dog_id, {
                   adopted_date: h.adopted_date,
                   age_group: dogIdToAgeGroup.get(h.dog_id) || null,
                   id: h.dog_id,
-                    name: dogIdToName.get(h.dog_id) || undefined
-                }] as const)
+                  name: dogIdToName.get(h.dog_id) || undefined
+                }] as const),
+              ...dogs.map(d => [d.id, { adopted_date: d.adopted_date, age_group: d.age_group, id: d.id, name: d.name }] as const),
             ] as ReadonlyArray<readonly [number, { adopted_date: string; age_group: string; id: number; name?: string }]>).values()
           )
         ];
@@ -72,9 +72,23 @@ export default function InsightsSpotlightTab() {
         // Group by week (Monday) and age group
         const weekMap: Record<string, { Puppies: number; Adults: number; Seniors: number }> = {};
         for (const dog of allAdoptions) {
-          // Extract the date-only portion from adopted_date (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS)
-          const dateOnly = dog.adopted_date ? dog.adopted_date.slice(0, 10) : null;
-          // Parse as a plain date (no timezone conversion needed for date-only strings)
+          let dateOnly: string | null = null;
+          
+          if (dog.adopted_date) {
+            // Check if this is a date-only string (YYYY-MM-DD) or a timestamp
+            // Date-only: exactly 10 chars, no time component
+            if (dog.adopted_date.length === 10 && dog.adopted_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+              // Already a date in MST, just use it
+              dateOnly = dog.adopted_date;
+            } else {
+              // This is a UTC timestamp (with 'T' or space separator), convert to Denver timezone first
+              const timeZone = 'America/Denver';
+              const denverDate = toZonedTime(new Date(dog.adopted_date), timeZone);
+              dateOnly = formatTz(denverDate, 'yyyy-MM-dd', { timeZone });
+            }
+          }
+          
+          // Now parse the date as a simple date for week calculation
           const localDateObj = dateOnly ? new Date(dateOnly + 'T12:00:00') : undefined;
           const weekStart = localDateObj ? startOfWeek(localDateObj, { weekStartsOn: 1 }) : undefined;
           const weekStr = weekStart ? formatDate(weekStart, 'MM/dd/yyyy') : undefined;
@@ -85,19 +99,33 @@ export default function InsightsSpotlightTab() {
             console.warn('Adopted dog missing age_group:', dog);
             continue;
           }
+          if (!weekStr) continue;
           if (weekStr === '02/02/2026') {
             console.log('[WEEKLY DEBUG] Counting dog for week of 2/2:', { id: dog.id, name: dog.name ?? "(unknown)", age_group: dog.age_group, adopted_date: dog.adopted_date, dateOnly });
+          } else if (weekStr === '01/26/2026') {
+            console.log('[WEEKLY DEBUG] Counting dog for week of 1/26:', { id: dog.id, name: dog.name ?? "(unknown)", age_group: dog.age_group, adopted_date: dog.adopted_date, dateOnly });
           }
-          if (!weekStr) continue;
           if (!weekMap[weekStr]) weekMap[weekStr] = { Puppies: 0, Adults: 0, Seniors: 0 };
           if (dog.age_group === 'Puppy') weekMap[weekStr].Puppies++;
           else if (dog.age_group === 'Adult') weekMap[weekStr].Adults++;
           else if (dog.age_group === 'Senior') weekMap[weekStr].Seniors++;
         }
         // After aggregation, log the full list of dogs counted for week of 2/2
+        console.log('[WEEKLY DEBUG] Final week counts:', weekMap);
         if (weekMap['02/02/2026']) {
           const countedAdults = allAdoptions.filter(dog => {
-            const dateOnly = dog.adopted_date ? dog.adopted_date.slice(0, 10) : null;
+            let dateOnly: string | null = null;
+            
+            if (dog.adopted_date) {
+              if (dog.adopted_date.length === 10 && dog.adopted_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                dateOnly = dog.adopted_date;
+              } else {
+                const timeZone = 'America/Denver';
+                const denverDate = toZonedTime(new Date(dog.adopted_date), timeZone);
+                dateOnly = formatTz(denverDate, 'yyyy-MM-dd', { timeZone });
+              }
+            }
+            
             const localDateObj = dateOnly ? new Date(dateOnly + 'T12:00:00') : undefined;
             const weekStart = localDateObj ? startOfWeek(localDateObj, { weekStartsOn: 1 }) : undefined;
             const weekStr = weekStart ? formatDate(weekStart, 'MM/dd/yyyy') : undefined;
