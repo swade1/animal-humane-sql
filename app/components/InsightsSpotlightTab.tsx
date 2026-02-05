@@ -72,21 +72,13 @@ export default function InsightsSpotlightTab() {
         // Group by week (Monday) and age group
         const weekMap: Record<string, { Puppies: number; Adults: number; Seniors: number }> = {};
         for (const dog of allAdoptions) {
-          // Debug: log every dog considered for aggregation, including calculated weekStr
-          // Convert adopted_date to America/Denver timezone before grouping
-          const timeZone = 'America/Denver';
-          let localDateObj: Date | undefined = undefined;
-          if (dog.adopted_date) {
-            // Use date-fns-tz to convert to MST
-            try {
-              localDateObj = toZonedTime(new Date(dog.adopted_date), timeZone);
-            } catch {
-              localDateObj = new Date(dog.adopted_date.slice(0, 10));
-            }
-          }
+          // Extract the date-only portion from adopted_date (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS)
+          const dateOnly = dog.adopted_date ? dog.adopted_date.slice(0, 10) : null;
+          // Parse as a plain date (no timezone conversion needed for date-only strings)
+          const localDateObj = dateOnly ? new Date(dateOnly + 'T12:00:00') : undefined;
           const weekStart = localDateObj ? startOfWeek(localDateObj, { weekStartsOn: 1 }) : undefined;
           const weekStr = weekStart ? formatDate(weekStart, 'MM/dd/yyyy') : undefined;
-          console.log('[WEEKLY DEBUG][ALL] Considering:', { id: dog.id, name: dog.name ?? "(unknown)", age_group: dog.age_group, adopted_date: dog.adopted_date, weekStr });
+          console.log('[WEEKLY DEBUG][ALL] Considering:', { id: dog.id, name: dog.name ?? "(unknown)", age_group: dog.age_group, adopted_date: dog.adopted_date, dateOnly, weekStr });
           if (!dog.adopted_date) continue;
           if (!dog.age_group) {
             // Warn if missing age_group for debugging
@@ -94,9 +86,7 @@ export default function InsightsSpotlightTab() {
             continue;
           }
           if (weekStr === '02/02/2026') {
-            // Use the local date string for adopted_date
-            const debugDateStr = localDateObj ? formatDate(localDateObj, 'yyyy-MM-dd') : dog.adopted_date;
-            console.log('[WEEKLY DEBUG] Counting dog for week of 2/2:', { id: dog.id, name: dog.name ?? "(unknown)", age_group: dog.age_group, adopted_date: debugDateStr });
+            console.log('[WEEKLY DEBUG] Counting dog for week of 2/2:', { id: dog.id, name: dog.name ?? "(unknown)", age_group: dog.age_group, adopted_date: dog.adopted_date, dateOnly });
           }
           if (!weekStr) continue;
           if (!weekMap[weekStr]) weekMap[weekStr] = { Puppies: 0, Adults: 0, Seniors: 0 };
@@ -107,15 +97,8 @@ export default function InsightsSpotlightTab() {
         // After aggregation, log the full list of dogs counted for week of 2/2
         if (weekMap['02/02/2026']) {
           const countedAdults = allAdoptions.filter(dog => {
-            const timeZone = 'America/Denver';
-            let localDateObj: Date | undefined = undefined;
-            if (dog.adopted_date) {
-              try {
-                localDateObj = toZonedTime(new Date(dog.adopted_date), timeZone);
-              } catch {
-                localDateObj = new Date(dog.adopted_date.slice(0, 10));
-              }
-            }
+            const dateOnly = dog.adopted_date ? dog.adopted_date.slice(0, 10) : null;
+            const localDateObj = dateOnly ? new Date(dateOnly + 'T12:00:00') : undefined;
             const weekStart = localDateObj ? startOfWeek(localDateObj, { weekStartsOn: 1 }) : undefined;
             const weekStr = weekStart ? formatDate(weekStart, 'MM/dd/yyyy') : undefined;
             return weekStr === '02/02/2026' && dog.age_group === 'Adult';
