@@ -37,7 +37,7 @@ function enrichAnimal(animal: Record<string, unknown>): Record<string, unknown> 
     ...animal,
     intake_date: convertTimestamp(animal.intake_date),
     birthday: convertTimestamp(animal.birthday),
-    age_group: normalizeAgeGroup(animal.age_group),
+    age_group: normalizeAgeGroup(animal.age_group as string | { name?: string } | null),
   };
 }
 
