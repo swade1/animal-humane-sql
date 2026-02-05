@@ -22,10 +22,22 @@ function enrichAnimal(animal: Record<string, unknown>): Record<string, unknown> 
     }
     return val;
   };
+  // Strict normalization for age_group
+  const normalizeAgeGroup = (val: any) => {
+    if (!val) return null;
+    const name = typeof val === 'object' && 'name' in val ? val.name : val;
+    if (!name) return null;
+    const n = String(name).toLowerCase();
+    if (n.includes('puppy')) return 'Puppy';
+    if (n.includes('senior')) return 'Senior';
+    if (n.includes('adult')) return 'Adult';
+    return null;
+  };
   return {
     ...animal,
     intake_date: convertTimestamp(animal.intake_date),
     birthday: convertTimestamp(animal.birthday),
+    age_group: normalizeAgeGroup(animal.age_group),
   };
 }
 
@@ -33,27 +45,43 @@ export async function enrichAndUpsertAnimals() {
   const animals: Record<string, unknown>[] = await fetchAllAnimals();
   const enriched: Record<string, unknown>[] = animals.map(enrichAnimal);
   // Upsert into Supabase (by id/nid)
-  const upsertRows = enriched.map(a => ({
-    id: a.nid,
-    name: a.name,
-    location: a.location,
-    origin: a.origin || null,
-    status: a.status || 'available',
-    url: a.public_url,
-    intake_date: a.intake_date || null,
-    birthdate: a.birthday || null,
-    age_group: (a.age_group && typeof a.age_group === 'object' && 'name' in a.age_group) ? (a.age_group as { name?: string }).name ?? null : (a.age_group ?? null),
-    breed: a.breed,
-    secondary_breed: a.secondary_breed,
-    weight_group: a.weight_group,
-    color: a.primary_color + (a.secondary_color ? ` and ${a.secondary_color}` : ''),
-    notes: a.kennel_description || '',
-    latitude: a.latitude || null,
-    longitude: a.longitude || null,
-    // Add more fields as needed
-    updated_at: new Date().toISOString(),
-    scraped: true
-  }));
+  // Fetch current origins from Supabase to preserve manual edits
+  const ids = enriched.map(a => a.nid).filter(Boolean);
+  const { data: existingDogs, error: fetchError } = await supabase
+    .from('dogs')
+    .select('id, origin')
+    .in('id', ids);
+  const originMap = new Map();
+  if (existingDogs && Array.isArray(existingDogs)) {
+    for (const dog of existingDogs) {
+      originMap.set(dog.id, dog.origin);
+    }
+  }
+  const upsertRows = enriched.map(a => {
+    const manualOrigin = originMap.get(a.nid);
+    return {
+      id: a.nid,
+      name: a.name,
+      location: a.location,
+      // Only set origin if not already present in DB
+      origin: manualOrigin !== undefined ? manualOrigin : (a.origin || null),
+      status: a.status || 'available',
+      url: a.public_url,
+      intake_date: a.intake_date || null,
+      birthdate: a.birthday || null,
+      age_group: a.age_group ?? null,
+      breed: a.breed,
+      secondary_breed: a.secondary_breed,
+      weight_group: a.weight_group,
+      color: a.primary_color + (a.secondary_color ? ` and ${a.secondary_color}` : ''),
+      notes: a.kennel_description || '',
+      latitude: a.latitude || null,
+      longitude: a.longitude || null,
+      // Add more fields as needed
+      updated_at: new Date().toISOString(),
+      scraped: true
+    };
+  });
   console.log('[enrich_and_upsert_animals] Upsert rows:', upsertRows);
   const { error } = await supabase.from('dogs').upsert(upsertRows, { onConflict: 'id' });
   if (error) {
