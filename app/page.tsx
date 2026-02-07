@@ -15,6 +15,7 @@ import OwnerSurrenderHeatmap from "./components/OwnerSurrenderHeatmap";
 import LengthOfStayHistogram from "./components/LengthOfStayHistogram";
 import LengthOfStayByAgeGroupChart from "./components/LengthOfStayByAgeGroupChart";
 import AverageLengthOfStayByAgeGroupChart from "./components/AverageLengthOfStayByAgeGroupChart";
+import PasswordProtection from "./components/PasswordProtection";
 
 const tabLabels = [
   "Overview",
@@ -28,7 +29,8 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState(0);
 
   return (
-    <div className="min-h-screen bg-white">
+    <PasswordProtection>
+      <div className="min-h-screen bg-white">
       <div className="p-5">
         <div style={{ display: 'flex', alignItems: 'center', marginTop: '60px', marginBottom: '30px', marginLeft: '20px' }}>
           <PawPrint className="text-orange-500" size={28} style={{ marginLeft: '10px', marginTop: '-6px', transform: 'rotate(-90deg)', position: 'relative' }} />
@@ -89,5 +91,6 @@ export default function HomePage() {
         </div>
       </div>
     </div>
+    </PasswordProtection>
   );
 }
