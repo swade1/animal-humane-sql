@@ -82,7 +82,7 @@ export default function RecentPupdatesTab() {
       // Get all dog_history status_change events from adopted to available
       const { data: history, error: errorHistory } = await supabase
         .from('dog_history')
-        .select('dog_id, old_value, new_value, created_at')
+        .select('dog_id, old_value, new_value, event_timestamp')
         .eq('event_type', 'status_change')
         .eq('old_value', 'adopted')
         .eq('new_value', 'available');
@@ -94,12 +94,12 @@ export default function RecentPupdatesTab() {
       // Build a map of dog_id to most recent status_change event
       const recentReturnMap = new Map();
       for (const h of history) {
-        if (!h.dog_id || !h.created_at) continue;
-        let createdAtStr = h.created_at;
-        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(createdAtStr)) {
-          createdAtStr += 'Z';
+        if (!h.dog_id || !h.event_timestamp) continue;
+        let eventTimestampStr = h.event_timestamp;
+        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(eventTimestampStr)) {
+          eventTimestampStr += 'Z';
         }
-        const eventDate = parseISO(createdAtStr);
+        const eventDate = parseISO(eventTimestampStr);
         const eventMST = toZonedTime(eventDate, mstTimeZone);
         if (!recentReturnMap.has(h.dog_id) || eventMST > recentReturnMap.get(h.dog_id)) {
           recentReturnMap.set(h.dog_id, eventMST);
@@ -147,12 +147,12 @@ export default function RecentPupdatesTab() {
       // Get dogs that changed from NULL to available today
       const { data: statusChanges, error: statusError } = await supabase
         .from('dog_history')
-        .select('dog_id, timestamp')
+        .select('dog_id, event_timestamp')
         .eq('event_type', 'status_change')
         .eq('old_value', 'NULL')
         .eq('new_value', 'available')
-        .gte('timestamp', startOfDayMST_Date.toISOString())
-        .lte('timestamp', endOfDayMST_Date.toISOString());
+        .gte('event_timestamp', startOfDayMST_Date.toISOString())
+        .lte('event_timestamp', endOfDayMST_Date.toISOString());
       
       console.log('[NEW DOGS] Status change query result:', { statusChanges, statusError });
       
