@@ -47,27 +47,29 @@ export default function HomePage() {
               Animal Humane New Mexico: Pet Status and Updates
             </h1>
           </div>
-          <button
-            onClick={handleLogout}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#2563eb',
-              color: 'white',
-              border: 'none',
-              borderRadius: '0.375rem',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              fontWeight: '500'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#1d4ed8';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#2563eb';
-            }}
-          >
-            Logout
-          </button>
+          {activeTab === 0 && (
+            <button
+              onClick={handleLogout}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#2563eb',
+                color: 'white',
+                border: 'none',
+                borderRadius: '0.375rem',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                fontWeight: '500'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#1d4ed8';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#2563eb';
+              }}
+            >
+              Logout
+            </button>
+          )}
         </div>
         <div className="p-5">
           <div style={{ marginLeft: '20px', marginTop: 0, marginBottom: 0 }}>
