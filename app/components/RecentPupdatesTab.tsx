@@ -131,7 +131,7 @@ export default function RecentPupdatesTab() {
       // New dogs: available today and (created_at is today OR status changed from NULL to available today)
       const mstTimeZone = 'America/Denver';
       const todayMST = toZonedTime(new Date(), mstTimeZone);
-      const todayStr = format(todayMST, 'yyyy-MM-dd', { timeZone: mstTimeZone });
+      const todayStr = format(todayMST, 'yyyy-MM-dd');
       
       // Get dogs that changed from NULL to available today
       const { data: statusChanges } = await supabase
