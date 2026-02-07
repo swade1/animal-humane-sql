@@ -41,7 +41,6 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
             longitude: '',
           }));
         }
-        // eslint-disable-next-line
       }, []);
     // Map of origin to lat/lng
     const originLatLng: Record<string, { latitude: number; longitude: number }> = {
@@ -121,6 +120,10 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
     // Remove pre-population of ID with 0
     if (initialForm.id === 0) {
       initialForm.id = undefined;
+    }
+    // Prepopulate status as blank/null
+    if (initialForm.status === undefined || initialForm.status === 'available') {
+      initialForm.status = '';
     }
     return initialForm;
   });
@@ -301,129 +304,130 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
       <div style={{ color: '#b00', fontWeight: 600, minHeight: 24 }}>
         {error && <span>{error}</span>}
       </div>
+      {/* Custom field order: ID, URL, AHNM-A, Origin, Latitude, Longitude, Status, rest */}
+      {/* ID field */}
+      <label style={{ textTransform: 'capitalize', fontWeight: 600, marginBottom: 6 }}>
+        ID:
+        <input
+          name="id"
+          type="text"
+          value={form.id == null ? '' : form.id}
+          onChange={handleChange}
+          placeholder="Enter unique ID (required)"
+          style={{ width: '100%', fontSize: 17, borderRadius: 6, border: '1px solid #bcd', padding: 10, marginTop: 6, background: '#fff' }}
+        />
+        <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>
+          Enter the unique identifier number (required)
+        </div>
+      </label>
+      {/* URL field */}
+      <label style={{ textTransform: 'capitalize', fontWeight: 600, marginBottom: 6 }}>
+        URL:
+        <input
+          name="url"
+          type="text"
+          value={form.url == null ? '' : form.url}
+          onChange={handleChange}
+          placeholder="Enter dog profile URL"
+          style={{ width: '100%', fontSize: 17, borderRadius: 6, border: '1px solid #bcd', padding: 10, marginTop: 6, background: '#fff' }}
+        />
+        <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>
+          ShelterLuv embed URL
+        </div>
+      </label>
+      {/* AHNM-A field */}
+      <label style={{ fontWeight: 600, marginBottom: 6 }}>
+        AHNM-A Number:
+        <input
+          name="AHNM-A"
+          type="text"
+          value={form['AHNM-A'] == null ? '' : form['AHNM-A']}
+          onChange={handleChange}
+          placeholder="e.g., 83495"
+          style={{ width: '100%', fontSize: 17, borderRadius: 6, border: '1px solid #bcd', padding: 10, marginTop: 6, background: '#fff' }}
+        />
+        <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>
+          The unique identifier number (e.g., 83495 for AHNM-A-83495)
+        </div>
+      </label>
+      {/* Origin field */}
+      <div style={{ marginBottom: 12 }}>
+        <label style={{ textTransform: 'capitalize', fontWeight: 600, marginBottom: 6 }}>
+          Origin:
+          <select
+            name="origin"
+            value={form.origin && originLatLng[form.origin] ? form.origin : form.origin || ''}
+            onChange={e => {
+              if (e.target.value === 'custom') {
+                setForm(prev => ({ ...prev, origin: '', latitude: '', longitude: '' }));
+              } else {
+                handleChange(e);
+              }
+            }}
+            style={{ width: '100%', fontSize: 17, borderRadius: 6, border: '1px solid #bcd', padding: 10, marginTop: 6, background: '#fff' }}
+          >
+            <option value="">Select origin...</option>
+            {Object.entries(originLatLng).map(([origin, coords]) => (
+              <option key={origin} value={origin}>{origin}</option>
+            ))}
+            <option value="custom">Other (add new origin)</option>
+          </select>
+          {(!form.origin || (form.origin && !originLatLng[form.origin])) && (
+            <input
+              type="text"
+              name="origin"
+              placeholder="Enter new origin (e.g. Stray, Owner Surrender, Unknown)"
+              value={form.origin || ''}
+              onChange={handleChange}
+              style={{ width: '100%', fontSize: 17, borderRadius: 6, border: '1px solid #bcd', padding: 10, marginTop: 8, background: '#fff' }}
+            />
+          )}
+        </label>
+      </div>
+      {/* Latitude field */}
+      <label style={{ textTransform: 'capitalize', fontWeight: 600, marginBottom: 6 }}>
+        Latitude:
+        <input
+          name="latitude"
+          type="text"
+          value={form.latitude == null ? '' : form.latitude}
+          onChange={handleChange}
+          placeholder="Enter latitude (optional)"
+          style={{ width: '100%', fontSize: 17, borderRadius: 6, border: '1px solid #bcd', padding: 10, marginTop: 6, background: '#fff' }}
+        />
+        <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>Optional</div>
+      </label>
+      {/* Longitude field */}
+      <label style={{ textTransform: 'capitalize', fontWeight: 600, marginBottom: 6 }}>
+        Longitude:
+        <input
+          name="longitude"
+          type="text"
+          value={form.longitude == null ? '' : form.longitude}
+          onChange={handleChange}
+          placeholder="Enter longitude (optional)"
+          style={{ width: '100%', fontSize: 17, borderRadius: 6, border: '1px solid #bcd', padding: 10, marginTop: 6, background: '#fff' }}
+        />
+        <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>Optional</div>
+      </label>
+      {/* Status field */}
+      <label style={{ textTransform: 'capitalize', fontWeight: 600, marginBottom: 6 }}>
+        Status:
+        <input
+          name="status"
+          type="text"
+          value={form.status == null ? '' : form.status}
+          onChange={handleChange}
+          placeholder="e.g. available, adopted, etc. (optional)"
+          style={{ width: '100%', fontSize: 17, borderRadius: 6, border: '1px solid #bcd', padding: 10, marginTop: 6, background: '#fff' }}
+        />
+        <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>
+          Leave blank for dogs not yet on the website (NULL in database)
+        </div>
+      </label>
+      {/* Render remaining fields */}
       {Object.entries(form).map(([key, value]) => {
-        if (key === 'id') {
-          return (
-            <label key={key} style={{ textTransform: 'capitalize', fontWeight: 600, marginBottom: 6 }}>
-              ID:
-              <input
-                name={key}
-                type="text"
-                value={value == null ? '' : value}
-                onChange={handleChange}
-                placeholder="Enter unique ID (required)"
-                style={{ width: '100%', fontSize: 17, borderRadius: 6, border: '1px solid #bcd', padding: 10, marginTop: 6, background: '#fff' }}
-              />
-              <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>
-                Enter the unique identifier number (required)
-              </div>
-            </label>
-          );
-        }
-        // Custom field order
-        if (key === 'url') {
-          return (
-            <label key={key} style={{ textTransform: 'capitalize', fontWeight: 600, marginBottom: 6 }}>
-              URL:
-              <input
-                name="url"
-                type="text"
-                value={form.url == null ? '' : form.url}
-                onChange={handleChange}
-                placeholder="Enter dog profile URL"
-                style={{ width: '100%', fontSize: 17, borderRadius: 6, border: '1px solid #bcd', padding: 10, marginTop: 6, background: '#fff' }}
-              />
-              <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>
-                ShelterLuv embed URL
-              </div>
-            </label>
-          );
-        }
-        if (key === 'AHNM-A') {
-          return (
-            <label key={key} style={{ fontWeight: 600, marginBottom: 6 }}>
-              AHNM-A Number:
-              <input
-                name="AHNM-A"
-                type="text"
-                value={value == null ? '' : value}
-                onChange={handleChange}
-                placeholder="e.g., 83495"
-                style={{ width: '100%', fontSize: 17, borderRadius: 6, border: '1px solid #bcd', padding: 10, marginTop: 6, background: '#fff' }}
-              />
-              <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>
-                The unique identifier number (e.g., 83495 for AHNM-A-83495)
-              </div>
-            </label>
-          );
-        }
-        if (key === 'origin') {
-          const isCustomOrigin = value && !originLatLng[value];
-          return (
-            <div key={key} style={{ marginBottom: 12 }}>
-              <label style={{ textTransform: 'capitalize', fontWeight: 600, marginBottom: 6 }}>
-                Origin:
-                <select
-                  name="origin"
-                  value={isCustomOrigin ? 'custom' : value || ''}
-                  onChange={e => {
-                    if (e.target.value === 'custom') {
-                      setForm(prev => ({ ...prev, origin: '', latitude: '', longitude: '' }));
-                    } else {
-                      handleChange(e);
-                    }
-                  }}
-                  style={{ width: '100%', fontSize: 17, borderRadius: 6, border: '1px solid #bcd', padding: 10, marginTop: 6, background: '#fff' }}
-                >
-                  <option value="">Select origin...</option>
-                  {Object.entries(originLatLng).map(([origin, coords]) => (
-                    <option key={origin} value={origin}>{origin}</option>
-                  ))}
-                  <option value="custom">Other (add new origin)</option>
-                </select>
-                {(!value || isCustomOrigin) && (
-                  <input
-                    type="text"
-                    name="origin"
-                    placeholder="Enter new origin (e.g. Stray, Owner Surrender, Unknown)"
-                    value={value || ''}
-                    onChange={handleChange}
-                    style={{ width: '100%', fontSize: 17, borderRadius: 6, border: '1px solid #bcd', padding: 10, marginTop: 8, background: '#fff' }}
-                  />
-                )}
-              </label>
-              {/* Latitude and Longitude directly under location */}
-              {form.latitude !== undefined && (
-                <label key="latitude" style={{ textTransform: 'capitalize', fontWeight: 600, marginBottom: 6 }}>
-                  Latitude:
-                  <input
-                    name="latitude"
-                    type="text"
-                    value={form.latitude == null ? '' : form.latitude}
-                    onChange={handleChange}
-                    placeholder="Enter latitude (optional)"
-                    style={{ width: '100%', fontSize: 17, borderRadius: 6, border: '1px solid #bcd', padding: 10, marginTop: 6, background: '#fff' }}
-                  />
-                  <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>Optional</div>
-                </label>
-              )}
-              {form.longitude !== undefined && (
-                <label key="longitude" style={{ textTransform: 'capitalize', fontWeight: 600, marginBottom: 6 }}>
-                  Longitude:
-                  <input
-                    name="longitude"
-                    type="text"
-                    value={form.longitude == null ? '' : form.longitude}
-                    onChange={handleChange}
-                    placeholder="Enter longitude (optional)"
-                    style={{ width: '100%', fontSize: 17, borderRadius: 6, border: '1px solid #bcd', padding: 10, marginTop: 6, background: '#fff' }}
-                  />
-                  <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>Optional</div>
-                </label>
-              )}
-            </div>
-          );
-        }
+        if (["id", "url", "AHNM-A", "origin", "latitude", "longitude", "status"].includes(key)) return null;
         if (key === 'notes') {
           return (
             <label key={key} style={{ textTransform: 'capitalize', fontWeight: 600, marginBottom: 6 }}>
@@ -452,25 +456,6 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
               />
               <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>
                 Format: MM-DD-YYYY (e.g. 09-26-2025)
-              </div>
-            </label>
-          );
-        }
-        // Allow latitude and longitude to be empty
-        if (key === 'latitude' || key === 'longitude') {
-          return (
-            <label key={key} style={{ textTransform: 'capitalize', fontWeight: 600, marginBottom: 6 }}>
-              {key.replace(/_/g, ' ')}:
-              <input
-                name={key}
-                type="text"
-                value={value == null ? '' : value}
-                onChange={handleChange}
-                placeholder={`Enter ${key} (optional)`}
-                style={{ width: '100%', fontSize: 17, borderRadius: 6, border: '1px solid #bcd', padding: 10, marginTop: 6, background: '#fff' }}
-              />
-              <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>
-                Optional
               </div>
             </label>
           );
