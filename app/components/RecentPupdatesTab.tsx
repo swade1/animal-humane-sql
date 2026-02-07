@@ -128,12 +128,31 @@ export default function RecentPupdatesTab() {
       // Get IDs of Available Soon dogs to exclude
       const availableSoonIds = (availableSoonDogs || []).map(d => d.id);
 
-      // New dogs: available today and created_at is today (in MST), and not in Available Soon
+      // New dogs: available today and (created_at is today OR status changed from NULL to available today)
       const mstTimeZone = 'America/Denver';
       const todayMST = toZonedTime(new Date(), mstTimeZone);
+      const todayStr = format(todayMST, 'yyyy-MM-dd', { timeZone: mstTimeZone });
+      
+      // Get dogs that changed from NULL to available today
+      const { data: statusChanges } = await supabase
+        .from('dog_history')
+        .select('dog_id, timestamp')
+        .eq('event_type', 'status_change')
+        .eq('old_value', 'NULL')
+        .eq('new_value', 'available')
+        .gte('timestamp', todayStr)
+        .lt('timestamp', `${todayStr}T23:59:59.999`);
+      
+      const statusChangeIds = new Set((statusChanges || []).map(sc => sc.dog_id));
+      
       const filtered = dogsToday.filter(dog => {
-        if (!dog.created_at) return false;
         if (availableSoonIds.includes(dog.id)) return false;
+        
+        // Include if status changed from NULL to available today
+        if (statusChangeIds.has(dog.id)) return true;
+        
+        // Include if created_at is today
+        if (!dog.created_at) return false;
         try {
           // Patch: If created_at is missing 'Z' or timezone, treat as UTC
           let createdAtStr = dog.created_at;
@@ -151,7 +170,8 @@ export default function RecentPupdatesTab() {
             createdDate: createdDate.toString(),
             createdMST: createdMST.toString(),
             todayMST: todayMST.toString(),
-            sameDay
+            sameDay,
+            statusChanged: statusChangeIds.has(dog.id)
           });
           return sameDay;
         } catch (e) {
@@ -161,6 +181,7 @@ export default function RecentPupdatesTab() {
       });
       console.log('dogsToday:', dogsToday);
       console.log('availableSoonIds:', availableSoonIds);
+      console.log('statusChangeIds:', Array.from(statusChangeIds));
       console.log('newDogs (filtered):', filtered);
       return filtered;
     },

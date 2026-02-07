@@ -464,14 +464,14 @@ export async function runScraper() {
           .eq('id', dog.id);
         console.error(`Location change detected for dog ID ${dog.id} (${dog.name}): '${oldLocation}' -> '${newLocation}'`);
       }
-      // Status change
+      // Status change (including NULL -> available)
       const oldStatus = statusMap.get(dog.id) ?? null;
       const newStatus = dog.status ?? null;
-      if (oldStatus && newStatus && oldStatus !== newStatus) {
+      if (newStatus && oldStatus !== newStatus) {
         await logDogHistory({
           dogId: dog.id,
           eventType: 'status_change',
-          oldValue: oldStatus,
+          oldValue: oldStatus || 'NULL',
           newValue: newStatus,
           notes: 'Status updated by scraper'
         });
@@ -479,7 +479,7 @@ export async function runScraper() {
           .from('dogs')
           .update({ status: newStatus })
           .eq('id', dog.id);
-        console.error(`Status change detected for dog ID ${dog.id} (${dog.name}): '${oldStatus}' -> '${newStatus}'`);
+        console.error(`Status change detected for dog ID ${dog.id} (${dog.name}): '${oldStatus || 'NULL'}' -> '${newStatus}'`);
       }
       // Name change
       const oldName = nameMap.get(dog.id) ?? null;
