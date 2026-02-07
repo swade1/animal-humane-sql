@@ -121,8 +121,8 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
     if (initialForm.id === 0) {
       initialForm.id = undefined;
     }
-    // If status is null or undefined, leave as undefined (not empty string or 'available')
-    if (initialForm.status === undefined || initialForm.status === null) {
+    // If status is null, undefined, or 'available', leave as undefined (not empty string or 'available')
+    if (initialForm.status === undefined || initialForm.status === null || initialForm.status === 'available') {
       delete initialForm.status;
     }
     return initialForm;
