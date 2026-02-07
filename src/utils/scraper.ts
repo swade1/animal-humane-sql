@@ -222,12 +222,7 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]
       // Log the raw JSON for each dog
       console.log(`[SCRAPER][RAW] Dog #${idx + 1}:`, JSON.stringify(p));
       const intakeDate = p.intake_date ? new Date(getNumber(p, 'intake_date') * 1000) : null;
-      let lengthOfStay: number | null = null;
-      if (intakeDate) {
-        // Calculate difference in days (UTC)
-        const diffTime = today.setHours(0,0,0,0) - intakeDate.setHours(0,0,0,0);
-        lengthOfStay = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      }
+      // length_of_stay_days is now a generated column, no need to calculate it here
       // Handle age_group as nested object and normalize to 'Puppy', 'Adult', or 'Senior'
       let ageGroupRaw = '';
       if (typeof p.age_group === 'object' && p.age_group !== null && 'name' in p.age_group) {
@@ -261,7 +256,7 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]
         status: status.trim(),
         url: getString(p, 'public_url'),
         intake_date: intakeDate ? intakeDate.toISOString().slice(0, 10) : null,
-        length_of_stay_days: lengthOfStay,
+        // length_of_stay_days is now a generated column, don't include it in inserts/updates
         birthdate: p.birthday ? new Date(getNumber(p, 'birthday') * 1000).toISOString().slice(0, 10) : null,
         age_group: ageGroup,
         breed: getString(p, 'breed'),
