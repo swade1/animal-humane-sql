@@ -92,7 +92,7 @@ export default function AdoptionsTab() {
               <tr><td colSpan={4} style={{ color: '#888' }}>No adoptions found.</td></tr>
             )}
             {!isLoading && adoptedDogs && [...adoptedDogs]
-              .filter((dog): dog is { id: number; name: string; adopted_date: string; length_of_stay_days: number | string; verified_adoption?: number } => !!dog && !!dog.adopted_date)
+              .filter((dog): dog is NonNullable<typeof dog> & { adopted_date: string } => !!dog && !!dog.adopted_date)
               .sort((a, b) => {
                 const dateA = new Date(a.adopted_date).valueOf();
                 const dateB = new Date(b.adopted_date).valueOf();
