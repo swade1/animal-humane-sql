@@ -35,36 +35,32 @@ export default function RecentPupdatesTab() {
   const { data: temporarilyUnlistedDogs, isLoading: isLoadingUnlisted } = useQuery({
     queryKey: ['temporarilyUnlistedDogs'],
     queryFn: async () => {
-      // Load latest scraped IDs from current scrape
-      let currentScrapedIds = [];
-      try {
-        const response = await fetch('/latest_scraped_ids.json');
-        if (!response.ok) {
-          console.error('Failed to load latest_scraped_ids.json, status:', response.status);
-          // If we can't load the file, return empty list instead of showing incorrect data
-          return [];
-        } else {
-          currentScrapedIds = await response.json();
-          console.log('Loaded scraped IDs:', currentScrapedIds.length, 'IDs');
-        }
-      } catch (e) {
-        console.error('Error loading latest_scraped_ids.json:', e);
-        // If we can't load the file, return empty list instead of showing incorrect data
-        return [];
-      }
-      // Get all dogs with status='available'
+      // Get the most recent updated_at timestamp across all dogs
+      const { data: allDogs, error: errorAll } = await supabase
+        .from('dogs')
+        .select('updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(1);
+      
+      if (errorAll || !allDogs || allDogs.length === 0) return [];
+      const mostRecentTimestamp = allDogs[0].updated_at;
+      
+      // Get all dogs with status='available' whose updated_at precedes the most recent timestamp
       const { data: unlistedDogs, error: errorUnlisted } = await supabase
         .from('dogs')
         .select('id, name, intake_date, created_at, updated_at, status, location, scraped')
-        .eq('status', 'available');
+        .eq('status', 'available')
+        .lt('updated_at', mostRecentTimestamp);
+      
       if (errorUnlisted || !unlistedDogs) return [];
-      // Filter: keep dogs that were previously scraped but are NOT in current scrape, and exclude Trial Adoption
+      
+      // Filter: exclude Trial Adoption
       const filtered = unlistedDogs.filter(dog => {
         const isTrial = dog.location && dog.location.includes('Trial Adoption');
-        const isInCurrentScrape = currentScrapedIds.includes(dog.id);
-        return !isTrial && !isInCurrentScrape;
+        return !isTrial;
       });
-      console.log('Available but Temporarily Unlisted dogs:', filtered.map(d => ({ id: d.id, name: d.name })));
+      console.log('Available but Temporarily Unlisted dogs:', filtered.map(d => ({ id: d.id, name: d.name, updated_at: d.updated_at })));
+      console.log('Most recent timestamp:', mostRecentTimestamp);
       return filtered;
     },
     staleTime: 1000 * 60 * 60 * 2
