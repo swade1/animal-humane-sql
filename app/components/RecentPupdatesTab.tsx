@@ -133,15 +133,20 @@ export default function RecentPupdatesTab() {
       const todayMST = toZonedTime(new Date(), mstTimeZone);
       const todayStr = format(todayMST, 'yyyy-MM-dd');
       
-      // Get dogs that changed from NULL to available today
+      // Get dogs that changed from NULL to available today (check in MST timezone range)
+      const startOfDayMST = `${todayStr}T00:00:00`;
+      const endOfDayMST = `${todayStr}T23:59:59.999`;
+      
       const { data: statusChanges } = await supabase
         .from('dog_history')
         .select('dog_id, timestamp')
         .eq('event_type', 'status_change')
         .eq('old_value', 'NULL')
         .eq('new_value', 'available')
-        .gte('timestamp', todayStr)
-        .lt('timestamp', `${todayStr}T23:59:59.999`);
+        .gte('timestamp', startOfDayMST)
+        .lte('timestamp', endOfDayMST);
+      
+      console.log('[NEW DOGS] Status change query:', { todayStr, startOfDayMST, endOfDayMST, statusChanges });
       
       const statusChangeIds = new Set((statusChanges || []).map(sc => sc.dog_id));
       
