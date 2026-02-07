@@ -28,18 +28,46 @@ const tabLabels = [
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState(0);
 
+  const handleLogout = () => {
+    sessionStorage.removeItem('isAuthenticated');
+    window.location.reload();
+  };
+
   return (
     <PasswordProtection>
       <div className="min-h-screen bg-white">
       <div className="p-5">
-        <div style={{ display: 'flex', alignItems: 'center', marginTop: '60px', marginBottom: '30px', marginLeft: '20px' }}>
-          <PawPrint className="text-orange-500" size={28} style={{ marginLeft: '10px', marginTop: '-6px', transform: 'rotate(-90deg)', position: 'relative' }} />
-          <h1
-            className="text-2xl font-bold"
-            style={{ marginLeft: '5px' }}
+        <div style={{ display: 'flex', alignItems: 'center', marginTop: '20px', marginBottom: '30px', marginLeft: '20px', justifyContent: 'space-between', marginRight: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <PawPrint className="text-orange-500" size={28} style={{ marginLeft: '10px', marginTop: '-6px', transform: 'rotate(-90deg)', position: 'relative' }} />
+            <h1
+              className="text-2xl font-bold"
+              style={{ marginLeft: '5px' }}
+            >
+              Animal Humane New Mexico: Pet Status and Updates
+            </h1>
+          </div>
+          <button
+            onClick={handleLogout}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: '#2563eb',
+              color: 'white',
+              border: 'none',
+              borderRadius: '0.375rem',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              fontWeight: '500'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#1d4ed8';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#2563eb';
+            }}
           >
-            Animal Humane New Mexico: Pet Status and Updates
-          </h1>
+            Logout
+          </button>
         </div>
         <div className="p-5">
           <div style={{ marginLeft: '20px', marginTop: 0, marginBottom: 0 }}>
