@@ -82,7 +82,7 @@ export default function RecentPupdatesTab() {
       // Get all dog_history status_change events from adopted to available
       const { data: history, error: errorHistory } = await supabase
         .from('dog_history')
-        .select('dog_id, old_value, new_value, event_timestamp')
+        .select('dog_id, old_value, new_value, event_time')
         .eq('event_type', 'status_change')
         .eq('old_value', 'adopted')
         .eq('new_value', 'available');
@@ -94,12 +94,12 @@ export default function RecentPupdatesTab() {
       // Build a map of dog_id to most recent status_change event
       const recentReturnMap = new Map();
       for (const h of history) {
-        if (!h.dog_id || !h.event_timestamp) continue;
-        let eventTimestampStr = h.event_timestamp;
-        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(eventTimestampStr)) {
-          eventTimestampStr += 'Z';
+        if (!h.dog_id || !h.event_time) continue;
+        let eventTimeStr = h.event_time;
+        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(eventTimeStr)) {
+          eventTimeStr += 'Z';
         }
-        const eventDate = parseISO(eventTimestampStr);
+        const eventDate = parseISO(eventTimeStr);
         const eventMST = toZonedTime(eventDate, mstTimeZone);
         if (!recentReturnMap.has(h.dog_id) || eventMST > recentReturnMap.get(h.dog_id)) {
           recentReturnMap.set(h.dog_id, eventMST);
@@ -145,24 +145,47 @@ export default function RecentPupdatesTab() {
       });
       
       // Get dogs that changed from NULL to available today
+      // Handle both SQL null and string 'NULL' for old_value
       const { data: statusChanges, error: statusError } = await supabase
         .from('dog_history')
-        .select('dog_id, event_timestamp')
+        .select('dog_id, event_time, old_value, new_value, event_type')
         .eq('event_type', 'status_change')
-        .eq('old_value', 'NULL')
         .eq('new_value', 'available')
-        .gte('event_timestamp', startOfDayMST_Date.toISOString())
-        .lte('event_timestamp', endOfDayMST_Date.toISOString());
+        .or('old_value.is.null,old_value.eq.NULL')
+        .gte('event_time', startOfDayMST_Date.toISOString())
+        .lte('event_time', endOfDayMST_Date.toISOString());
       
-      console.log('[NEW DOGS] Status change query result:', { statusChanges, statusError });
+      console.log('[NEW DOGS] Status change query result:', { 
+        statusChanges, 
+        statusError,
+        queryParams: {
+          event_type: 'status_change',
+          old_value: 'NULL or null',
+          new_value: 'available',
+          startTime: startOfDayMST_Date.toISOString(),
+          endTime: endOfDayMST_Date.toISOString()
+        }
+      });
       
       const statusChangeIds = new Set((statusChanges || []).map(sc => sc.dog_id));
       
+      console.log('[NEW DOGS] Bean check:', {
+        beanId: 212870363,
+        isInStatusChanges: statusChangeIds.has(212870363),
+        allStatusChangeIds: Array.from(statusChangeIds)
+      });
+      
       const filtered = dogsToday.filter(dog => {
-        if (availableSoonIds.includes(dog.id)) return false;
+        if (availableSoonIds.includes(dog.id)) {
+          if (dog.id === 212870363) console.log('[NEW DOGS] Bean excluded: in Available Soon');
+          return false;
+        }
         
         // Include if status changed from NULL to available today
-        if (statusChangeIds.has(dog.id)) return true;
+        if (statusChangeIds.has(dog.id)) {
+          if (dog.id === 212870363) console.log('[NEW DOGS] Bean INCLUDED via status change');
+          return true;
+        }
         
         // Include if created_at is today
         if (!dog.created_at) return false;
