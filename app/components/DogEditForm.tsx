@@ -304,13 +304,14 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
               ID:
               <input
                 name={key}
-                type="number"
+                type="text"
                 value={value == null ? '' : value}
                 onChange={handleChange}
+                placeholder="Enter unique ID (required)"
                 style={{ width: '100%', fontSize: 17, borderRadius: 6, border: '1px solid #bcd', padding: 10, marginTop: 6, background: '#fff' }}
               />
               <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>
-                Auto-generated if left blank for new dogs
+                Enter the unique identifier number (required)
               </div>
             </label>
           );

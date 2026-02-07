@@ -17,11 +17,15 @@ export default function RecentPupdatesTab() {
     queryFn: async () => {
       const { data: soonDogs, error: errorSoon } = await supabase
         .from('dogs')
-        .select('id, name, intake_date, created_at, notes')
+        .select('id, name, intake_date, created_at, notes, location')
         .is('status', null);
       if (errorSoon || !soonDogs) return [];
-      // Only include dogs with 'Available Soon' in notes
-      return soonDogs.filter(dog => typeof dog.notes === 'string' && dog.notes.includes('Available Soon'));
+      // Only include dogs with 'Available Soon' in notes and exclude those whose location contains 'Trial Adoption'
+      return soonDogs.filter(dog => {
+        const isAvailableSoon = typeof dog.notes === 'string' && dog.notes.includes('Available Soon');
+        const isTrialAdoption = typeof dog.location === 'string' && dog.location.includes('Trial Adoption');
+        return isAvailableSoon && !isTrialAdoption;
+      });
     },
     staleTime: 1000 * 60 * 60 * 2
   });
@@ -414,14 +418,14 @@ function TrialAdoptionsDogs({ setModalDog }: TrialAdoptionsDogsProps) {
   const { data: trialDogs, isLoading } = useQuery({
     queryKey: ['trialAdoptions'],
     queryFn: async () => {
-      // Get all available dogs with 'Trial Adoption' in location
-      const { data: availableDogs, error: errorAvailable } = await supabase
+      // Get all dogs with status 'available' OR status null and 'Trial Adoption' in location
+      const { data: trialAdoptionDogs, error: errorTrial } = await supabase
         .from('dogs')
-        .select('id, name, intake_date, created_at, location')
-        .eq('status', 'available')
+        .select('id, name, intake_date, created_at, location, status')
+        .or('status.eq.available,status.is.null')
         .ilike('location', '%Trial Adoption%');
-      if (errorAvailable || !availableDogs) return [];
-      return availableDogs;
+      if (errorTrial || !trialAdoptionDogs) return [];
+      return trialAdoptionDogs;
     },
     staleTime: 1000 * 60 * 60 * 2
   });
