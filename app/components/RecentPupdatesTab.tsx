@@ -37,9 +37,8 @@ export default function RecentPupdatesTab() {
     queryFn: async () => {
       const { data: unlistedDogs, error: errorUnlisted } = await supabase
         .from('dogs')
-        .select('id, name, intake_date, created_at, updated_at, status, location')
-        .eq('status', 'available')
-        .eq('scraped', false);
+        .select('id, name, intake_date, created_at, updated_at, status, location, scraped')
+        .eq('status', 'available');
       if (errorUnlisted || !unlistedDogs) return [];
       // Exclude dogs in trial adoption
       return unlistedDogs.filter(dog => {
