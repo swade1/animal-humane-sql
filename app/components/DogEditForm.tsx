@@ -117,15 +117,12 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
     if (initialForm.adopted_date) {
       initialForm.adopted_date = convertToDisplayFormat(initialForm.adopted_date);
     }
-    // Remove pre-population of ID with 0
-    if (initialForm.id === 0) {
-      initialForm.id = undefined;
+    // For new dog (id is undefined, null, or 0), do not pre-populate id or status
+    if (initialForm.id === 0 || initialForm.id === undefined || initialForm.id === null) {
+      delete initialForm.id;
+      delete initialForm.status;
     }
-    // For new dog (no id), status should be undefined (blank/NULL)
-    if (!initialForm.id) {
-      initialForm.status = undefined;
-    }
-    // For existing dog, status should be whatever Supabase provides (including 'available')
+    // For existing dog, use values from Supabase as-is
     return initialForm;
   });
   
