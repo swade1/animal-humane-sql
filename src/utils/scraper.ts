@@ -489,7 +489,9 @@ export async function runScraper() {
       // Name change
       const oldName = nameMap.get(dog.id) ?? null;
       const newName = dog.name ?? null;
-      if (oldName && newName && oldName !== newName) {
+      const normOldName = oldName ? oldName.trim() : '';
+      const normNewName = newName ? newName.trim() : '';
+      if (normOldName && normNewName && normOldName !== normNewName) {
         await logDogHistory({
           dogId: dog.id,
           eventType: 'name_change',
