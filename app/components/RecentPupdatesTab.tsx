@@ -39,7 +39,13 @@ export default function RecentPupdatesTab() {
       let currentScrapedIds = [];
       try {
         const response = await fetch('/latest_scraped_ids.json');
-        currentScrapedIds = await response.json();
+        if (!response.ok) {
+          console.error('Failed to load latest_scraped_ids.json, status:', response.status);
+          currentScrapedIds = [];
+        } else {
+          currentScrapedIds = await response.json();
+          console.log('Loaded scraped IDs:', currentScrapedIds.length, 'IDs');
+        }
       } catch (e) {
         console.error('Error loading latest_scraped_ids.json:', e);
         currentScrapedIds = [];
