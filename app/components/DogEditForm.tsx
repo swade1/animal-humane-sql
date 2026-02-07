@@ -121,9 +121,9 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
     if (initialForm.id === 0) {
       initialForm.id = undefined;
     }
-    // Prepopulate status as blank/null
-    if (initialForm.status === undefined || initialForm.status === 'available') {
-      initialForm.status = '';
+    // If status is null or undefined, leave as null (not empty string or 'available')
+    if (initialForm.status === undefined || initialForm.status === null) {
+      initialForm.status = null;
     }
     return initialForm;
   });
@@ -416,7 +416,7 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
         <input
           name="status"
           type="text"
-          value={form.status == null ? '' : form.status}
+          value={form.status === null || form.status === undefined ? '' : form.status}
           onChange={handleChange}
           placeholder="e.g. available, adopted, etc. (optional)"
           style={{ width: '100%', fontSize: 17, borderRadius: 6, border: '1px solid #bcd', padding: 10, marginTop: 6, background: '#fff' }}
