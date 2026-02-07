@@ -116,10 +116,11 @@ export default function RecentPupdatesTab() {
   const { data: newDogs, isLoading } = useQuery({
     queryKey: ['newDogs', availableSoonDogs?.map(d => d.id) ?? []],
     queryFn: async () => {
-      // Get all dogs present today
+      // Get all available dogs present today
       const { data: dogsToday, error: errorToday } = await supabase
         .from('dogs')
-        .select('id, name, intake_date, created_at, status');
+        .select('id, name, intake_date, created_at, status')
+        .eq('status', 'available');
       if (errorToday || !dogsToday) {
         console.log('Error or no dogsToday:', errorToday, dogsToday);
         return [];
@@ -133,20 +134,27 @@ export default function RecentPupdatesTab() {
       const todayMST = toZonedTime(new Date(), mstTimeZone);
       const todayStr = format(todayMST, 'yyyy-MM-dd');
       
-      // Get dogs that changed from NULL to available today (check in MST timezone range)
-      const startOfDayMST = `${todayStr}T00:00:00`;
-      const endOfDayMST = `${todayStr}T23:59:59.999`;
+      // Convert MST day boundaries to UTC for database query
+      const startOfDayMST_Date = new Date(`${todayStr}T00:00:00-07:00`); // MST is UTC-7
+      const endOfDayMST_Date = new Date(`${todayStr}T23:59:59.999-07:00`);
       
-      const { data: statusChanges } = await supabase
+      console.log('[NEW DOGS] Date conversion:', { 
+        todayStr, 
+        startOfDayMST_Date: startOfDayMST_Date.toISOString(), 
+        endOfDayMST_Date: endOfDayMST_Date.toISOString() 
+      });
+      
+      // Get dogs that changed from NULL to available today
+      const { data: statusChanges, error: statusError } = await supabase
         .from('dog_history')
         .select('dog_id, timestamp')
         .eq('event_type', 'status_change')
         .eq('old_value', 'NULL')
         .eq('new_value', 'available')
-        .gte('timestamp', startOfDayMST)
-        .lte('timestamp', endOfDayMST);
+        .gte('timestamp', startOfDayMST_Date.toISOString())
+        .lte('timestamp', endOfDayMST_Date.toISOString());
       
-      console.log('[NEW DOGS] Status change query:', { todayStr, startOfDayMST, endOfDayMST, statusChanges });
+      console.log('[NEW DOGS] Status change query result:', { statusChanges, statusError });
       
       const statusChangeIds = new Set((statusChanges || []).map(sc => sc.dog_id));
       
