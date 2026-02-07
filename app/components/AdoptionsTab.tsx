@@ -133,28 +133,41 @@ export default function AdoptionsTab() {
       {/* Modal for dog info with iframe */}
       {modalDog && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
           onClick={() => setModalDog(null)}
-          style={{ padding: '1rem' }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            padding: '1rem'
+          }}
         >
           <div
-            className="bg-white rounded-lg shadow-lg relative"
             onClick={(e) => e.stopPropagation()}
             style={{
+              backgroundColor: 'white',
+              borderRadius: '0.5rem',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+              position: 'relative',
               width: '100%',
               height: '100%',
               maxWidth: '800px',
               maxHeight: '90vh',
-              boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
               display: 'flex',
               flexDirection: 'column'
             }}
           >
             <button
-              className="absolute text-gray-500 hover:text-gray-700 bg-white rounded-full flex items-center justify-center shadow-md"
               onClick={() => setModalDog(null)}
               aria-label="Close"
               style={{
+                position: 'absolute',
                 top: 8,
                 right: 8,
                 width: 36,
@@ -162,7 +175,14 @@ export default function AdoptionsTab() {
                 fontSize: 24,
                 border: 'none',
                 cursor: 'pointer',
-                zIndex: 10
+                zIndex: 10,
+                backgroundColor: 'white',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                color: '#6b7280'
               }}
             >
               ×
