@@ -121,10 +121,11 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
     if (initialForm.id === 0) {
       initialForm.id = undefined;
     }
-    // If status is null, undefined, or 'available', leave as undefined (not empty string or 'available')
-    if (initialForm.status === undefined || initialForm.status === null || initialForm.status === 'available') {
-      delete initialForm.status;
+    // For new dog (no id), status should be undefined (blank/NULL)
+    if (!initialForm.id) {
+      initialForm.status = undefined;
     }
+    // For existing dog, status should be whatever Supabase provides (including 'available')
     return initialForm;
   });
   
