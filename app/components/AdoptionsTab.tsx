@@ -133,14 +133,21 @@ export default function AdoptionsTab() {
       {/* Modal for dog info with iframe */}
       {modalDog && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
           onClick={() => setModalDog(null)}
+          style={{ padding: '1rem' }}
         >
           <div
-            className="bg-white rounded-lg shadow-lg relative flex flex-col w-full h-full max-w-4xl max-h-[90vh]"
+            className="bg-white rounded-lg shadow-lg relative"
             onClick={(e) => e.stopPropagation()}
             style={{
+              width: '100%',
+              height: '100%',
+              maxWidth: '800px',
+              maxHeight: '90vh',
               boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+              display: 'flex',
+              flexDirection: 'column'
             }}
           >
             <button
@@ -163,8 +170,12 @@ export default function AdoptionsTab() {
             <iframe
               src={`https://new.shelterluv.com/embed/animal/${modalDog.id}`}
               title={modalDog.name}
-              className="w-full h-full rounded-lg"
-              style={{ border: 'none' }}
+              style={{ 
+                border: 'none',
+                width: '100%',
+                height: '100%',
+                borderRadius: '0.5rem'
+              }}
               allowFullScreen
             />
           </div>
