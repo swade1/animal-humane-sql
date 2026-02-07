@@ -41,14 +41,16 @@ export default function RecentPupdatesTab() {
         const response = await fetch('/latest_scraped_ids.json');
         if (!response.ok) {
           console.error('Failed to load latest_scraped_ids.json, status:', response.status);
-          currentScrapedIds = [];
+          // If we can't load the file, return empty list instead of showing incorrect data
+          return [];
         } else {
           currentScrapedIds = await response.json();
           console.log('Loaded scraped IDs:', currentScrapedIds.length, 'IDs');
         }
       } catch (e) {
         console.error('Error loading latest_scraped_ids.json:', e);
-        currentScrapedIds = [];
+        // If we can't load the file, return empty list instead of showing incorrect data
+        return [];
       }
       // Get all dogs with status='available'
       const { data: unlistedDogs, error: errorUnlisted } = await supabase
@@ -57,11 +59,13 @@ export default function RecentPupdatesTab() {
         .eq('status', 'available');
       if (errorUnlisted || !unlistedDogs) return [];
       // Filter: keep dogs that were previously scraped but are NOT in current scrape, and exclude Trial Adoption
-      return unlistedDogs.filter(dog => {
+      const filtered = unlistedDogs.filter(dog => {
         const isTrial = dog.location && dog.location.includes('Trial Adoption');
         const isInCurrentScrape = currentScrapedIds.includes(dog.id);
         return !isTrial && !isInCurrentScrape;
       });
+      console.log('Available but Temporarily Unlisted dogs:', filtered.map(d => ({ id: d.id, name: d.name })));
+      return filtered;
     },
     staleTime: 1000 * 60 * 60 * 2
   });
