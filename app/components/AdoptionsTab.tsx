@@ -132,23 +132,15 @@ export default function AdoptionsTab() {
       </div>
       {/* Modal for dog info with iframe */}
       {modalDog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
+          onClick={() => setModalDog(null)}
+        >
           <div
-            className="bg-white rounded-lg shadow-lg p-6 relative flex flex-col items-center justify-center"
+            className="bg-white rounded-lg shadow-lg relative flex flex-col w-full h-full max-w-4xl max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
             style={{
-              width: 800,
-              height: 800,
-              maxWidth: 800,
-              maxHeight: 800,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              position: 'fixed',
-              left: '50%',
-              top: '10%',
-              transform: 'translate(-50%, 0)',
               boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-              background: 'rgba(255,255,255,0.97)'
             }}
           >
             <button
@@ -156,8 +148,8 @@ export default function AdoptionsTab() {
               onClick={() => setModalDog(null)}
               aria-label="Close"
               style={{
-                top: 10,
-                right: 10,
+                top: 8,
+                right: 8,
                 width: 36,
                 height: 36,
                 fontSize: 24,
@@ -171,9 +163,8 @@ export default function AdoptionsTab() {
             <iframe
               src={`https://new.shelterluv.com/embed/animal/${modalDog.id}`}
               title={modalDog.name}
-              width="100%"
-              height="100%"
-              style={{ border: 'none', flex: 1 }}
+              className="w-full h-full rounded-lg"
+              style={{ border: 'none' }}
               allowFullScreen
             />
           </div>
