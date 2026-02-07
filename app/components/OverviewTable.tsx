@@ -150,49 +150,72 @@ export default function OverviewTable() {
       </div>
       {/* Modal rendered outside of table/tbody to avoid hydration errors */}
       {showModal && longestStayDog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div 
+          onClick={() => setShowModal(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            padding: '1rem'
+          }}
+        >
           <div
-            className="bg-white rounded-lg shadow-lg p-6 relative flex flex-col items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
             style={{
-              width: 750,
-              height: 750,
-              maxWidth: 750,
-              maxHeight: 750,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              position: 'fixed',
-              left: '50%',
-              top: '10%',
-              transform: 'translate(-50%, 0)',
+              backgroundColor: 'white',
+              borderRadius: '0.5rem',
               boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-              background: 'rgba(255,255,255,0.97)'
+              position: 'relative',
+              width: '100%',
+              height: '100%',
+              maxWidth: '800px',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '1.5rem'
             }}
           >
             <button
-              className="absolute text-gray-500 hover:text-gray-700 bg-white rounded-full flex items-center justify-center shadow-md"
               onClick={() => setShowModal(false)}
               aria-label="Close"
               style={{
-                zIndex: 10,
-                top: 16,
-                right: 16,
                 position: 'absolute',
-                lineHeight: 1,
-                width: 64,
-                height: 64,
-                fontSize: 48,
-                fontWeight: 900
+                top: 8,
+                right: 8,
+                width: 36,
+                height: 36,
+                fontSize: 24,
+                border: 'none',
+                cursor: 'pointer',
+                zIndex: 10,
+                backgroundColor: 'white',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                color: '#6b7280'
               }}
             >
               ×
             </button>
-            <h3 className="text-lg font-bold mb-2 text-center w-full">{longestStayDog.name}</h3>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', marginBottom: '0.5rem', textAlign: 'center', width: '100%' }}>{longestStayDog.name}</h3>
             <iframe
-              src={`http://new.shelterluv.com/embed/animal/${longestStayDog.id}/`}
+              src={`https://new.shelterluv.com/embed/animal/${longestStayDog.id}`}
               title={longestStayDog.name}
-              className="rounded border"
-              style={{ width: 700, height: 650, border: '1px solid #ccc', background: '#fff' }}
+              style={{ 
+                border: 'none',
+                width: '100%',
+                flex: 1,
+                borderRadius: '0.5rem'
+              }}
               allowFullScreen
             />
           </div>
