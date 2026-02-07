@@ -118,6 +118,10 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
     if (initialForm.adopted_date) {
       initialForm.adopted_date = convertToDisplayFormat(initialForm.adopted_date);
     }
+    // Remove pre-population of ID with 0
+    if (initialForm.id === 0) {
+      initialForm.id = undefined;
+    }
     return initialForm;
   });
   
@@ -316,12 +320,31 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
             </label>
           );
         }
+        // Custom field order
+        if (key === 'url') {
+          return (
+            <label key={key} style={{ textTransform: 'capitalize', fontWeight: 600, marginBottom: 6 }}>
+              URL:
+              <input
+                name="url"
+                type="text"
+                value={form.url == null ? '' : form.url}
+                onChange={handleChange}
+                placeholder="Enter dog profile URL"
+                style={{ width: '100%', fontSize: 17, borderRadius: 6, border: '1px solid #bcd', padding: 10, marginTop: 6, background: '#fff' }}
+              />
+              <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>
+                ShelterLuv embed URL
+              </div>
+            </label>
+          );
+        }
         if (key === 'AHNM-A') {
           return (
             <label key={key} style={{ fontWeight: 600, marginBottom: 6 }}>
               AHNM-A Number:
               <input
-                name={key}
+                name="AHNM-A"
                 type="text"
                 value={value == null ? '' : value}
                 onChange={handleChange}
@@ -369,6 +392,35 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
                   />
                 )}
               </label>
+              {/* Latitude and Longitude directly under location */}
+              {form.latitude !== undefined && (
+                <label key="latitude" style={{ textTransform: 'capitalize', fontWeight: 600, marginBottom: 6 }}>
+                  Latitude:
+                  <input
+                    name="latitude"
+                    type="text"
+                    value={form.latitude == null ? '' : form.latitude}
+                    onChange={handleChange}
+                    placeholder="Enter latitude (optional)"
+                    style={{ width: '100%', fontSize: 17, borderRadius: 6, border: '1px solid #bcd', padding: 10, marginTop: 6, background: '#fff' }}
+                  />
+                  <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>Optional</div>
+                </label>
+              )}
+              {form.longitude !== undefined && (
+                <label key="longitude" style={{ textTransform: 'capitalize', fontWeight: 600, marginBottom: 6 }}>
+                  Longitude:
+                  <input
+                    name="longitude"
+                    type="text"
+                    value={form.longitude == null ? '' : form.longitude}
+                    onChange={handleChange}
+                    placeholder="Enter longitude (optional)"
+                    style={{ width: '100%', fontSize: 17, borderRadius: 6, border: '1px solid #bcd', padding: 10, marginTop: 6, background: '#fff' }}
+                  />
+                  <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>Optional</div>
+                </label>
+              )}
             </div>
           );
         }
