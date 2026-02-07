@@ -141,6 +141,11 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
     if (updatedForm.adopted_date) {
       updatedForm.adopted_date = convertToDisplayFormat(updatedForm.adopted_date);
     }
+    // For new dog (id is undefined, null, or 0), do not pre-populate id or status
+    if (updatedForm.id === 0 || updatedForm.id === undefined || updatedForm.id === null) {
+      delete updatedForm.id;
+      delete updatedForm.status;
+    }
     setForm(updatedForm);
     setError(null);
   }, [dog]);

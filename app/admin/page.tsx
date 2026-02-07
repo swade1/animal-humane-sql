@@ -84,20 +84,13 @@ function AdminPage() {
       latitude: mergedData.latitude === '' || mergedData.latitude == null ? null : mergedData.latitude,
       longitude: mergedData.longitude === '' || mergedData.longitude == null ? null : mergedData.longitude,
     };
-    if (editDog.id === 0) {
-      // Add new dog
-      // If user provided an ID, use it; otherwise remove id field for auto-generation
-      if (!dbData.id || dbData.id === 0) {
-        const { id, ...fields } = dbData;
-        ({ error, data } = await supabase
-          .from('dogs')
-          .insert([fields]));
-      } else {
-        // User provided a specific ID
-        ({ error, data } = await supabase
-          .from('dogs')
-          .insert([dbData]));
-      }
+    if (!editDog.id) {
+      // Add new dog - id not present means new dog
+      // Remove id field for auto-generation
+      const { id, ...fields } = dbData;
+      ({ error, data } = await supabase
+        .from('dogs')
+        .insert([fields]));
       if (!error) alert('Dog added!');
     } else {
       // Update existing dog
@@ -224,9 +217,8 @@ function AdminPage() {
         </ul>
         <button
           onClick={() => {
-            // Create a new dog with all available fields
+            // Create a new dog with all available fields - DO NOT pre-populate id or status
             setEditDog({
-              id: 0,
               name: '',
               location: '',
               origin: '',
@@ -235,7 +227,6 @@ function AdminPage() {
               bite_quarantine: 0,
               returned: 0,
               notes: '',
-              status: 'available',
               url: '',
               intake_date: '',
               length_of_stay_days: 0,
