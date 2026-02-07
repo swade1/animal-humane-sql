@@ -31,27 +31,30 @@ export default function RecentPupdatesTab() {
   });
 
 
-  // Query for temporarily unlisted dogs using scraped=false
+  // Query for temporarily unlisted dogs: dogs that were in previous scrapes but not in current scrape
   const { data: temporarilyUnlistedDogs, isLoading: isLoadingUnlisted } = useQuery({
     queryKey: ['temporarilyUnlistedDogs'],
     queryFn: async () => {
-      // Load latest scraped IDs
-      let scrapedIds = [];
+      // Load latest scraped IDs from current scrape
+      let currentScrapedIds = [];
       try {
-        scrapedIds = await fetch('/public/latest_scraped_ids.json').then(r => r.json());
+        const response = await fetch('/latest_scraped_ids.json');
+        currentScrapedIds = await response.json();
       } catch (e) {
-        scrapedIds = [];
+        console.error('Error loading latest_scraped_ids.json:', e);
+        currentScrapedIds = [];
       }
+      // Get all dogs with status='available'
       const { data: unlistedDogs, error: errorUnlisted } = await supabase
         .from('dogs')
         .select('id, name, intake_date, created_at, updated_at, status, location, scraped')
         .eq('status', 'available');
       if (errorUnlisted || !unlistedDogs) return [];
-      // Exclude dogs in trial adoption and those that are in the scraped list
+      // Filter: keep dogs that were previously scraped but are NOT in current scrape, and exclude Trial Adoption
       return unlistedDogs.filter(dog => {
         const isTrial = dog.location && dog.location.includes('Trial Adoption');
-        const isScraped = scrapedIds.includes(dog.id);
-        return !isTrial && !isScraped;
+        const isInCurrentScrape = currentScrapedIds.includes(dog.id);
+        return !isTrial && !isInCurrentScrape;
       });
     },
     staleTime: 1000 * 60 * 60 * 2
