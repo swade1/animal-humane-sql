@@ -35,15 +35,23 @@ export default function RecentPupdatesTab() {
   const { data: temporarilyUnlistedDogs, isLoading: isLoadingUnlisted } = useQuery({
     queryKey: ['temporarilyUnlistedDogs'],
     queryFn: async () => {
+      // Load latest scraped IDs
+      let scrapedIds = [];
+      try {
+        scrapedIds = await fetch('/public/latest_scraped_ids.json').then(r => r.json());
+      } catch (e) {
+        scrapedIds = [];
+      }
       const { data: unlistedDogs, error: errorUnlisted } = await supabase
         .from('dogs')
         .select('id, name, intake_date, created_at, updated_at, status, location, scraped')
         .eq('status', 'available');
       if (errorUnlisted || !unlistedDogs) return [];
-      // Exclude dogs in trial adoption
+      // Exclude dogs in trial adoption and those that are in the scraped list
       return unlistedDogs.filter(dog => {
         const isTrial = dog.location && dog.location.includes('Trial Adoption');
-        return !isTrial;
+        const isScraped = scrapedIds.includes(dog.id);
+        return !isTrial && !isScraped;
       });
     },
     staleTime: 1000 * 60 * 60 * 2
