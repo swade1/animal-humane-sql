@@ -86,11 +86,10 @@ function AdminPage() {
     };
     if (!editDog.id) {
       // Add new dog - id not present means new dog
-      // Remove id field for auto-generation
-      const { id, ...fields } = dbData;
+      // Include id field so user-provided id is sent to DB
       ({ error, data } = await supabase
         .from('dogs')
-        .insert([fields]));
+        .insert([dbData]));
       if (!error) alert('Dog added!');
     } else {
       // Update existing dog
