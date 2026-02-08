@@ -81,8 +81,13 @@ export default function HomePage() {
               }))}
             />
           </div>
-          <div style={{ marginTop: '10px', marginLeft: '20px', marginRight: '20px', marginBottom: 0 }}>
-            {activeTab === 0 && <OverviewUnitChart />}
+          <div style={{ marginTop: '10px', marginBottom: 0 }}>
+            {/* Responsive wrapper for Overview tab */}
+            {activeTab === 0 && (
+              <div className="overview-scroll-wrapper">
+                <OverviewUnitChart />
+              </div>
+            )}
             {activeTab === 1 && <RecentPupdatesTab />}
             {activeTab === 2 && <CurrentPopulationTab />}
             {activeTab === 3 && <AdoptionsTab />}

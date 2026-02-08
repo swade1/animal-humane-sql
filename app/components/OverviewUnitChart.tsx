@@ -111,51 +111,72 @@ export default function OverviewUnitChart() {
 
   return (
     <div
-      className="border border-[#ccc] p-4 rounded bg-[#fafafa]"
+      className="overview-unit-chart border border-[#ccc] p-4 rounded bg-[#fafafa]"
       style={{ padding: "24px" }}
     >
       <div className="flex items-center justify-between mt-[10px]">
         <h2 className="m-0 text-left text-lg font-semibold" style={{ marginLeft: '4px' }}>Shelter Overview</h2>
       </div>
-      <div style={{ marginTop: '32px', marginLeft: '-24px' }}>
-        {loading ? (
-          <div style={{ color: '#888', fontSize: '1.1rem', marginBottom: 12 }}>Loading...</div>
-        ) : (
-          categories.map(({ label, count }) => (
-            <div
-              key={label}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: 12,
-                fontSize: "1.1rem",
-              }}
-            >
-              {/* Right-justified label */}
+      {/* Responsive scrollable container for mobile */}
+      <div
+        style={{
+          marginTop: '32px',
+          marginLeft: '-24px',
+          overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          maxWidth: '100vw',
+        }}
+      >
+        <div style={{ minWidth: 320 }}>
+          {loading ? (
+            <div style={{ color: '#888', fontSize: '1.1rem', marginBottom: 12 }}>Loading...</div>
+          ) : (
+            categories.map(({ label, count }) => (
               <div
+                key={label}
                 style={{
-                  minWidth: `${maxLabelLength + 2}ch`,
-                  textAlign: "right",
-                  fontWeight: 600,
-                  color: "#374151",
-                  marginRight: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  marginBottom: 12,
+                  fontSize: "1.1rem",
+                  flexWrap: 'nowrap',
                 }}
               >
-                {label}
+                {/* Right-justified label */}
+                <div
+                  style={{
+                    minWidth: `${maxLabelLength + 2}ch`,
+                    textAlign: "right",
+                    fontWeight: 600,
+                    color: "#374151",
+                    marginRight: 16,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {label}
+                </div>
+                {/* Count */}
+                <div style={{ minWidth: "2ch", fontWeight: 700, marginRight: 8 }}>
+                  {count}
+                </div>
+                {/* Squares/icons */}
+                <div
+                  style={{
+                    overflowX: 'auto',
+                    display: 'flex',
+                    flexWrap: 'nowrap',
+                    minWidth: Math.max(120, count * 18),
+                    maxWidth: '100vw',
+                  }}
+                >
+                  {Array.from({ length: count }).map((_, i) => (
+                    <Square key={i} />
+                  ))}
+                </div>
               </div>
-              {/* Count */}
-              <div style={{ minWidth: "2ch", fontWeight: 700, marginRight: 8 }}>
-                {count}
-              </div>
-              {/* Squares/icons */}
-              <div>
-                {Array.from({ length: count }).map((_, i) => (
-                  <Square key={i} />
-                ))}
-              </div>
-            </div>
-          ))
-        )}
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

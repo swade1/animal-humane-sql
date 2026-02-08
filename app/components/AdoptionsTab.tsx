@@ -70,18 +70,45 @@ export default function AdoptionsTab() {
 
   // Only one return statement for the component
   return (
-    <div className="border border-[#ccc] p-4 rounded bg-[#fafafa]">
+    <div className="border border-[#ccc] p-4 rounded bg-[#fafafa] adoptions-tab-container">
       <div className="flex items-center justify-between mt-[10px]">
         <h2 className="m-0 text-left text-lg font-semibold" style={{ marginLeft: '8px' }}>Adoptions</h2>
       </div>
-      <div style={{ paddingLeft: '18px' }}>
-        <table className="w-2/3 mt-4 text-left border-separate" style={{ borderSpacing: '0 20px' }}>
+      <div
+        style={{
+          overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          maxWidth: '100vw',
+        }}
+      >
+        <table
+          className="mt-4 text-left border-separate adoptions-table"
+          style={{
+            borderSpacing: '0 20px',
+            width: '100%',
+            maxWidth: '700px',
+            tableLayout: 'fixed',
+          }}
+        >
           <thead>
             <tr>
-              <th className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem' }}>Name</th>
-              <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center' }}>Date Adopted</th>
-              <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center' }}>Adoption Verified</th>
-              <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center' }}>Days at Shelter</th>
+              <th
+                className="font-bold text-base sticky-name"
+                style={{
+                  fontWeight: 700,
+                  fontSize: '1.1rem',
+                  whiteSpace: 'nowrap',
+                  position: 'sticky',
+                  left: 0,
+                  background: '#fafafa',
+                  zIndex: 2,
+                  maxWidth: '120px',
+                  overflowWrap: 'break-word',
+                }}
+              >Name</th>
+              <th className="font-bold text-base adoptions-col text-center" style={{ minWidth: '60px' }}>Date Adopted</th>
+              <th className="font-bold text-base adoptions-col text-center" style={{ minWidth: '60px' }}>Adoption Verified</th>
+              <th className="font-bold text-base adoptions-col text-center" style={{ minWidth: '60px' }}>Days at Shelter</th>
             </tr>
           </thead>
           <tbody>
@@ -91,42 +118,60 @@ export default function AdoptionsTab() {
             {!isLoading && adoptedDogs && adoptedDogs.length === 0 && (
               <tr><td colSpan={4} style={{ color: '#888' }}>No adoptions found.</td></tr>
             )}
-            {!isLoading && adoptedDogs && [...adoptedDogs]
-              .filter((dog): dog is NonNullable<typeof dog> & { adopted_date: string } => !!dog && !!dog.adopted_date)
-              .sort((a, b) => {
-                const dateA = new Date(a.adopted_date).valueOf();
-                const dateB = new Date(b.adopted_date).valueOf();
-                return dateA - dateB;
-              })
-              .map(dog => (
-                <tr key={`${dog.id}-${dog.adopted_date}`} className="align-middle">
-                  <td>
-                    <span
-                      className="text-[#2a5db0] cursor-pointer font-bold"
-                      style={{ fontWeight: 700, display: 'inline-block', marginBottom: '0.5em' }}
-                      onClick={() => setModalDog(dog)}
-                    >
-                      {dog.name}
-                    </span>
-                  </td>
-                  <td style={{ paddingLeft: '8ch', textAlign: 'center' }}>
-                    {/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(dog.adopted_date)
-                      ? (() => {
-                          const [year, month, day] = dog.adopted_date.split('-');
-                          return `${month}/${day}/${year}`;
-                        })()
-                      : formatDateMST(dog.adopted_date)}
-                  </td>
-                  <td style={{ paddingLeft: '8ch', textAlign: 'center' }}>
-                    {dog.verified_adoption === 1 ? (
-                      <span style={{ color: '#22c55e', fontSize: '1.5rem' }}>✓</span>
-                    ) : (
-                      ''
-                    )}
-                  </td>
-                  <td style={{ paddingLeft: '8ch', textAlign: 'center' }}>{dog.length_of_stay_days}</td>
-                </tr>
-              ))}
+            {!isLoading && adoptedDogs &&
+              adoptedDogs
+                .filter((dog): dog is NonNullable<typeof dog> & { adopted_date: string } => !!dog && !!dog.adopted_date)
+                .sort((a, b) => {
+                  const dateA = new Date(a.adopted_date).valueOf();
+                  const dateB = new Date(b.adopted_date).valueOf();
+                  return dateA - dateB;
+                })
+                .map((dog) => {
+                  const isDateOnly = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(dog.adopted_date);
+                  const formattedDate = isDateOnly
+                    ? (() => {
+                        const [year, month, day] = dog.adopted_date.split('-');
+                        return `${month}/${day}/${year}`;
+                      })()
+                    : formatDateMST(dog.adopted_date);
+                  return (
+                    <tr key={`${dog.id}-${dog.adopted_date}`} className="align-middle">
+                      <td
+                        className="sticky-name"
+                        style={{
+                          fontWeight: 700,
+                          fontSize: '1.1rem',
+                          whiteSpace: 'nowrap',
+                          position: 'sticky',
+                          left: 0,
+                          background: '#fafafa',
+                          zIndex: 2,
+                          maxWidth: '120px',
+                          overflowWrap: 'break-word',
+                          textAlign: 'left',
+                        }}
+                      >
+                        <span
+                          className="text-[#2a5db0] cursor-pointer font-bold"
+                          style={{ fontWeight: 700, display: 'inline-block', marginBottom: '0.5em' }}
+                          onClick={() => setModalDog(dog)}
+                        >
+                          {dog.name}
+                        </span>
+                      </td>
+                      <td className="adoptions-col text-center" style={{ minWidth: '60px' }}>{formattedDate}</td>
+                      <td className="adoptions-col text-center" style={{ minWidth: '60px' }}>
+                        {dog.verified_adoption === 1 ? (
+                          <span style={{ color: '#22c55e', fontSize: '1.5rem' }}>✓</span>
+                        ) : (
+                          ''
+                        )}
+                      </td>
+                      <td className="adoptions-col text-center" style={{ minWidth: '60px' }}>{dog.length_of_stay_days}</td>
+                    </tr>
+                  );
+                })
+            }
           </tbody>
         </table>
       </div>

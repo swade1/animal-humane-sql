@@ -36,12 +36,41 @@ export default function CurrentPopulationTab() {
       <div className="flex items-center justify-between mt-[10px]">
         <h2 className="m-0 text-left text-lg font-semibold" style={{ marginLeft: '4px' }}>Current Population</h2>
       </div>
-      <div style={{ paddingLeft: '18px' }}>
-        <table className="w-1/2 mt-4 text-left border-separate" style={{ borderSpacing: '0 20px' }}>
+      <div
+        style={{
+          paddingLeft: '18px',
+          overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          maxWidth: '100vw',
+        }}
+      >
+        <table
+          className="min-w-[500px] mt-4 text-left border-separate"
+          style={{ borderSpacing: '0 20px', width: '100%', tableLayout: 'auto' }}
+        >
           <thead>
             <tr>
-              <th className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem', minWidth: '180px', whiteSpace: 'nowrap' }}>Name</th>
-              <th className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '10ch', textAlign: 'left', minWidth: '260px', whiteSpace: 'nowrap' }}>Location</th>
+              <th
+                className="font-bold text-base cp-col cp-col-name"
+                style={{
+                  fontWeight: 700,
+                  fontSize: '1.1rem',
+                  whiteSpace: 'nowrap',
+                  position: 'sticky',
+                  left: 0,
+                  background: '#fafafa',
+                  zIndex: 2,
+                }}
+              >Name</th>
+              <th
+                className="font-bold text-base cp-col cp-col-location"
+                style={{
+                  fontWeight: 700,
+                  fontSize: '1.1rem',
+                  textAlign: 'left',
+                  whiteSpace: 'nowrap',
+                }}
+              >Location</th>
             </tr>
           </thead>
           <tbody>
@@ -84,7 +113,16 @@ export default function CurrentPopulationTab() {
               })
               .map(dog => (
                 <tr key={dog.id} className="align-middle">
-                  <td style={{ minWidth: '180px', whiteSpace: 'nowrap' }}>
+                  <td
+                    className="cp-col cp-col-name"
+                    style={{
+                      whiteSpace: 'nowrap',
+                      position: 'sticky',
+                      left: 0,
+                      background: '#fafafa',
+                      zIndex: 1,
+                    }}
+                  >
                     <span
                       className="text-[#2a5db0] cursor-pointer font-bold"
                       style={{ fontWeight: 700 }}
@@ -93,7 +131,7 @@ export default function CurrentPopulationTab() {
                       {dog.name}
                     </span>
                   </td>
-                  <td style={{ paddingLeft: '11ch', minWidth: '260px', whiteSpace: 'nowrap' }}>{dog.location}</td>
+                  <td className="cp-col cp-col-location">{dog.location}</td>
                 </tr>
               ))}
           </tbody>
