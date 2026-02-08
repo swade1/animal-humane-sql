@@ -76,7 +76,8 @@ export async function enrichAndUpsertAnimals() {
       manualMap.set(dog.id, {
         origin: dog.origin,
         latitude: dog.latitude,
-        longitude: dog.longitude
+        longitude: dog.longitude,
+        weight_group: dog.weight_group
       });
     }
   }
@@ -98,10 +99,11 @@ export async function enrichAndUpsertAnimals() {
       id: a.nid,
       name: a.name,
       location: a.location,
-      // Only set origin, latitude, longitude if not already present in DB
+      // Only set origin, latitude, longitude, weight_group if not already present in DB
       origin: manual.origin !== undefined ? manual.origin : (a.origin || null),
       latitude: manual.latitude !== undefined ? manual.latitude : (a.latitude || null),
       longitude: manual.longitude !== undefined ? manual.longitude : (a.longitude || null),
+      weight_group: manual.weight_group !== undefined ? manual.weight_group : (a.weight_group || null),
       status: a.status || 'available',
       url: a.public_url,
       intake_date: a.intake_date || null,
@@ -109,7 +111,6 @@ export async function enrichAndUpsertAnimals() {
       age_group: a.age_group ?? null,
       breed: a.breed,
       secondary_breed: a.secondary_breed,
-      weight_group: a.weight_group,
       color: a.primary_color + (a.secondary_color ? ` and ${a.secondary_color}` : ''),
       notes: a.kennel_description || '',
       // Add more fields as needed
