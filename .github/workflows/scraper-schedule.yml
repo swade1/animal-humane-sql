@@ -41,6 +41,14 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: npx tsx src/utils/run-scraper-pipeline.ts
 
+      - name: Commit updated scraped IDs
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add public/latest_scraped_ids.json
+          git diff --staged --quiet || git commit -m "Update latest_scraped_ids.json from scheduled scraper"
+          git push
+
       - name: Upload scraped IDs JSON
         uses: actions/upload-artifact@v4
         with:
