@@ -13,7 +13,7 @@ import ShelterTransferChart from "./components/ShelterTransferChart";
 // ...existing code...
 import OwnerSurrenderHeatmap from "./components/OwnerSurrenderHeatmap";
 import LengthOfStayHistogram from "./components/LengthOfStayHistogram";
-import LengthOfStayByAgeGroupChart from "./components/LengthOfStayByAgeGroupChart";
+// import LengthOfStayByAgeGroupChart from "./components/LengthOfStayByAgeGroupChart";
 import AverageLengthOfStayByAgeGroupChart from "./components/AverageLengthOfStayByAgeGroupChart";
 import PasswordProtection from "./components/PasswordProtection";
 
@@ -106,19 +106,33 @@ export default function HomePage() {
                 <div style={{ clear: 'both', width: '100%' }}>
                   <ShelterTransferChart />
                 </div>
-                <div style={{ marginTop: 32 }}>
-                  <LengthOfStayHistogram />
+
+                <div style={{ 
+                     marginTop: 32, 
+                     display: 'flex', 
+                     flexDirection: 'row', 
+                     gap: 32, 
+                     alignItems: 'flex-start' 
+                 }}>
+                    <div style={{ flex: 1, minWidth: 0}}>
+                      <LengthOfStayHistogram />
+                    </div>
+                   <div style={{ flex: 1, minWidth: 0 }}>
+                      {/* Average length of stay bar chart by age group */}
+                     <AverageLengthOfStayByAgeGroupChart />
+                   </div>
                 </div>
-                <div style={{ marginTop: 32, display: 'flex', flexDirection: 'row', gap: 32, alignItems: 'flex-start' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
+
+                {/*<div style={{ marginTop: 32, display: 'flex', flexDirection: 'row', gap: 32, alignItems: 'flex-start' }}>*/}
+                  {/*<div style={{ flex: 1, minWidth: 0 }}>*/}
                     {/* Grouped bar chart for length of stay by age group */}
-                    <LengthOfStayByAgeGroupChart />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                    { /*<LengthOfStayByAgeGroupChart />*/}
+                  {/*</div>*/}
+                  {/*<div style={{ flex: 1, minWidth: 0 }}>*/}
                     {/* Average length of stay bar chart by age group */}
-                    <AverageLengthOfStayByAgeGroupChart />
-                  </div>
-                </div>
+                    {/*<AverageLengthOfStayByAgeGroupChart />*/}
+                  {/*</div>*/}
+                {/*</div>*/}
               </>
             )}
           </div>

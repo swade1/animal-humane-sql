@@ -1,18 +1,53 @@
-"use client";
-
+  // Tooltip formatter for daily adoption chart
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const { date, names, count } = payload[0].payload;
+      // Format date as MM-DD-YYYY
+      let formattedDate = date;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        const [y, m, d] = date.split('-');
+        formattedDate = `${m}-${d}-${y}`;
+      }
+      return (
+        <div style={{
+          background: 'rgba(255,255,255,0.97)',
+          border: '1px solid #0047AB',
+          borderRadius: 8,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+          padding: 14,
+          minWidth: 260,
+          maxWidth: 400,
+          fontSize: 15,
+          color: '#222',
+          whiteSpace: 'normal',
+        }}>
+          <div style={{ fontWeight: 700, marginBottom: 4 }}><span>Date:</span> <span style={{ fontWeight: 400 }}>{formattedDate}</span></div>
+          <div style={{ fontWeight: 700, marginBottom: 4 }}><span>Adoptions:</span> <span style={{ fontWeight: 400 }}>{count}</span></div>
+          <div style={{ fontWeight: 700, marginBottom: 2 }}>Dogs Adopted:</div>
+          <div style={{ fontWeight: 400, marginLeft: 8 }}>
+            {names.map((n: string, i: number) => (
+              <div key={n} style={{ marginBottom: 4 }}>{n}</div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+// Removed stray JSX and ensured grouped bar chart is only rendered inside the main return statement
+import React, { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../lib/supabaseClient";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart, Bar, Legend, LegendProps } from "recharts";
 import { startOfWeek, format as formatDate, addDays } from 'date-fns';
 import { toZonedTime, format as formatTz } from 'date-fns-tz';
-// Data type for each week's adoptions by age group
+
 type WeeklyAdoptions = {
   week: string; // formatted as MM/dd/yyyy
   Puppies: number;
   Adults: number;
   Seniors: number;
 };
-import React, { useMemo } from "react";
 
 // Data type for each day's adoptions
 type DailyAdoptions = {
@@ -37,11 +72,11 @@ export default function InsightsSpotlightTab() {
         // Build a map of dog_id to age_group for lookup
         const dogIdToAgeGroup = new Map<number, string>();
         const dogIdToName = new Map<number, string>();
-        for (const d of dogs) {
+        for (const d of dogs as { id: number; age_group: string; name: string }[]) {
           dogIdToAgeGroup.set(d.id, d.age_group);
           dogIdToName.set(d.id, d.name);
         }
-        const adoptedDogIds = new Set(dogs.map(d => d.id));
+        const adoptedDogIds = new Set((dogs as { id: number }[]).map(d => d.id));
 
         // Get all adoption events from dog_history (status_change to adopted)
         const { data: history, error: historyError } = await supabase
@@ -57,21 +92,21 @@ export default function InsightsSpotlightTab() {
           ...Array.from(
             new Map<number, { adopted_date: string; age_group: string; id: number; name?: string }>([
               ...history
-                .filter(h => h.adopted_date)
-                .map(h => [h.dog_id, {
+                .filter((h: { adopted_date: string }) => h.adopted_date)
+                .map((h: { dog_id: number; adopted_date: string }) => [h.dog_id, {
                   adopted_date: h.adopted_date,
                   age_group: dogIdToAgeGroup.get(h.dog_id) || null,
                   id: h.dog_id,
                   name: dogIdToName.get(h.dog_id) || undefined
                 }] as const),
-              ...dogs.map(d => [d.id, { adopted_date: d.adopted_date, age_group: d.age_group, id: d.id, name: d.name }] as const),
+              ...(dogs as { id: number; adopted_date: string; age_group: string; name: string }[]).map(d => [d.id, { adopted_date: d.adopted_date, age_group: d.age_group, id: d.id, name: d.name }] as const),
             ] as ReadonlyArray<readonly [number, { adopted_date: string; age_group: string; id: number; name?: string }]>).values()
           )
         ];
 
         // Group by week (Monday) and age group
         const weekMap: Record<string, { Puppies: number; Adults: number; Seniors: number }> = {};
-        for (const dog of allAdoptions) {
+        for (const dog of allAdoptions as { adopted_date: string; age_group: string; id: number; name?: string }[]) {
           let dateOnly: string | null = null;
           
           if (dog.adopted_date) {
@@ -113,7 +148,7 @@ export default function InsightsSpotlightTab() {
         // After aggregation, log the full list of dogs counted for week of 2/2
         console.log('[WEEKLY DEBUG] Final week counts:', weekMap);
         if (weekMap['02/02/2026']) {
-          const countedAdults = allAdoptions.filter(dog => {
+          const countedAdults = (allAdoptions as { adopted_date: string; age_group: string; id: number; name?: string }[]).filter(dog => {
             let dateOnly: string | null = null;
             
             if (dog.adopted_date) {
@@ -152,7 +187,7 @@ export default function InsightsSpotlightTab() {
       if (dogsError || !dogs) return [];
 
       // Build a set of adopted dog IDs from the dogs table
-      const adoptedDogIds = new Set(dogs.map(d => d.id));
+      const adoptedDogIds = new Set((dogs as { id: number }[]).map(d => d.id));
 
       // Get all adoption events from dog_history (status_change to adopted)
       const { data: history, error: historyError } = await supabase
@@ -164,8 +199,8 @@ export default function InsightsSpotlightTab() {
 
       // Merge: start with dogs table, then add any dog_history adoptions not in dogs table
       const allAdoptions: { name: string; adopted_date: string; id: number }[] = [
-        ...dogs.map(d => ({ name: d.name, adopted_date: d.adopted_date, id: d.id })),
-        ...history.filter(h => h.adopted_date && !adoptedDogIds.has(h.dog_id)).map(h => ({ name: h.name, adopted_date: h.adopted_date, id: h.dog_id }))
+        ...(dogs as { name: string; adopted_date: string; id: number }[]).map(d => ({ name: d.name, adopted_date: d.adopted_date, id: d.id })),
+        ...(history as { name: string; adopted_date: string; dog_id: number }[]).filter(h => h.adopted_date && !adoptedDogIds.has(h.dog_id)).map(h => ({ name: h.name, adopted_date: h.adopted_date, id: h.dog_id }))
       ];
 
       // Group by date (YYYY-MM-DD)
@@ -207,43 +242,6 @@ export default function InsightsSpotlightTab() {
     );
   };
 
-  // Tooltip formatter
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const { date, names, count } = payload[0].payload;
-      // Format date as MM-DD-YYYY
-      let formattedDate = date;
-      if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-        const [y, m, d] = date.split('-');
-        formattedDate = `${m}-${d}-${y}`;
-      }
-      return (
-        <div style={{
-          background: 'rgba(255,255,255,0.97)',
-          border: '1px solid #0047AB',
-          borderRadius: 8,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
-          padding: 14,
-          minWidth: 260,
-          maxWidth: 400,
-          fontSize: 15,
-          color: '#222',
-          whiteSpace: 'normal',
-        }}>
-          <div style={{ fontWeight: 700, marginBottom: 4 }}><span>Date:</span> <span style={{ fontWeight: 400 }}>{formattedDate}</span></div>
-          <div style={{ fontWeight: 700, marginBottom: 4 }}><span>Adoptions:</span> <span style={{ fontWeight: 400 }}>{count}</span></div>
-          <div style={{ fontWeight: 700, marginBottom: 2 }}>Dogs Adopted:</div>
-          <div style={{ fontWeight: 400, marginLeft: 8 }}>
-            {names.map((n: string, i: number) => (
-              <div key={n} style={{ marginBottom: 4 }}>{n}</div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
-
   return (
     <div>
       <h2 className="text-2xl font-bold mb-4 text-center">Daily Adoption Totals</h2>
@@ -258,14 +256,11 @@ export default function InsightsSpotlightTab() {
                 dataKey="date"
                 tick={props => {
                   const { x, y, payload } = props;
-                  // Convert YYYY-MM-DD to MM-DD-YYYY
                   let formatted = payload.value;
                   if (/^\d{4}-\d{2}-\d{2}$/.test(payload.value)) {
                     const [y, m, d] = payload.value.split('-');
                     formatted = `${m}-${d}-${y}`;
                   }
-                  // Shift label slightly to the right and down (e.g., +8px right, +8px down)
-                  // Ensure x and y are numbers before adding offset
                   const xNum = typeof x === 'number' ? x : Number(x);
                   const yNum = typeof y === 'number' ? y : Number(y);
                   return (
@@ -307,13 +302,10 @@ export default function InsightsSpotlightTab() {
                 strokeWidth={2.5}
                 dot={renderDot}
                 activeDot={props => {
-                  // Highlight hovered point in red and increase size
                   const { cx, cy, payload } = props;
-                  // If this is the high point, keep it red and large
                   if (payload && payload.count === maxCount) {
                     return <circle cx={cx} cy={cy} r={7} fill="#ef4444" stroke="#ef4444" strokeWidth={2} />;
                   }
-                  // Otherwise, red and slightly larger on hover
                   return <circle cx={cx} cy={cy} r={6} fill="#ef4444" stroke="#ef4444" strokeWidth={2} />;
                 }}
               />
@@ -335,7 +327,6 @@ export default function InsightsSpotlightTab() {
                 dataKey="week"
                 tick={props => {
                   const { x, y, payload } = props;
-                  // Ensure y is a number before adding offset
                   const yNum = typeof y === 'number' ? y : Number(y);
                   return (
                     <text
@@ -404,7 +395,6 @@ export default function InsightsSpotlightTab() {
                 iconType="rect"
                 wrapperStyle={{ fontSize: 15 }}
                 content={(props: LegendProps) => {
-                  // Always render in Puppies, Adults, Seniors order
                   const items = [
                     { value: 'Puppies', color: '#6ee7b7' },
                     { value: 'Adults', color: '#60a5fa' },

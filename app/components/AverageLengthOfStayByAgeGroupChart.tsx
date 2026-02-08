@@ -58,7 +58,7 @@ export default function AverageLengthOfStayByAgeGroupChart() {
       <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 16, textAlign: 'center' }}>
         Average Length of Stay by Age Group
       </div>
-      <ResponsiveContainer width="99%" minWidth={0} height={260}>
+      <ResponsiveContainer width="100%" height={320}>
         <BarChart data={data} margin={{ top: 20, right: 30, left: 30, bottom: 30 }} barCategoryGap="50%" barGap={0}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
           <XAxis dataKey="label" tick={{ fontSize: 15, fill: '#222' }} />

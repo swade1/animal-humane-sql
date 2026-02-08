@@ -1,3 +1,4 @@
+import { logDogHistory } from './dogHistory';
 // enrich_and_upsert_animals.ts
 // Enriches animals with location_info.jsonl and upserts into Supabase
 
@@ -79,9 +80,21 @@ export async function enrichAndUpsertAnimals() {
       });
     }
   }
-  const upsertRows = enriched.map(a => {
+  const upsertRows = [];
+  for (const a of enriched) {
     const manual = manualMap.get(a.nid) || {};
-    return {
+    const existing = existingDogs?.find(d => d.id === a.nid);
+    // Check for name change
+    if (existing && existing.name && a.name && existing.name !== a.name) {
+      await logDogHistory({
+        dogId: a.nid,
+        name: a.name,
+        eventType: 'name_change',
+        oldValue: existing.name,
+        newValue: a.name,
+      });
+    }
+    upsertRows.push({
       id: a.nid,
       name: a.name,
       location: a.location,
@@ -102,8 +115,8 @@ export async function enrichAndUpsertAnimals() {
       // Add more fields as needed
       updated_at: new Date().toISOString(),
       scraped: true
-    };
-  });
+    });
+  }
   console.log('[enrich_and_upsert_animals] Upsert rows:', upsertRows);
   const { error } = await supabase.from('dogs').upsert(upsertRows, { onConflict: 'id' });
   if (error) {

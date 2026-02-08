@@ -75,11 +75,11 @@ export default function LengthOfStayHistogram() {
   if (!data) return <div>No data found.</div>;
 
   return (
-    <div style={{ width: '100%', minWidth: 900, maxWidth: '100%', background: '#fff', borderRadius: 16, boxShadow: '0 2px 16px 0 rgba(0,0,0,0.07)', padding: 32, margin: '32px auto' }}>
+    <div style={{ width: '100%', background: '#fff', borderRadius: 16, boxShadow: '0 2px 16px 0 rgba(0,0,0,0.07)', padding: 32}}>
       <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 16, textAlign: 'center' }}>
         Length of Stay for Available Dogs
       </div>
-      <ResponsiveContainer width="100%" minWidth={900} height={320}>
+      <ResponsiveContainer width="100%" height={320}>
         <BarChart data={data} margin={{ top: 20, right: 30, left: 30, bottom: 30 }} barCategoryGap={18}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
           <XAxis dataKey="range" tick={{ fontSize: 15, fill: '#222' }} />
