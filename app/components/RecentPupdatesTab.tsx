@@ -31,36 +31,31 @@ export default function RecentPupdatesTab() {
   });
 
 
-  // Query for temporarily unlisted dogs: dogs that were in previous scrapes but not in current scrape
+  // Query for temporarily unlisted dogs: available in DB, not on website (not in latest_scraped_ids.json), not Trial Adoption
   const { data: temporarilyUnlistedDogs, isLoading: isLoadingUnlisted } = useQuery({
     queryKey: ['temporarilyUnlistedDogs'],
     queryFn: async () => {
-      // Get the most recent updated_at timestamp across all dogs
-      const { data: allDogs, error: errorAll } = await supabase
+      // Fetch scraped IDs from public/latest_scraped_ids.json
+      let scrapedIds: number[] = [];
+      try {
+        const res = await fetch('/latest_scraped_ids.json');
+        if (res.ok) {
+          const ids = await res.json();
+          if (Array.isArray(ids)) scrapedIds = ids;
+        }
+      } catch {}
+      // Get all available dogs with non-empty location
+      const { data: allAvailable, error: errorAvailable } = await supabase
         .from('dogs')
-        .select('updated_at')
-        .order('updated_at', { ascending: false })
-        .limit(1);
-      
-      if (errorAll || !allDogs || allDogs.length === 0) return [];
-      const mostRecentTimestamp = allDogs[0].updated_at;
-      
-      // Get all dogs with status='available' whose updated_at precedes the most recent timestamp
-      const { data: unlistedDogs, error: errorUnlisted } = await supabase
-        .from('dogs')
-        .select('id, name, intake_date, created_at, updated_at, status, location, scraped')
-        .eq('status', 'available')
-        .lt('updated_at', mostRecentTimestamp);
-      
-      if (errorUnlisted || !unlistedDogs) return [];
-      
-      // Filter: exclude Trial Adoption
-      const filtered = unlistedDogs.filter(dog => {
-        const isTrial = dog.location && dog.location.includes('Trial Adoption');
-        return !isTrial;
+        .select('id, name, intake_date, created_at, updated_at, status, location')
+        .eq('status', 'available');
+      if (errorAvailable || !allAvailable) return [];
+      // Exclude dogs on website and those in Trial Adoption
+      const filtered = allAvailable.filter(dog => {
+        if (!dog.location || dog.location.includes('Trial Adoption')) return false;
+        return !scrapedIds.includes(dog.id);
       });
       console.log('Available but Temporarily Unlisted dogs:', filtered.map(d => ({ id: d.id, name: d.name, updated_at: d.updated_at })));
-      console.log('Most recent timestamp:', mostRecentTimestamp);
       return filtered;
     },
     staleTime: 1000 * 60 * 60 * 2
