@@ -1,6 +1,7 @@
 // enrich_and_upsert_animals.ts
 // Enriches animals with location_info.jsonl and upserts into Supabase
 
+import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { fetchAllAnimals } from './fetch_all_animals';
 
@@ -44,6 +45,23 @@ function enrichAnimal(animal: Record<string, unknown>): Record<string, unknown> 
 export async function enrichAndUpsertAnimals() {
   const animals: Record<string, unknown>[] = await fetchAllAnimals();
   const enriched: Record<string, unknown>[] = animals.map(enrichAnimal);
+  
+  // Save scraped dog IDs to public/latest_scraped_ids.json for UI comparison
+  try {
+    const fs = await import('fs');
+    const path = await import('path');
+    const scrapedDogIds = enriched.map(a => a.nid).filter(Boolean);
+    const filePath = path.join(process.cwd(), 'public', 'latest_scraped_ids.json');
+    const publicDir = path.join(process.cwd(), 'public');
+    if (!fs.existsSync(publicDir)) {
+      fs.mkdirSync(publicDir, { recursive: true });
+    }
+    fs.writeFileSync(filePath, JSON.stringify(scrapedDogIds));
+    console.log(`[enrich_and_upsert_animals] Saved ${scrapedDogIds.length} scraped dog IDs to public/latest_scraped_ids.json`);
+  } catch (err) {
+    console.error('[enrich_and_upsert_animals] Error saving scraped dog IDs:', err);
+  }
+  
   // Upsert into Supabase (by id/nid)
   // Fetch current origins from Supabase to preserve manual edits
   const ids = enriched.map(a => a.nid).filter(Boolean);
