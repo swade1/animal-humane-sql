@@ -91,7 +91,7 @@ export async function enrichAndUpsertAnimals() {
         name: typeof a.name === 'string' ? a.name : '',
         eventType: 'name_change',
         oldValue: existing.name,
-        newValue: a.name,
+        newValue: typeof a.name === 'string' ? a.name : '',
       });
     }
     upsertRows.push({
