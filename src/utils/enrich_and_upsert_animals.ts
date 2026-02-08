@@ -68,7 +68,7 @@ export async function enrichAndUpsertAnimals() {
   const ids = enriched.map(a => a.nid).filter(Boolean);
   const { data: existingDogs } = await supabase
     .from('dogs')
-    .select('id, origin, latitude, longitude')
+    .select('id, name, origin, latitude, longitude')
     .in('id', ids);
   const manualMap = new Map();
   if (existingDogs && Array.isArray(existingDogs)) {
