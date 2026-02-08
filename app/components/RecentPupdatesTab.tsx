@@ -50,11 +50,17 @@ export default function RecentPupdatesTab() {
         .select('id, name, intake_date, created_at, updated_at, status, location')
         .eq('status', 'available');
       if (errorAvailable || !allAvailable) return [];
+      // Debug output
+      console.log('scrapedIds:', scrapedIds);
+      console.log('allAvailable:', allAvailable.map(d => ({ id: d.id, name: d.name, location: d.location })));
       // Exclude dogs on website and those in Trial Adoption
+      // Ensure type consistency for ID comparison
+      const scrapedIdSet = new Set(scrapedIds.map(id => Number(id)));
       const filtered = allAvailable.filter(dog => {
         if (!dog.location || dog.location.includes('Trial Adoption')) return false;
-        return !scrapedIds.includes(dog.id);
+        return !scrapedIdSet.has(Number(dog.id));
       });
+      console.log('Filtered temporarily unlisted IDs:', filtered.map(d => d.id));
       console.log('Available but Temporarily Unlisted dogs:', filtered.map(d => ({ id: d.id, name: d.name, updated_at: d.updated_at })));
       return filtered;
     },
