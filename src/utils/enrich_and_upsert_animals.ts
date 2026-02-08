@@ -87,7 +87,7 @@ export async function enrichAndUpsertAnimals() {
     // Check for name change
     if (existing && existing.name && a.name && existing.name !== a.name) {
       await logDogHistory({
-        dogId: a.nid,
+        dogId: Number(a.nid),
         name: a.name,
         eventType: 'name_change',
         oldValue: existing.name,
