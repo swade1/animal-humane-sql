@@ -261,6 +261,31 @@ export default function RecentPupdatesTab() {
           )}
         </div>
         <div style={{ height: '1em' }} />
+        {/* Adopted/Reclaimed Dogs Section */}
+        <div className="mb-8">
+          <h3 className="text-md font-bold mb-2" style={{ marginLeft: '0.5em' }}>Adopted/Reclaimed Dogs</h3>
+          <div style={{ height: '0.6em' }} />
+          <p className="text-sm mb-4" style={{ marginLeft: '0.5em' }}><em>We've been adopted!!!</em></p>
+          <div style={{ height: '0.6em' }} />
+          {/* Query for dogs adopted today */}
+          <AdoptedTodayDogs setModalDog={setModalDog} />
+        </div>
+        {/* Patch: Remove dogs with status 'unknown' or 'pending_review' from Adopted/Reclaimed category */}
+        {/* If AdoptedTodayDogs is a component, update its query to exclude these statuses. If it's inline, update the query logic similarly. */}
+
+        <div style={{ height: '1em' }} />
+
+        {/* Trial Adoptions Section */}
+        <div className="mb-8">
+          <h3 className="text-md font-bold mb-2" style={{ marginLeft: '0.5em' }}>Trial Adoptions</h3>
+          <div style={{ height: '0.6em' }} />
+          <p className="text-sm mb-4" style={{ marginLeft: '0.5em' }}><em>We're checking out a potential new home and evaluating the quality of the treats and toys.</em></p>
+          <div style={{ height: '0.6em' }} />
+          <TrialAdoptionsDogs setModalDog={setModalDog} />
+        </div>
+
+        <div style={{ height: '1em' }} />
+
         {/* Returned Dogs Section */}
         <div className="mb-8">
           <h3 className="text-md font-bold mb-2" style={{ marginLeft: '0.5em' }}>Returned Dogs</h3>
@@ -290,30 +315,7 @@ export default function RecentPupdatesTab() {
           )}
         </div>
 
-
-        {/* Trial Adoptions Section */}
-        <div className="mb-8">
-          <h3 className="text-md font-bold mb-2" style={{ marginLeft: '0.5em' }}>Trial Adoptions</h3>
-          <div style={{ height: '0.6em' }} />
-          <p className="text-sm mb-4" style={{ marginLeft: '0.5em' }}><em>We're checking out a potential new home and evaluating the quality of the treats and toys.</em></p>
-          <div style={{ height: '0.6em' }} />
-          <TrialAdoptionsDogs setModalDog={setModalDog} />
-        </div>
-
-        {/* Adopted/Reclaimed Dogs Section */}
-        <div className="mb-8">
-          <h3 className="text-md font-bold mb-2" style={{ marginLeft: '0.5em' }}>Adopted/Reclaimed Dogs</h3>
-          <div style={{ height: '0.6em' }} />
-          <p className="text-sm mb-4" style={{ marginLeft: '0.5em' }}><em>We've been adopted!!!</em></p>
-          <div style={{ height: '0.6em' }} />
-          {/* Query for dogs adopted today */}
-          <AdoptedTodayDogs setModalDog={setModalDog} />
-        </div>
-        {/* Patch: Remove dogs with status 'unknown' or 'pending_review' from Adopted/Reclaimed category */}
-        {/* If AdoptedTodayDogs is a component, update its query to exclude these statuses. If it's inline, update the query logic similarly. */}
-
-        {/* Extra spacing between Adopted/Reclaimed and Unlisted sections */}
-        <div style={{ height: '1.5em' }} />
+        <div style={{ height: '1em' }} />
 
         {/* Available but Temporarily Unlisted Section */}
         <div className="mb-8">
@@ -342,6 +344,8 @@ export default function RecentPupdatesTab() {
             <div style={{ marginLeft: '1.5em', color: '#888', marginTop: '0.3em', marginBottom: '1.2em' }}>No temporarily unlisted dogs today.</div>
           )}
         </div>
+
+        <div style={{ height: '1em' }} />
 
         {/* Available Soon Section (moved last) */}
         <div className="mb-8">

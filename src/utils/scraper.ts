@@ -443,26 +443,39 @@ export async function runScraper() {
       // Prepare prevAvailableDogs for adoption/status-change logic (always trim status)
       // const prevAvailableDogs = prevDogs ? prevDogs.filter(d => typeof d.status === 'string' && d.status.trim() === 'available') : []; // removed unused variable
     for (const dog of mergedDogs) {
-      // Location change with extra logging
+      // Location change with extra logging and more robust comparison
       const oldLocation = locationMap.get(dog.id) ?? null;
       const newLocation = dog.location ?? null;
       const normOldLocation = oldLocation ? oldLocation.trim() : '';
       const normNewLocation = newLocation ? newLocation.trim() : '';
       console.log(`[debug] Checking location for dog ID ${dog.id} (${dog.name}): old='${oldLocation}' new='${newLocation}' | normOld='${normOldLocation}' normNew='${normNewLocation}'`);
-      if (normOldLocation && normNewLocation && normOldLocation !== normNewLocation) {
-        console.log(`[debug] Location change detected for dog ID ${dog.id} (${dog.name}): '${normOldLocation}' -> '${normNewLocation}'`);
-        await logDogHistory({
-          dogId: dog.id,
-          eventType: 'location_change',
-          oldValue: oldLocation,
-          newValue: newLocation,
-          notes: 'Location updated by scraper'
-        });
-        await supabase
-          .from('dogs')
-          .update({ location: newLocation })
-          .eq('id', dog.id);
-        console.error(`Location change detected for dog ID ${dog.id} (${dog.name}): '${oldLocation}' -> '${newLocation}'`);
+      
+      // More robust comparison: log change if either location exists and they differ
+      // This catches cases like: null -> location, location -> null, location1 -> location2
+      if (normOldLocation !== normNewLocation && (normOldLocation || normNewLocation)) {
+        console.log(`[debug] Location change detected for dog ID ${dog.id} (${dog.name}): '${normOldLocation || 'NULL'}' -> '${normNewLocation || 'NULL'}'`);
+        try {
+          await logDogHistory({
+            dogId: dog.id,
+            eventType: 'location_change',
+            oldValue: oldLocation,
+            newValue: newLocation,
+            notes: 'Location updated by scraper'
+          });
+          console.log(`[debug] Successfully logged location_change to dog_history for dog ID ${dog.id}`);
+        } catch (logError) {
+          console.error(`[ERROR] Failed to log location_change for dog ID ${dog.id} (${dog.name}):`, logError);
+        }
+        
+        try {
+          await supabase
+            .from('dogs')
+            .update({ location: newLocation })
+            .eq('id', dog.id);
+          console.error(`Location change detected for dog ID ${dog.id} (${dog.name}): '${oldLocation || 'NULL'}' -> '${newLocation || 'NULL'}'`);
+        } catch (updateError) {
+          console.error(`[ERROR] Failed to update location in dogs table for dog ID ${dog.id} (${dog.name}):`, updateError);
+        }
       }
       // Status change (including NULL -> available)
       const oldStatus = statusMap.get(dog.id) ?? null;

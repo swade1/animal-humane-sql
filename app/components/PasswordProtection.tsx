@@ -12,28 +12,37 @@ export default function PasswordProtection({ children }: PasswordProtectionProps
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
-  // The password - you can change this or move it to environment variables
-  const CORRECT_PASSWORD = process.env.NEXT_PUBLIC_SITE_PASSWORD || 'ahnm2024';
+
 
   useEffect(() => {
-    // Check if user is already authenticated
-    const authStatus = sessionStorage.getItem('isAuthenticated');
-    if (authStatus === 'true') {
+    // Check for a valid session token
+    const token = sessionStorage.getItem('sessionToken');
+    if (token && token.length > 0) {
       setIsAuthenticated(true);
     }
     setIsLoading(false);
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (password === CORRECT_PASSWORD) {
-      setIsAuthenticated(true);
-      sessionStorage.setItem('isAuthenticated', 'true');
-      setError('');
-    } else {
-      setError('Incorrect password. Please try again.');
-      setPassword('');
+    setError("");
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json();
+      if (res.ok && data.token) {
+        setIsAuthenticated(true);
+        sessionStorage.setItem("sessionToken", data.token);
+        setError("");
+      } else {
+        setError(data.error || "Incorrect password. Please try again.");
+        setPassword("");
+      }
+    } catch (err) {
+      setError("An error occurred. Please try again.");
     }
   };
 
