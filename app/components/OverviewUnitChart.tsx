@@ -4,6 +4,25 @@ import { supabase } from "../lib/supabaseClient";
 import React from "react";
 
 export default function OverviewUnitChart() {
+    // Fetch count for 'Available Soon' category using SQL query logic
+    const { data: availableSoonCount, isLoading: loadingAvailableSoon } = useQuery({
+      queryKey: ['availableSoonCount'],
+      queryFn: async () => {
+        const { data, error } = await supabase
+          .from('dogs')
+          .select('id, location, status, notes')
+          .is('status', null);
+        if (error || !data) return 0;
+        return data.filter(dog =>
+          dog.location !== 'Foster Home' &&
+          typeof dog.notes === 'string' && dog.notes.includes('Available Soon') &&
+          !dog.location.startsWith('Dog Treatment') &&
+          !dog.location.endsWith('Trial Adoption') &&
+          !dog.location.startsWith('Foster Office')
+        ).length;
+      },
+      staleTime: 1000 * 60 * 60 * 2
+    });
   // Square icon component
   const Square = () => (
     <span style={{
@@ -94,8 +113,9 @@ export default function OverviewUnitChart() {
 
   // Compose categories and sort descending by count
   const categories = [
-    { label: "Available on Website", count: availableDogs ?? 0 },
-    { label: "Available but not on Website", count: temporarilyUnlistedDogs ?? 0 },
+    { label: "Listed on Website", count: availableDogs ?? 0 },
+    { label: "Temporarily Unlisted", count: temporarilyUnlistedDogs ?? 0 },
+    { label: "Available Soon", count: availableSoonCount ?? 0 },
     { label: "Foster Home", count: fosterHomeCount },
     { label: "Trial Adoption", count: trialAdoptionCount },
     { label: "Foster Office", count: fosterOfficeCount },
@@ -107,7 +127,8 @@ export default function OverviewUnitChart() {
   // Find max label length for right alignment
   const maxLabelLength = Math.max(...categories.map(c => c.label.length));
 
-  const loading = loadingAvailable || loadingUnlisted || loadingLocations;
+  // const loading = loadingAvailable || loadingUnlisted || loadingLocations; // Removed duplicate declaration
+  const loading = loadingAvailable || loadingUnlisted || loadingLocations || loadingAvailableSoon;
 
   return (
     <div
