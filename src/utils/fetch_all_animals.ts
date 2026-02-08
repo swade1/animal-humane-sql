@@ -1,24 +1,28 @@
 // fetch_all_animals.ts
 // Fetches and combines all available-animals JSON endpoints for animalhumanenm.org
-// To be used for enrichment and upsert pipeline
+// Dynamically discovers API URLs from the main page
 
 
 import fetch from 'node-fetch';
 
-// Always use the 6 provided API URLs
-const ANIMAL_API_URLS = [
-  'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=12363&embedded=1&iframeId=shelterluv_wrap_1761166982&columns=1',
-  'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=8888&embedded=1&iframeId=shelterluv_wrap_1764539234&columns=1',
-  'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=9274&embedded=1&iframeId=shelterluv_wrap_1742914295&columns=1',
-  'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=12946&embedded=1&iframeId=shelterluv_wrap_1764539274&columns=1',
-  'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=8889&embedded=1&iframeId=shelterluv_wrap_1741279482&columns=1',
-  'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=8887&embedded=1&iframeId=shelterluv_wrap_1741279189&columns=1',
-];
+const MAIN_URL = 'https://animalhumanenm.org/adopt/adoptable-dogs';
+
+// Helper to extract all available-animals URLs from the main page
+async function getAvailableAnimalsUrls() {
+  const res = await fetch(MAIN_URL);
+  const html = await res.text();
+  const urlRegex = /https:\/\/animalhumanenm\.org\/available-animals\?location=[^"']+/g;
+  const matches = html.match(urlRegex) || [];
+  const urls = Array.from(new Set(matches));
+  console.log('[fetch_all_animals] Discovered URLs from main page:', urls);
+  return urls;
+}
 
 // Fetch and combine all animals from all endpoints
 export async function fetchAllAnimals(): Promise<Record<string, unknown>[]> {
+  const urls = await getAvailableAnimalsUrls();
   let allAnimals: Record<string, unknown>[] = [];
-  for (const url of ANIMAL_API_URLS) {
+  for (const url of urls) {
     try {
       const res = await fetch(url);
       const data = await res.json() as { animals?: Array<Record<string, unknown>> };

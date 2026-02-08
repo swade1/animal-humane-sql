@@ -1,4 +1,5 @@
 
+import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { logDogHistory } from './dogHistory';
 import { format as formatTz, toZonedTime } from 'date-fns-tz';

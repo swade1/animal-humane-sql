@@ -33,7 +33,7 @@ export default function RecentPupdatesTab() {
 
   // Query for temporarily unlisted dogs: available in DB, not on website (not in latest_scraped_ids.json), not Trial Adoption
   const { data: temporarilyUnlistedDogs, isLoading: isLoadingUnlisted } = useQuery({
-    queryKey: ['temporarilyUnlistedDogs'],
+    queryKey: ['temporarilyUnlistedDogsDetails'],
     queryFn: async () => {
       // Fetch scraped IDs from public/latest_scraped_ids.json
       let scrapedIds: number[] = [];
@@ -44,24 +44,44 @@ export default function RecentPupdatesTab() {
           if (Array.isArray(ids)) scrapedIds = ids;
         }
       } catch {}
-      // Get all available dogs with non-empty location
+      
+      console.log('[TEMP UNLISTED] Scraped IDs count:', scrapedIds.length);
+      console.log('[TEMP UNLISTED] First 10 scraped IDs:', scrapedIds.slice(0, 10));
+      
+      // Get all available dogs
       const { data: allAvailable, error: errorAvailable } = await supabase
         .from('dogs')
         .select('id, name, intake_date, created_at, updated_at, status, location')
         .eq('status', 'available');
       if (errorAvailable || !allAvailable) return [];
-      // Debug output
-      console.log('scrapedIds:', scrapedIds);
-      console.log('allAvailable:', allAvailable.map(d => ({ id: d.id, name: d.name, location: d.location })));
+      
+      console.log('[TEMP UNLISTED] Total available dogs:', allAvailable.length);
+      
       // Exclude dogs on website and those in Trial Adoption
-      // Ensure type consistency for ID comparison
       const scrapedIdSet = new Set(scrapedIds.map(id => Number(id)));
       const filtered = allAvailable.filter(dog => {
-        if (!dog.location || dog.location.includes('Trial Adoption')) return false;
-        return !scrapedIdSet.has(Number(dog.id));
+        // Must have a non-empty location
+        if (!dog.location || dog.location.trim() === '') {
+          console.log(`[TEMP UNLISTED] Excluding ${dog.name} (ID: ${dog.id}) - empty location`);
+          return false;
+        }
+        // Exclude Trial Adoption
+        if (dog.location.includes('Trial Adoption')) {
+          console.log(`[TEMP UNLISTED] Excluding ${dog.name} (ID: ${dog.id}) - Trial Adoption`);
+          return false;
+        }
+        // Exclude dogs on website
+        if (scrapedIdSet.has(Number(dog.id))) {
+          console.log(`[TEMP UNLISTED] Excluding ${dog.name} (ID: ${dog.id}) - on website`);
+          return false;
+        }
+        console.log(`[TEMP UNLISTED] Including ${dog.name} (ID: ${dog.id}) - location: ${dog.location}`);
+        return true;
       });
-      console.log('Filtered temporarily unlisted IDs:', filtered.map(d => d.id));
-      console.log('Available but Temporarily Unlisted dogs:', filtered.map(d => ({ id: d.id, name: d.name, updated_at: d.updated_at })));
+      
+      console.log('[TEMP UNLISTED] Filtered count:', filtered.length);
+      console.log('[TEMP UNLISTED] Filtered dogs:', filtered.map(d => ({ id: d.id, name: d.name })));
+      
       return filtered;
     },
     staleTime: 1000 * 60 * 60 * 2

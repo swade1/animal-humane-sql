@@ -32,27 +32,32 @@ export default function OverviewUnitChart() {
     staleTime: 1000 * 60 * 60 * 2
   });
 
-  // Fetch temporarily unlisted dogs (Recent Pupdates logic)
+  // Fetch temporarily unlisted dogs (dogs available in DB, not on website, not Trial Adoption)
   const { data: temporarilyUnlistedDogs, isLoading: loadingUnlisted } = useQuery({
-    queryKey: ['temporarilyUnlistedDogs'],
+    queryKey: ['temporarilyUnlistedDogsCount'],
     queryFn: async () => {
-      // Get the most recent updated_at timestamp across all dogs
-      const { data: allDogs, error: errorAll } = await supabase
-        .from('dogs')
-        .select('updated_at')
-        .order('updated_at', { ascending: false })
-        .limit(1);
-      if (errorAll || !allDogs || allDogs.length === 0) return 0;
-      const mostRecentTimestamp = allDogs[0].updated_at;
-      // Get all dogs with status='available' whose updated_at precedes the most recent timestamp
-      const { data: unlistedDogs, error: errorUnlisted } = await supabase
+      // Fetch scraped IDs from public/latest_scraped_ids.json
+      let scrapedIds: number[] = [];
+      try {
+        const res = await fetch('/latest_scraped_ids.json');
+        if (res.ok) {
+          const ids = await res.json();
+          if (Array.isArray(ids)) scrapedIds = ids;
+        }
+      } catch {}
+      // Get all available dogs with non-empty location
+      const { data: allAvailable, error: errorAvailable } = await supabase
         .from('dogs')
         .select('id, location')
-        .eq('status', 'available')
-        .lt('updated_at', mostRecentTimestamp);
-      if (errorUnlisted || !unlistedDogs) return 0;
-      // Exclude Trial Adoption
-      return unlistedDogs.filter(dog => !dog.location?.includes('Trial Adoption')).length;
+        .eq('status', 'available');
+      if (errorAvailable || !allAvailable) return 0;
+      // Exclude dogs on website and those in Trial Adoption
+      const scrapedIdSet = new Set(scrapedIds.map(id => Number(id)));
+      const filtered = allAvailable.filter(dog => {
+        if (!dog.location || dog.location.includes('Trial Adoption')) return false;
+        return !scrapedIdSet.has(Number(dog.id));
+      });
+      return filtered.length;
     },
     staleTime: 1000 * 60 * 60 * 2
   });
