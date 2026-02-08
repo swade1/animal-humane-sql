@@ -29,7 +29,7 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState(0);
 
   const handleLogout = () => {
-    sessionStorage.removeItem('isAuthenticated');
+    sessionStorage.removeItem('sessionToken');
     window.location.reload();
   };
 
