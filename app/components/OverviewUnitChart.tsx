@@ -1,0 +1,157 @@
+"use client";
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from "../lib/supabaseClient";
+import React from "react";
+
+export default function OverviewUnitChart() {
+  // Square icon component
+  const Square = () => (
+    <span style={{
+      display: "inline-block",
+      width: 16,
+      height: 16,
+      margin: "0 2px",
+      background: "#2563eb",
+      borderRadius: 3,
+    }} />
+  );
+
+  // Fetch available dogs on website from latest_scraped_ids.json
+  const { data: availableDogs, isLoading: loadingAvailable } = useQuery({
+    queryKey: ['availableDogsScrape'],
+    queryFn: async () => {
+      try {
+        const res = await fetch('/latest_scraped_ids.json');
+        if (!res.ok) return 0;
+        const ids = await res.json();
+        return Array.isArray(ids) ? ids.length : 0;
+      } catch {
+        return 0;
+      }
+    },
+    staleTime: 1000 * 60 * 60 * 2
+  });
+
+  // Fetch temporarily unlisted dogs (Recent Pupdates logic)
+  const { data: temporarilyUnlistedDogs, isLoading: loadingUnlisted } = useQuery({
+    queryKey: ['temporarilyUnlistedDogs'],
+    queryFn: async () => {
+      // Get the most recent updated_at timestamp across all dogs
+      const { data: allDogs, error: errorAll } = await supabase
+        .from('dogs')
+        .select('updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(1);
+      if (errorAll || !allDogs || allDogs.length === 0) return 0;
+      const mostRecentTimestamp = allDogs[0].updated_at;
+      // Get all dogs with status='available' whose updated_at precedes the most recent timestamp
+      const { data: unlistedDogs, error: errorUnlisted } = await supabase
+        .from('dogs')
+        .select('id, location')
+        .eq('status', 'available')
+        .lt('updated_at', mostRecentTimestamp);
+      if (errorUnlisted || !unlistedDogs) return 0;
+      // Exclude Trial Adoption
+      return unlistedDogs.filter(dog => !dog.location?.includes('Trial Adoption')).length;
+    },
+    staleTime: 1000 * 60 * 60 * 2
+  });
+
+  // Fetch all dogs with location info and status (needed for filtering)
+  const { data: allDogsWithLocation, isLoading: loadingLocations } = useQuery({
+    queryKey: ['allDogsWithLocation'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('dogs')
+        .select('id, location, status');
+      return error || !data ? [] : data;
+    },
+    staleTime: 1000 * 60 * 60 * 2
+  });
+
+  // Count by location
+  const countByLocation = (locationName: string) =>
+    allDogsWithLocation?.filter(dog => (dog.location || '').toLowerCase() === locationName.toLowerCase()).length || 0;
+
+  // Trial Adoption (all dogs, regardless of status)
+  const trialAdoptionCount = allDogsWithLocation?.filter(dog => dog.location?.includes('Trial Adoption')).length || 0;
+
+  // Foster Home
+  const fosterHomeCount = countByLocation('Foster Home');
+  // Foster Office (location contains 'Foster Office', regardless of status)
+  const fosterOfficeCount = allDogsWithLocation?.filter(dog => dog.location?.includes('Foster Office')).length || 0;
+  // Dog Treatment (location contains 'Dog Treatment', regardless of status)
+  const dogTreatmentCount = allDogsWithLocation?.filter(dog => dog.location?.includes('Dog Treatment')).length || 0;
+  // Clinic (location contains 'Clinic' and status is 'available')
+  const clinicCount = allDogsWithLocation?.filter(dog => dog.location?.includes('Clinic') && dog.status === 'available').length || 0;
+  // Behavior Office (location contains 'Behavior Office' and status is 'available')
+  const behaviorOfficeCount = allDogsWithLocation?.filter(dog => dog.location?.includes('Behavior Office') && dog.status === 'available').length || 0;
+
+  // Compose categories and sort descending by count
+  const categories = [
+    { label: "Available on Website", count: availableDogs ?? 0 },
+    { label: "Available but not on Website", count: temporarilyUnlistedDogs ?? 0 },
+    { label: "Foster Home", count: fosterHomeCount },
+    { label: "Trial Adoption", count: trialAdoptionCount },
+    { label: "Foster Office", count: fosterOfficeCount },
+    { label: "Dog Treatment", count: dogTreatmentCount },
+    { label: "Clinic", count: clinicCount },
+    { label: "Behavior Office", count: behaviorOfficeCount },
+  ].sort((a, b) => b.count - a.count);
+
+  // Find max label length for right alignment
+  const maxLabelLength = Math.max(...categories.map(c => c.label.length));
+
+  const loading = loadingAvailable || loadingUnlisted || loadingLocations;
+
+  return (
+    <div
+      className="border border-[#ccc] p-4 rounded bg-[#fafafa]"
+      style={{ padding: "24px" }}
+    >
+      <div className="flex items-center justify-between mt-[10px]">
+        <h2 className="m-0 text-left text-lg font-semibold" style={{ marginLeft: '4px' }}>Shelter Overview</h2>
+      </div>
+      <div style={{ marginTop: '32px', marginLeft: '-24px' }}>
+        {loading ? (
+          <div style={{ color: '#888', fontSize: '1.1rem', marginBottom: 12 }}>Loading...</div>
+        ) : (
+          categories.map(({ label, count }) => (
+            <div
+              key={label}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                marginBottom: 12,
+                fontSize: "1.1rem",
+              }}
+            >
+              {/* Right-justified label */}
+              <div
+                style={{
+                  minWidth: `${maxLabelLength + 2}ch`,
+                  textAlign: "right",
+                  fontWeight: 600,
+                  color: "#374151",
+                  marginRight: 16,
+                }}
+              >
+                {label}
+              </div>
+              {/* Count */}
+              <div style={{ minWidth: "2ch", fontWeight: 700, marginRight: 8 }}>
+                {count}
+              </div>
+              {/* Squares/icons */}
+              <div>
+                {Array.from({ length: count }).map((_, i) => (
+                  <Square key={i} />
+                ))}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
