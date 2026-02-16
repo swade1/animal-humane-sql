@@ -118,7 +118,7 @@ export default function AdoptionsTab() {
                       : formatDateMST(dog.adopted_date)}
                   </td>
                   <td style={{ paddingLeft: '8ch', textAlign: 'center' }}>{dog.length_of_stay_days}</td>
-                  <td style={{ paddingLeft: '8ch', textAlign: 'center' }}>{dog.verified_adoption === 1 ? '✓' : ''}</td>
+                  <td style={{ paddingLeft: '8ch', textAlign: 'center', color: '#22c55e', fontWeight: 700 }}>{dog.verified_adoption === 1 ? '\u2713' : ''}</td>
                 </tr>
               ))}
           </tbody>
