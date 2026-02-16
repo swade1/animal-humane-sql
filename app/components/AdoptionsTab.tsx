@@ -76,13 +76,13 @@ export default function AdoptionsTab() {
       </div>
       <div style={{ paddingLeft: '18px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollPaddingLeft: '0' }}>
         <div style={{ minWidth: '600px', paddingLeft: '0' }}>
-          <table className="w-2/3 mt-4 text-left border-separate" style={{ borderSpacing: '0 20px', width: '100%', tableLayout: 'fixed' }}>
+          <table className="mt-4 text-left border-separate" style={{ borderSpacing: '0 20px', width: 'auto', tableLayout: 'fixed' }}>
             <thead>
               <tr>
-                <th className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem', position: 'sticky', left: 0, backgroundColor: '#fafafa', zIndex: 10, paddingLeft: '18px', paddingRight: '8px', width: '218px', minWidth: '218px' }}>Name</th>
-                <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '1ch', textAlign: 'center', width: '150px' }}>Date Adopted</th>
-                <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center', width: '150px' }}>Adoption Verified</th>
-                <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center', width: '150px' }}>Days at Shelter</th>
+                <th className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem', position: 'sticky', left: 0, backgroundColor: '#fafafa', zIndex: 10, paddingLeft: '10px', paddingRight: '5px', width: '140px', minWidth: '140px', maxWidth: '140px' }}>Name</th>
+                <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '1ch', textAlign: 'center', width: '120px' }}>Date Adopted</th>
+                <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '1ch', textAlign: 'center', width: '110px' }}>Adoption Verified</th>
+                <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '1ch', textAlign: 'center', width: '110px' }}>Days at Shelter</th>
               </tr>
             </thead>
             <tbody>
@@ -100,8 +100,8 @@ export default function AdoptionsTab() {
                   return dateA - dateB;
                 })
                 .map(dog => (
-                  <tr key={`${dog.id}-${dog.adopted_date}`} className="align-middle">
-                    <td style={{ position: 'sticky', left: 0, backgroundColor: '#fafafa', zIndex: 10, paddingLeft: '18px', paddingRight: '8px', width: '218px', minWidth: '218px' }}>
+                  <tr key={`${dog.id}-${dog.adopted_date}`} className="align-left">
+                    <td style={{ position: 'sticky', left: 0, backgroundColor: '#fafafa', zIndex: 10, paddingLeft: '10px', paddingRight: '5px', width: '140px', minWidth: '140px', maxWidth: '140px' }}>
                       <span
                         className="text-[#2a5db0] cursor-pointer font-bold"
                         style={{ fontWeight: 700, display: 'inline-block', marginBottom: '0.5em' }}
@@ -110,7 +110,7 @@ export default function AdoptionsTab() {
                         {dog.name}
                       </span>
                     </td>
-                  <td style={{ paddingLeft: '1ch', textAlign: 'center' }}>
+                  <td style={{ paddingLeft: '1ch', textAlign: 'center', width: '97.88px', height: '26.55px' }}>
                     {/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(dog.adopted_date)
                       ? (() => {
                           const [year, month, day] = dog.adopted_date.split('-');
@@ -118,8 +118,8 @@ export default function AdoptionsTab() {
                         })()
                       : formatDateMST(dog.adopted_date)}
                   </td>
-                  <td style={{ paddingLeft: '8ch', textAlign: 'center', color: '#22c55e', fontWeight: 700 }}>{dog.verified_adoption === 1 ? '\u2713' : ''}</td>
-                  <td style={{ paddingLeft: '8ch', textAlign: 'center' }}>{dog.length_of_stay_days}</td>
+                  <td style={{ paddingLeft: '1ch', textAlign: 'center', color: '#22c55e', fontWeight: 700 }}>{dog.verified_adoption === 1 ? '\u2713' : ''}</td>
+                  <td style={{ paddingLeft: '1ch', textAlign: 'center' }}>{dog.length_of_stay_days}</td>
                 </tr>
               ))}
           </tbody>
