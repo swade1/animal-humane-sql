@@ -78,7 +78,7 @@ export default function AdoptionsTab() {
         <table className="w-2/3 mt-4 text-left border-separate" style={{ borderSpacing: '0 20px', minWidth: '600px' }}>
           <thead>
             <tr>
-              <th className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem', position: 'sticky', left: 0, backgroundColor: '#fafafa', zIndex: 1 }}>Name</th>
+              <th className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem', position: 'sticky', left: 0, backgroundColor: '#fafafa', zIndex: 10 }}>Name</th>
               <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center' }}>Date Adopted</th>
               <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center' }}>Days at Shelter</th>
               <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center' }}>Adoption Verified</th>
@@ -100,7 +100,7 @@ export default function AdoptionsTab() {
               })
               .map(dog => (
                 <tr key={`${dog.id}-${dog.adopted_date}`} className="align-middle">
-                  <td style={{ position: 'sticky', left: 0, backgroundColor: '#fafafa', zIndex: 1 }}>
+                  <td style={{ position: 'sticky', left: 0, backgroundColor: '#fafafa', zIndex: 10 }}>
                     <span
                       className="text-[#2a5db0] cursor-pointer font-bold"
                       style={{ fontWeight: 700, display: 'inline-block', marginBottom: '0.5em' }}
