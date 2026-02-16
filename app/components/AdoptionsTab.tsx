@@ -124,6 +124,7 @@ export default function AdoptionsTab() {
               ))}
           </tbody>
         </table>
+        </div>
       </div>
       {/* Modal for dog info with iframe */}
       {modalDog && (
