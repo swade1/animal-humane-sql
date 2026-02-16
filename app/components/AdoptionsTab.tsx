@@ -74,41 +74,42 @@ export default function AdoptionsTab() {
       <div className="flex items-center justify-between mt-[10px]">
         <h2 className="m-0 text-left text-lg font-semibold" style={{ marginLeft: '8px' }}>Adoptions</h2>
       </div>
-      <div style={{ paddingLeft: '18px', overflowX: 'auto', position: 'relative' }}>
-        <table className="w-2/3 mt-4 text-left border-separate" style={{ borderSpacing: '0 20px', minWidth: '600px' }}>
-          <thead>
-            <tr>
-              <th className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem', position: 'sticky', left: 0, backgroundColor: '#fafafa', zIndex: 10, minWidth: '150px', boxShadow: '2px 0 5px rgba(0,0,0,0.05)' }}>Name</th>
-              <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center' }}>Date Adopted</th>
-              <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center' }}>Days at Shelter</th>
-              <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center' }}>Adoption Verified</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading && (
-              <tr><td colSpan={4}>Loading...</td></tr>
-            )}
-            {!isLoading && adoptedDogs && adoptedDogs.length === 0 && (
-              <tr><td colSpan={4} style={{ color: '#888' }}>No adoptions found.</td></tr>
-            )}
-            {!isLoading && adoptedDogs && [...adoptedDogs]
-              .filter((dog): dog is { id: number; name: string; adopted_date: string; length_of_stay_days: number | string; verified_adoption: number } => !!dog && !!dog.adopted_date)
-              .sort((a, b) => {
-                const dateA = new Date(a.adopted_date).valueOf();
-                const dateB = new Date(b.adopted_date).valueOf();
-                return dateA - dateB;
-              })
-              .map(dog => (
-                <tr key={`${dog.id}-${dog.adopted_date}`} className="align-middle">
-                  <td style={{ position: 'sticky', left: 0, backgroundColor: '#fafafa', zIndex: 10, minWidth: '150px', boxShadow: '2px 0 5px rgba(0,0,0,0.05)' }}>
-                    <span
-                      className="text-[#2a5db0] cursor-pointer font-bold"
-                      style={{ fontWeight: 700, display: 'inline-block', marginBottom: '0.5em' }}
-                      onClick={() => setModalDog(dog)}
-                    >
-                      {dog.name}
-                    </span>
-                  </td>
+      <div style={{ paddingLeft: '18px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <div style={{ minWidth: '600px' }}>
+          <table className="w-2/3 mt-4 text-left border-separate" style={{ borderSpacing: '0 20px', width: '100%' }}>
+            <thead>
+              <tr>
+                <th className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem', position: 'sticky', left: 0, backgroundColor: '#fafafa', zIndex: 10, paddingRight: '20px', width: '200px' }}>Name</th>
+                <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center' }}>Date Adopted</th>
+                <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center' }}>Days at Shelter</th>
+                <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center' }}>Adoption Verified</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading && (
+                <tr><td colSpan={4}>Loading...</td></tr>
+              )}
+              {!isLoading && adoptedDogs && adoptedDogs.length === 0 && (
+                <tr><td colSpan={4} style={{ color: '#888' }}>No adoptions found.</td></tr>
+              )}
+              {!isLoading && adoptedDogs && [...adoptedDogs]
+                .filter((dog): dog is { id: number; name: string; adopted_date: string; length_of_stay_days: number | string; verified_adoption: number } => !!dog && !!dog.adopted_date)
+                .sort((a, b) => {
+                  const dateA = new Date(a.adopted_date).valueOf();
+                  const dateB = new Date(b.adopted_date).valueOf();
+                  return dateA - dateB;
+                })
+                .map(dog => (
+                  <tr key={`${dog.id}-${dog.adopted_date}`} className="align-middle">
+                    <td style={{ position: 'sticky', left: 0, backgroundColor: '#fafafa', zIndex: 10, paddingRight: '20px', width: '200px' }}>
+                      <span
+                        className="text-[#2a5db0] cursor-pointer font-bold"
+                        style={{ fontWeight: 700, display: 'inline-block', marginBottom: '0.5em' }}
+                        onClick={() => setModalDog(dog)}
+                      >
+                        {dog.name}
+                      </span>
+                    </td>
                   <td style={{ paddingLeft: '8ch', textAlign: 'center' }}>
                     {/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(dog.adopted_date)
                       ? (() => {
