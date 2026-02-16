@@ -1,5 +1,4 @@
 
-import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { logDogHistory } from './dogHistory';
 import { format as formatTz, toZonedTime } from 'date-fns-tz';
@@ -46,6 +45,110 @@ async function getCurrentAvailableAnimalIds() {
 
 // Main adoption check logic
 async function main() {
+	// Get all current available animal IDs from API first (used for both returns and adoptions)
+	const apiDogIds = await getCurrentAvailableAnimalIds();
+	
+	// 1. Check for returned dogs (dogs that were adopted but are now back in the API)
+	
+	// Get all dogs currently marked as adopted
+	const { data: adoptedDogs, error: adoptedError } = await supabase
+		.from('dogs')
+		.select('id, name, status, location, returned, verified_adoption')
+		.eq('status', 'adopted');
+	
+	if (adoptedError) {
+		console.error('[adoption-check-api] Error fetching adopted dogs:', adoptedError);
+	} else if (adoptedDogs && adoptedDogs.length > 0) {
+		// Check if any adopted dogs are now back in the API (returned)
+		const returnedDogs = adoptedDogs.filter(dog => apiDogIds.has(dog.id));
+		
+		if (returnedDogs.length > 0) {
+			console.log(`[adoption-check-api] Found ${returnedDogs.length} returned dogs`);
+			
+			for (const dog of returnedDogs) {
+				try {
+					console.log(`[adoption-check-api] Processing returned dog: ID ${dog.id}, Name: ${dog.name}`);
+					
+					// Fetch current location from embed page
+					const embedUrl = `https://new.shelterluv.com/embed/animal/${dog.id}`;
+					const res = await fetch(embedUrl);
+					let currentLocation = '';
+					
+					if (res.ok) {
+						const html = await res.text();
+						const $ = load(html);
+						const iframeAnimal = $('iframe-animal');
+						let raw = '';
+						
+						if (iframeAnimal.length) {
+							const animalAttr = iframeAnimal.attr('animal') ?? '';
+							const colonAnimalAttr = iframeAnimal.attr(':animal') ?? '';
+							if (animalAttr) {
+								raw = animalAttr;
+							} else if (colonAnimalAttr) {
+								raw = he.decode(colonAnimalAttr);
+							}
+							if (raw) {
+								try {
+									const animalObj = JSON.parse(raw);
+									currentLocation = animalObj.location || '';
+								} catch (parseErr) {
+									console.warn(`[adoption-check-api] Could not parse animal JSON for returned dog ID ${dog.id}`);
+								}
+							}
+						}
+					}
+					
+					// Increment returned count
+					const newReturnedCount = (dog.returned || 0) + 1;
+					
+					// Log status change in dog_history
+					await logDogHistory({
+						dogId: dog.id,
+						name: dog.name,
+						eventType: 'status_change',
+						oldValue: 'adopted',
+						newValue: 'available',
+						notes: `Dog returned to shelter (return #${newReturnedCount})`,
+						adopted_date: null
+					});
+					
+					// Log location change in dog_history
+					await logDogHistory({
+						dogId: dog.id,
+						name: dog.name,
+						eventType: 'location_change',
+						oldValue: null,
+						newValue: currentLocation,
+						notes: `Location set to '${currentLocation}' for returned dog`
+					});
+					
+					// Update dogs table
+					const { error: updateErr } = await supabase
+						.from('dogs')
+						.update({
+							status: 'available',
+							verified_adoption: 0,
+							returned: newReturnedCount,
+							location: currentLocation,
+							adopted_date: null
+						})
+						.eq('id', dog.id);
+					
+					if (updateErr) {
+						console.error(`[adoption-check-api] Error updating returned dog ID ${dog.id}:`, updateErr);
+					} else {
+						console.log(`[adoption-check-api] Successfully updated returned dog ID ${dog.id}: status=available, verified_adoption=0, returned=${newReturnedCount}, location='${currentLocation}'`);
+					}
+				} catch (err) {
+					console.error(`[adoption-check-api] Error processing returned dog ID ${dog.id}:`, err);
+				}
+			}
+		} else {
+			console.log('[adoption-check-api] No returned dogs detected');
+		}
+	}
+
 		// 4. Check and update location for all Available Soon dogs
 		// Available Soon: status is null and notes contains 'Available Soon'
 		const { data: soonDogs, error: soonError } = await supabase
@@ -117,7 +220,7 @@ async function main() {
 				}
 			}
 		}
-	// 1. Get all dogs with status 'available' from Supabase
+	// 2. Get all dogs with status 'available' from Supabase
 	const { data: availableDogs, error } = await supabase
 		.from('dogs')
 		.select('id, name, location, url, status')
@@ -130,9 +233,6 @@ async function main() {
 		console.log('[adoption-check-api] No available dogs to check.');
 		return;
 	}
-
-	// 2. Get all current available animal IDs from API
-	const apiDogIds = await getCurrentAvailableAnimalIds();
 
 	// 3. For each dog in DB not in API, check their embed page
 	const suspectedAdoptions = availableDogs.filter(dog => !apiDogIds.has(dog.id));
