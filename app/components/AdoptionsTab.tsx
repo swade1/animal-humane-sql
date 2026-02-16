@@ -80,7 +80,7 @@ export default function AdoptionsTab() {
             <thead>
               <tr>
                 <th className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem', position: 'sticky', left: '18px', backgroundColor: '#fafafa', zIndex: 10, paddingRight: '8px', width: '200px', minWidth: '200px' }}>Name</th>
-                <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center', width: '150px' }}>Date Adopted</th>
+                <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '1ch', textAlign: 'center', width: '150px' }}>Date Adopted</th>
                 <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center', width: '150px' }}>Adoption Verified</th>
                 <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center', width: '150px' }}>Days at Shelter</th>
               </tr>
@@ -110,7 +110,7 @@ export default function AdoptionsTab() {
                         {dog.name}
                       </span>
                     </td>
-                  <td style={{ paddingLeft: '8ch', textAlign: 'center' }}>
+                  <td style={{ paddingLeft: '1ch', textAlign: 'center' }}>
                     {/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(dog.adopted_date)
                       ? (() => {
                           const [year, month, day] = dog.adopted_date.split('-');
