@@ -79,10 +79,10 @@ export default function AdoptionsTab() {
           <table className="w-2/3 mt-4 text-left border-separate" style={{ borderSpacing: '0 20px', width: '100%', tableLayout: 'fixed' }}>
             <thead>
               <tr>
-                <th className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem', backgroundColor: '#fafafa', paddingRight: '20px', width: '200px', minWidth: '200px' }}>Name</th>
+                <th className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem', position: 'sticky', left: '18px', backgroundColor: '#fafafa', zIndex: 10, paddingRight: '20px', width: '200px', minWidth: '200px' }}>Name</th>
                 <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center', width: '150px' }}>Date Adopted</th>
-                <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center', width: '150px' }}>Days at Shelter</th>
                 <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center', width: '150px' }}>Adoption Verified</th>
+                <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center', width: '150px' }}>Days at Shelter</th>
               </tr>
             </thead>
             <tbody>
@@ -101,7 +101,7 @@ export default function AdoptionsTab() {
                 })
                 .map(dog => (
                   <tr key={`${dog.id}-${dog.adopted_date}`} className="align-middle">
-                    <td style={{ backgroundColor: '#fafafa', paddingRight: '20px', width: '200px', minWidth: '200px' }}>
+                    <td style={{ position: 'sticky', left: '18px', backgroundColor: '#fafafa', zIndex: 10, paddingRight: '20px', width: '200px', minWidth: '200px' }}>
                       <span
                         className="text-[#2a5db0] cursor-pointer font-bold"
                         style={{ fontWeight: 700, display: 'inline-block', marginBottom: '0.5em' }}
@@ -118,8 +118,8 @@ export default function AdoptionsTab() {
                         })()
                       : formatDateMST(dog.adopted_date)}
                   </td>
-                  <td style={{ paddingLeft: '8ch', textAlign: 'center' }}>{dog.length_of_stay_days}</td>
                   <td style={{ paddingLeft: '8ch', textAlign: 'center', color: '#22c55e', fontWeight: 700 }}>{dog.verified_adoption === 1 ? '\u2713' : ''}</td>
+                  <td style={{ paddingLeft: '8ch', textAlign: 'center' }}>{dog.length_of_stay_days}</td>
                 </tr>
               ))}
           </tbody>
