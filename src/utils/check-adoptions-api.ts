@@ -53,7 +53,7 @@ async function main() {
 	// Get all dogs currently marked as adopted
 	const { data: adoptedDogs, error: adoptedError } = await supabase
 		.from('dogs')
-		.select('id, name, status, location, returned, verified_adoption')
+		.select('id, name, status, location, returned, verified_adoption, adopted_date')
 		.eq('status', 'adopted');
 	
 	if (adoptedError) {
@@ -68,6 +68,9 @@ async function main() {
 			for (const dog of returnedDogs) {
 				try {
 					console.log(`[adoption-check-api] Processing returned dog: ID ${dog.id}, Name: ${dog.name}`);
+					
+					// Preserve the adoption date before clearing it
+					const lastAdoptionDate = dog.adopted_date;
 					
 					// Fetch current location from embed page
 					const embedUrl = `https://new.shelterluv.com/embed/animal/${dog.id}`;
@@ -99,15 +102,15 @@ async function main() {
 						}
 					}
 					
-					// Increment returned count
-					const newReturnedCount = (dog.returned || 0) + 1;
-					
-					// Log status change in dog_history
+					// Increment returned count with the preserved adoption date
 					await logDogHistory({
 						dogId: dog.id,
 						name: dog.name,
 						eventType: 'status_change',
 						oldValue: 'adopted',
+						newValue: 'available',
+						notes: `Dog returned to shelter (return #${newReturnedCount}). Was adopted on ${lastAdoptionDate || 'unknown date'}.`,
+						adopted_date: lastAdoptionDate',
 						newValue: 'available',
 						notes: `Dog returned to shelter (return #${newReturnedCount})`,
 						adopted_date: null
