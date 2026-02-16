@@ -68,21 +68,19 @@ async function main() {
 			for (const dog of returnedDogs) {
 				try {
 					console.log(`[adoption-check-api] Processing returned dog: ID ${dog.id}, Name: ${dog.name}`);
-					
 					// Preserve the adoption date before clearing it
 					const lastAdoptionDate = dog.adopted_date;
-					
+					// Increment returned count (if null/undefined, treat as 0)
+					const newReturnedCount = (typeof dog.returned === 'number' && !isNaN(dog.returned) ? dog.returned : 0) + 1;
 					// Fetch current location from embed page
 					const embedUrl = `https://new.shelterluv.com/embed/animal/${dog.id}`;
 					const res = await fetch(embedUrl);
 					let currentLocation = '';
-					
 					if (res.ok) {
 						const html = await res.text();
 						const $ = load(html);
 						const iframeAnimal = $('iframe-animal');
 						let raw = '';
-						
 						if (iframeAnimal.length) {
 							const animalAttr = iframeAnimal.attr('animal') ?? '';
 							const colonAnimalAttr = iframeAnimal.attr(':animal') ?? '';
@@ -101,7 +99,6 @@ async function main() {
 							}
 						}
 					}
-					
 					// Increment returned count with the preserved adoption date
 					await logDogHistory({
 						dogId: dog.id,
@@ -110,12 +107,8 @@ async function main() {
 						oldValue: 'adopted',
 						newValue: 'available',
 						notes: `Dog returned to shelter (return #${newReturnedCount}). Was adopted on ${lastAdoptionDate || 'unknown date'}.`,
-						adopted_date: lastAdoptionDate',
-						newValue: 'available',
-						notes: `Dog returned to shelter (return #${newReturnedCount})`,
-						adopted_date: null
+						adopted_date: lastAdoptionDate
 					});
-					
 					// Log location change in dog_history
 					await logDogHistory({
 						dogId: dog.id,
@@ -125,7 +118,6 @@ async function main() {
 						newValue: currentLocation,
 						notes: `Location set to '${currentLocation}' for returned dog`
 					});
-					
 					// Update dogs table
 					const { error: updateErr } = await supabase
 						.from('dogs')
@@ -137,7 +129,6 @@ async function main() {
 							adopted_date: null
 						})
 						.eq('id', dog.id);
-					
 					if (updateErr) {
 						console.error(`[adoption-check-api] Error updating returned dog ID ${dog.id}:`, updateErr);
 					} else {
