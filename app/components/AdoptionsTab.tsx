@@ -7,6 +7,7 @@ type AdoptedDog = {
   name: string;
   adopted_date: string;
   length_of_stay_days: string | number;
+  verified_adoption: number;
 };
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "../lib/supabaseClient";
@@ -39,7 +40,7 @@ export default function AdoptionsTab() {
       // Query dogs table for adoptions in last 30 days
       const { data: dogs, error: dogsError } = await supabase
         .from('dogs')
-        .select('id, name, adopted_date, length_of_stay_days, status')
+        .select('id, name, adopted_date, length_of_stay_days, status, verified_adoption')
         .not('adopted_date', 'is', null)
         .not('status', 'in', '(pending_review,unknown)')
         .gte('adopted_date', thirtyDaysAgoStr)
@@ -59,6 +60,7 @@ export default function AdoptionsTab() {
           name: dog.name,
           adopted_date: dog.adopted_date,
           length_of_stay_days: dog.length_of_stay_days ?? '',
+          verified_adoption: dog.verified_adoption ?? 0,
         };
       }).filter(Boolean);
       return result;
@@ -79,17 +81,18 @@ export default function AdoptionsTab() {
               <th className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem' }}>Name</th>
               <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center' }}>Date Adopted</th>
               <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center' }}>Days at Shelter</th>
+              <th className="font-bold text-base text-center" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '8ch', textAlign: 'center' }}>Adoption Verified</th>
             </tr>
           </thead>
           <tbody>
             {isLoading && (
-              <tr><td colSpan={3}>Loading...</td></tr>
+              <tr><td colSpan={4}>Loading...</td></tr>
             )}
             {!isLoading && adoptedDogs && adoptedDogs.length === 0 && (
-              <tr><td colSpan={3} style={{ color: '#888' }}>No adoptions found.</td></tr>
+              <tr><td colSpan={4} style={{ color: '#888' }}>No adoptions found.</td></tr>
             )}
             {!isLoading && adoptedDogs && [...adoptedDogs]
-              .filter((dog): dog is { id: number; name: string; adopted_date: string; length_of_stay_days: number | string } => !!dog && !!dog.adopted_date)
+              .filter((dog): dog is { id: number; name: string; adopted_date: string; length_of_stay_days: number | string; verified_adoption: number } => !!dog && !!dog.adopted_date)
               .sort((a, b) => {
                 const dateA = new Date(a.adopted_date).valueOf();
                 const dateB = new Date(b.adopted_date).valueOf();
@@ -115,6 +118,7 @@ export default function AdoptionsTab() {
                       : formatDateMST(dog.adopted_date)}
                   </td>
                   <td style={{ paddingLeft: '8ch', textAlign: 'center' }}>{dog.length_of_stay_days}</td>
+                  <td style={{ paddingLeft: '8ch', textAlign: 'center' }}>{dog.verified_adoption === 1 ? '✓' : ''}</td>
                 </tr>
               ))}
           </tbody>
