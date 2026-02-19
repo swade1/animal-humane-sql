@@ -110,6 +110,8 @@ export default function OverviewUnitChart() {
   const clinicCount = allDogsWithLocation?.filter(dog => dog.location?.includes('Clinic') && dog.status === 'available').length || 0;
   // Behavior Office (location contains 'Behavior Office' and status is 'available')
   const behaviorOfficeCount = allDogsWithLocation?.filter(dog => dog.location?.includes('Behavior Office') && dog.status === 'available').length || 0;
+  // Parvo Ward (location contains 'Parvo Ward', regardless of status)
+  const parvoWardCount = allDogsWithLocation?.filter(dog => dog.location?.includes('Parvo Ward')).length || 0;
 
   // Compose categories and sort descending by count
   const categories = [
@@ -122,6 +124,7 @@ export default function OverviewUnitChart() {
     { label: "Dog Treatment", count: dogTreatmentCount },
     { label: "Clinic", count: clinicCount },
     { label: "Behavior Office", count: behaviorOfficeCount },
+    { label: "Parvo Ward", count: parvoWardCount },
   ].sort((a, b) => b.count - a.count);
 
   // Find max label length for right alignment
