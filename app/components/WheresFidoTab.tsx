@@ -139,7 +139,7 @@ export default function WheresFidoTab() {
       {modalDog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div
-            className="bg-white rounded-lg shadow-lg p-6 relative flex flex-col items-center justify-center"
+            className="bg-white rounded-lg shadow-lg relative flex flex-col items-center justify-center"
             style={{
               width: 750,
               height: 750,
@@ -153,7 +153,8 @@ export default function WheresFidoTab() {
               top: '50%',
               transform: 'translate(-50%, -50%)',
               boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-              background: 'rgba(255,255,255,0.97)'
+              background: 'rgba(255,255,255,0.97)',
+              padding: '50px 30px 20px 30px'
             }}
           >
             <button
@@ -161,25 +162,24 @@ export default function WheresFidoTab() {
               onClick={() => setModalDog(null)}
               aria-label="Close"
               style={{
-                zIndex: 10,
-                top: 16,
-                right: 16,
-                position: 'absolute',
-                lineHeight: 1,
-                width: 64,
-                height: 64,
-                fontSize: 48,
-                fontWeight: 900
+                top: 10,
+                right: 10,
+                width: 36,
+                height: 36,
+                fontSize: 24,
+                border: 'none',
+                cursor: 'pointer',
+                zIndex: 10
               }}
             >
               ×
             </button>
-            <h3 className="text-lg font-bold mb-2 text-center w-full">{modalDog.name}</h3>
             <iframe
               src={`https://new.shelterluv.com/embed/animal/${modalDog.id}/`}
               title={modalDog.name}
-              className="rounded border"
-              style={{ width: 'calc(100% - 32px)', height: 'calc(100% - 80px)', border: '1px solid #ccc', background: '#fff' }}
+              width="100%"
+              height="100%"
+              style={{ border: 'none', flex: 1 }}
               allowFullScreen
             />
           </div>
