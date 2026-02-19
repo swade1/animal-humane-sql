@@ -2,7 +2,7 @@
 import { PawPrint } from "lucide-react";
 import React, { useState } from "react";
 import Tabs from "./components/Tabs";
-import OverviewTable from "./components/OverviewTable";
+import OverviewUnitChart from "./components/OverviewUnitChart";
 import RecentPupdatesTab from "./components/RecentPupdatesTab";
 import CurrentPopulationTab from "./components/CurrentPopulationTab";
 import AdoptionsTab from "./components/AdoptionsTab";
@@ -51,7 +51,7 @@ export default function HomePage() {
             />
           </div>
           <div style={{ marginTop: '10px', marginLeft: '20px', marginRight: '20px', marginBottom: 0 }}>
-            {activeTab === 0 && <OverviewTable />}
+            {activeTab === 0 && <OverviewUnitChart />}
             {activeTab === 1 && <RecentPupdatesTab />}
             {activeTab === 2 && <CurrentPopulationTab />}
             {activeTab === 3 && <AdoptionsTab />}
