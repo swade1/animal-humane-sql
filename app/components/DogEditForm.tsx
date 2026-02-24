@@ -82,7 +82,7 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
       "Sandoval County Animal Services":{"latitude":35.3515,"longitude":-106.4694},
       "Santa Clara Animal Control":{"latitude":32.776773,"longitude":-108.153132},
       "Santa Rosa Animal Control":{"latitude":34.9387,"longitude":-104.6825},
-      "Sororro Animal Services":{"latitude":34.0242,"longitude":-106.8958},
+      "Socorro Animal Services":{"latitude":34.0242,"longitude":-106.8958},
       "Socorro Animal Shelter and Adoption Center":{"latitude":34.0225,"longitude":-106.9031},
       "Stray Hearts Animal Shelter":{"latitude":36.3848,"longitude":-105.5969},
       "The Animal Services Center":{"latitude":32.3128,"longitude":-106.7799},
