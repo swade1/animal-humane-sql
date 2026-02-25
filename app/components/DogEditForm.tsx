@@ -66,7 +66,7 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
       "Four Corners Animal League":{"latitude":36.4072,"longitude":-105.5731},
       "Gallup McKinley County Humane Society":{"latitude":35.543605,"longitude":-108.760272},
       "Grants Animal Care":{"latitude":35.1538323,"longitude":-107.8177302},
-      "Humane Society of Lincoln County":{"latitude":33.3436,"longitude":-105.6650},
+      "Humane Society of Lincoln County":{"latitude":33.3151862,"longitude":-105.6328329},
       "Labor of Love Project NM":{"latitude":34.1827,"longitude":-103.3245},
       "Lovelace Biomedical Research":{"latitude":35.0559,"longitude":-106.5789},
       "Moriarty Animal Control":{"latitude":34.9996,"longitude":-106.0183},
