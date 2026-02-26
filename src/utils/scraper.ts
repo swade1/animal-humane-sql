@@ -174,8 +174,7 @@ export async function getIframeUrls(mainUrl: string): Promise<string[]> {
 
   try {
     await page.goto(mainUrl, { waitUntil: 'networkidle2', timeout: 120000 });
-    await page.waitForSelector('.shelterluv', { timeout: 60000 });
-
+    
     // Extract all iframe src URLs (for completeness)
     const iframeUrls = await page.$$eval('iframe', (iframes: HTMLIFrameElement[]) =>
       iframes.map((iframe: HTMLIFrameElement) => iframe.src)
