@@ -9,19 +9,19 @@ process.on('unhandledRejection', (reason) => {
 console.log('=== File loaded: run-scraper-pipeline.ts ===');
 
 // run-scraper-pipeline.ts
-// Orchestrates the full animal data pipeline: fetch, enrich/upsert, adoption check
+// Orchestrates the full animal data pipeline: fetch, scrape with change detection, adoption check
 
-import { enrichAndUpsertAnimals } from './enrich_and_upsert_animals';
+import { runScraper } from './scraper';
 
 export async function main() {
   console.log('=== Entered main() in run-scraper-pipeline.ts ===');
   console.log('=== Scraper pipeline main() started ===');
   try {
-    console.log('[STEP] About to call enrichAndUpsertAnimals');
-    await enrichAndUpsertAnimals();
-    console.log('[STEP] enrichAndUpsertAnimals completed');
+    console.log('[STEP] About to call runScraper (with change detection)');
+    await runScraper();
+    console.log('[STEP] runScraper completed');
   } catch (err) {
-    console.error('[ERROR] enrichAndUpsertAnimals failed:', err);
+    console.error('[ERROR] runScraper failed:', err);
     process.exit(1);
   }
   let adoptionCheck;
