@@ -133,66 +133,23 @@ type Dog = {
 
 // Example: Scrape main page and extract iframe URLs
 export async function getIframeUrls(mainUrl: string): Promise<string[]> {
-  let browser;
-  const launchOptions = {
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
-  };
-  console.log('[scraper] Puppeteer launch options:', JSON.stringify(launchOptions));
-  try {
-    browser = await puppeteer.launch(launchOptions);
-  } catch (err) {
-    console.error('[scraper] FATAL: Failed to launch Puppeteer browser.');
-    console.error('[scraper] This likely means the sandbox flags are not being honored or the environment is too restricted.');
-    console.error('[scraper] Error details:', err);
-    throw err;
-  }
-  let page;
-  try {
-    page = await browser.newPage();
-  } catch (err) {
-    console.error('Failed to create Puppeteer page:', err);
-    await browser.close();
-    throw err;
-  }
-  const availableAnimalsUrls: string[] = [];
-
-  // Intercept network requests and responses
-  page.on('response', async (response: { url: () => string }) => {
-    try {
-      const url = response.url();
-      if (url.includes('available-animals')) {
-        if (!availableAnimalsUrls.includes(url)) {
-          availableAnimalsUrls.push(url);
-          console.log('Captured available-animals URL:', url);
-        }
-      }
-    } catch {
-      // Ignore errors
-    }
-  });
-
-  try {
-    await page.goto(mainUrl, { waitUntil: 'networkidle2', timeout: 120000 });
-    
-    // Extract all iframe src URLs (for completeness)
-    const iframeUrls = await page.$$eval('iframe', (iframes: HTMLIFrameElement[]) =>
-      iframes.map((iframe: HTMLIFrameElement) => iframe.src)
-    );
-
-    await browser.close();
-
-    // Combine iframe URLs and captured available-animals URLs, removing duplicates
-    const allUrls = Array.from(new Set([...iframeUrls, ...availableAnimalsUrls]));
-    console.log('Found iframe URLs:', iframeUrls);
-    console.log('Found available-animals URLs:', availableAnimalsUrls);
-    console.log('All combined URLs:', allUrls);
-    return allUrls;
-  } catch (err) {
-    console.error('Error during Puppeteer page operations:', err);
-    if (browser) await browser.close();
-    throw err;
-  }
+  console.log('[scraper] Using hardcoded API endpoints (bypassing Puppeteer)');
+  
+  // Hardcoded known API endpoints from the shelter website
+  // Last verified: February 26, 2026
+  // To update: Visit https://animalhumanenm.org/adopt/adoptable-dogs
+  // Open DevTools → Network tab → Filter by "available-animals" → Copy all URLs
+  const knownEndpoints = [
+    'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=9274&embedded=1&iframeId=shelterluv_wrap_1742914295&columns=1',
+    'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=8888&embedded=1&iframeId=shelterluv_wrap_1772061557&columns=1',
+    'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=8887&embedded=1&iframeId=shelterluv_wrap_1741279189&columns=1',
+    'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=8889&embedded=1&iframeId=shelterluv_wrap_1741279482&columns=1',
+    'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=12946&embedded=1&iframeId=shelterluv_wrap_1764539274&columns=1',
+    'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=12363&embedded=1&iframeId=shelterluv_wrap_1772060458&columns=1',
+  ];
+  
+  console.log('[scraper] Using', knownEndpoints.length, 'API endpoints');
+  return knownEndpoints;
 }
 
 import fetch from 'node-fetch';
