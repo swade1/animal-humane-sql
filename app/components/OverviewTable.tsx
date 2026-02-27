@@ -168,18 +168,15 @@ export default function OverviewTable() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-lg shadow-lg relative flex flex-col"
             style={{
-              backgroundColor: 'white',
-              borderRadius: '0.5rem',
-              boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-              position: 'relative',
               width: '100%',
               height: '100%',
               maxWidth: '800px',
               maxHeight: '90vh',
               display: 'flex',
               flexDirection: 'column',
-              padding: '1.5rem'
+              boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
             }}
           >
             <button
@@ -206,15 +203,16 @@ export default function OverviewTable() {
             >
               ×
             </button>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', marginBottom: '0.5rem', textAlign: 'center', width: '100%' }}>{longestStayDog.name}</h3>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', marginBottom: '0.5rem', textAlign: 'center', width: '100%', padding: '1rem 1rem 0 1rem' }}>{longestStayDog.name}</h3>
             <iframe
-              src={`https://new.shelterluv.com/embed/animal/${longestStayDog.id}`}
+              src={`http://new.shelterluv.com/embed/animal/${longestStayDog.id}/`}
               title={longestStayDog.name}
               style={{ 
                 border: 'none',
                 width: '100%',
-                flex: 1,
-                borderRadius: '0.5rem'
+                height: '100%',
+                borderRadius: '0.5rem',
+                flex: 1
               }}
               allowFullScreen
             />

@@ -188,38 +188,55 @@ function OverviewTab() {
       {/* Add trend, alerts, small charts here */}
       {/* Modal for dog info with iframe, styled to match other tabs */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div 
+          onClick={closeModal}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            padding: '1rem'
+          }}
+        >
           <div
-            className="bg-white rounded-lg shadow-lg p-6 relative flex flex-col items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-lg shadow-lg relative flex flex-col"
             style={{
-              width: 800,
-              height: 800,
-              maxWidth: 800,
-              maxHeight: 800,
+              width: '100%',
+              height: '100%',
+              maxWidth: '800px',
+              maxHeight: '90vh',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              position: 'fixed',
-              left: '50%',
-              top: '10%',
-              transform: 'translate(-50%, 0)',
-              boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-              background: 'rgba(255,255,255,0.97)'
+              flexDirection: 'column',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
             }}
           >
             <button
-              className="absolute text-gray-500 hover:text-gray-700 bg-white rounded-full flex items-center justify-center shadow-md"
               onClick={closeModal}
               aria-label="Close"
               style={{
-                top: 10,
-                right: 10,
+                position: 'absolute',
+                top: 8,
+                right: 8,
                 width: 36,
                 height: 36,
                 fontSize: 24,
                 border: 'none',
                 cursor: 'pointer',
-                zIndex: 10
+                zIndex: 10,
+                backgroundColor: 'white',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                color: '#6b7280'
               }}
             >
               ×
@@ -232,12 +249,13 @@ function OverviewTab() {
                 if (name) {
                   return (
                     <h2
-                      className="text-2xl font-bold mb-4"
                       style={{
-                        margin: 0,
+                        fontSize: '1.125rem',
+                        fontWeight: 'bold',
+                        marginBottom: '0.5rem',
                         textAlign: 'center',
                         width: '100%',
-                        fontWeight: 700
+                        padding: '1rem 1rem 0 1rem'
                       }}
                     >
                       {name}
@@ -250,9 +268,13 @@ function OverviewTab() {
             <iframe
               src={modalUrl}
               title="Dog Information"
-              width="100%"
-              height="100%"
-              style={{ border: 'none', flex: 1 }}
+              style={{ 
+                border: 'none',
+                width: '100%',
+                height: '100%',
+                borderRadius: '0.5rem',
+                flex: 1
+              }}
               allowFullScreen
             />
           </div>

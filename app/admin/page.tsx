@@ -84,12 +84,20 @@ function AdminPage() {
       latitude: mergedData.latitude === '' || mergedData.latitude == null ? null : mergedData.latitude,
       longitude: mergedData.longitude === '' || mergedData.longitude == null ? null : mergedData.longitude,
     };
-    if (!editDog.id) {
-      // Add new dog - id not present means new dog
-      // Include id field so user-provided id is sent to DB
-      ({ error, data } = await supabase
-        .from('dogs')
-        .insert([dbData]));
+    if (editDog.id === 0) {
+      // Add new dog
+      // If user provided an ID, use it; otherwise remove id field for auto-generation
+      if (!dbData.id || dbData.id === 0) {
+        const { id, ...fields } = dbData;
+        ({ error, data } = await supabase
+          .from('dogs')
+          .insert([fields]));
+      } else {
+        // User provided a specific ID
+        ({ error, data } = await supabase
+          .from('dogs')
+          .insert([dbData]));
+      }
       if (!error) alert('Dog added!');
     } else {
       // Update existing dog
@@ -121,26 +129,64 @@ function AdminPage() {
 
   if (!user) {
     return (
-      <div style={{ maxWidth: 400, margin: '40px auto', padding: 32, border: '1px solid #ccc', borderRadius: 8, background: '#fafafa' }}>
-        <h2>Admin Login</h2>
+      <div style={{ maxWidth: 400, margin: '20px auto', padding: '16px', border: '1px solid #ccc', borderRadius: 8, background: '#fafafa' }}>
+        <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Admin Login</h2>
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <label>
+          <label style={{ fontSize: '0.95rem' }}>
             Email
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required style={{ width: '100%', padding: 8, marginTop: 4 }} />
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required style={{ width: '100%', padding: 8, marginTop: 4, fontSize: '16px', boxSizing: 'border-box' }} />
           </label>
-          <label>
+          <label style={{ fontSize: '0.95rem' }}>
             Password
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required style={{ width: '100%', padding: 8, marginTop: 4 }} />
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required style={{ width: '100%', padding: 8, marginTop: 4, fontSize: '16px', boxSizing: 'border-box' }} />
           </label>
-          <button type="submit" style={{ padding: '10px 0', background: '#2a5db0', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 700 }}>Log In</button>
-          {loginError && <div style={{ color: 'red', marginTop: 8 }}>{loginError}</div>}
+          <button type="submit" style={{ padding: '10px 0', background: '#2a5db0', color: '#fff', border: 'none', borderRadius: 4, fontWeight: 700, fontSize: '16px' }}>Log In</button>
+          {loginError && <div style={{ color: 'red', marginTop: 8, fontSize: '0.9rem' }}>{loginError}</div>}
         </form>
       </div>
     );
   }
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+      <style jsx>{`
+        .admin-container {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          margin-top: 16px;
+          padding: 0 16px;
+        }
+        .dog-list-section {
+          width: 100%;
+          max-width: 100%;
+        }
+        .form-section {
+          width: 100%;
+          max-width: 100%;
+        }
+        @media (min-width: 768px) {
+          .admin-container {
+            flex-direction: row;
+            gap: 48px;
+            align-items: flex-start;
+          }
+          .dog-list-section {
+            margin-left: 48px;
+            width: auto;
+            max-width: none;
+          }
+          .form-section {
+            min-width: 420px;
+            margin-left: 48px;
+            margin-top: 24px;
+            padding: 24px;
+            background: #f8fafc;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+          }
+        }
+      `}</style>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16, padding: '0 16px' }}>
         <button
           onClick={async () => {
             await supabase.auth.signOut();
@@ -163,11 +209,11 @@ function AdminPage() {
           Log Out
         </button>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', gap: 48, marginTop: 32 }}>
-      {/* Move dog list and controls to the right */}
-      <div style={{ marginLeft: 96 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 16 }}>Currently Available Dogs</h2>
-        <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+      <div className="admin-container">
+      {/* Dog list and controls */}
+      <div className="dog-list-section">
+        <h2 style={{ fontSize: '1.375rem', fontWeight: 700, marginBottom: 16 }}>Currently Available Dogs</h2>
+        <div style={{ marginBottom: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {['A-E', 'F-J', 'K-O', 'P-T', 'U-Z'].map(group => (
             <button
               key={group}
@@ -216,8 +262,9 @@ function AdminPage() {
         </ul>
         <button
           onClick={() => {
-            // Create a new dog with all available fields - DO NOT pre-populate id or status
+            // Create a new dog with all available fields
             setEditDog({
+              id: 0,
               name: '',
               location: '',
               origin: '',
@@ -226,6 +273,7 @@ function AdminPage() {
               bite_quarantine: 0,
               returned: 0,
               notes: '',
+              status: 'available',
               url: '',
               intake_date: '',
               length_of_stay_days: 0,
@@ -257,9 +305,9 @@ function AdminPage() {
           + Add New Dog
         </button>
       </div>
-      {/* Dog list and controls are now on the left, form is on the right */}
+      {/* Dog edit form */}
       {editDog && (
-        <div style={{ minWidth: 420, marginLeft: 80, marginTop: 24, padding: 24, background: '#f8fafc', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+        <div className="form-section">
           <DogEditForm dog={editDog} onSave={handleSave} onCancel={handleCancel} />
         </div>
       )}
