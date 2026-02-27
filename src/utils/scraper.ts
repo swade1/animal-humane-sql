@@ -133,22 +133,16 @@ type Dog = {
 
 // Example: Scrape main page and extract iframe URLs
 export async function getIframeUrls(mainUrl: string): Promise<string[]> {
-  console.log('[scraper] Using hardcoded API endpoints (bypassing Puppeteer)');
+  console.log('[scraper] Using base API endpoint (no filters needed)');
   
-  // Hardcoded known API endpoints from the shelter website
+  // Base API endpoint returns ALL dogs from the shelter
   // Last verified: February 26, 2026
-  // To update: Visit https://animalhumanenm.org/adopt/adoptable-dogs
-  // Open DevTools → Network tab → Filter by "available-animals" → Copy all URLs
+  // The individual saved_query URLs are just filtered views of this same data
   const knownEndpoints = [
-    'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=9274&embedded=1&iframeId=shelterluv_wrap_1742914295&columns=1',
-    'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=8888&embedded=1&iframeId=shelterluv_wrap_1772061557&columns=1',
-    'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=8887&embedded=1&iframeId=shelterluv_wrap_1741279189&columns=1',
-    'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=8889&embedded=1&iframeId=shelterluv_wrap_1741279482&columns=1',
-    'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=12946&embedded=1&iframeId=shelterluv_wrap_1764539274&columns=1',
-    'https://new.shelterluv.com/api/v3/available-animals/1255?saved_query=12363&embedded=1&iframeId=shelterluv_wrap_1772060458&columns=1',
+    'https://new.shelterluv.com/api/v3/available-animals/1255',
   ];
   
-  console.log('[scraper] Using', knownEndpoints.length, 'API endpoints');
+  console.log('[scraper] Using', knownEndpoints.length, 'API endpoint');
   return knownEndpoints;
 }
 
@@ -751,8 +745,14 @@ export async function runScraper() {
     try {
       const fs = await import('fs');
       const path = await import('path');
-      const supabaseUrl = process.env.SUPABASE_URL!;
-      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+      const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || !supabaseKey) {
+        console.log('[SCRAPER][BACKUP] Skipping backup: Supabase credentials not available');
+        return;
+      }
+      
       const { createClient } = await import('@supabase/supabase-js');
       const supabaseBackup = createClient(supabaseUrl, supabaseKey);
 
