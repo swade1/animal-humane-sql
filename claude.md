@@ -1,3 +1,5 @@
+#NOTE: Run scraper manually with 'npx tsx src/utils/run-scraper-pipeline.ts'
+
 # Session Summary: Animal Humane SQL Dashboard Fixes
 
 **Date:** February 26, 2026
