@@ -162,8 +162,16 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]
       console.error(`No animals array in JSON: ${jsonUrl}`);
       return [];
     }
+    
+    // Filter to only include dogs (species === 'Dog')
+    const dogs = data.animals.filter((animal: Record<string, unknown>) => {
+      const species = typeof animal.species === 'string' ? animal.species : '';
+      return species.toLowerCase() === 'dog';
+    });
+    console.log(`[SCRAPER] Filtered ${dogs.length} dogs from ${data.animals.length} total animals`);
+    
     const today = new Date();
-    const mapped: Dog[] = data.animals.map((parsed: Record<string, unknown>, idx: number) => {
+    const mapped: Dog[] = dogs.map((parsed: Record<string, unknown>, idx: number) => {
       // Helper for safe property extraction
       const getString = (obj: Record<string, unknown>, key: string): string => typeof obj[key] === 'string' ? obj[key] as string : '';
       const getNumber = (obj: Record<string, unknown>, key: string): number => typeof obj[key] === 'number' ? obj[key] as number : (typeof obj[key] === 'string' ? parseInt(obj[key] as string, 10) : 0);
