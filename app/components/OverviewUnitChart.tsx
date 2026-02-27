@@ -5,21 +5,32 @@ import React from "react";
 
 export default function OverviewUnitChart() {
     // Fetch count for 'Available Soon' category using SQL query logic
-    const { data: availableSoonCount, isLoading: loadingAvailableSoon } = useQuery({
-      queryKey: ['availableSoonCount'],
+    const { data: availableSoonCounts, isLoading: loadingAvailableSoon } = useQuery({
+      queryKey: ['availableSoonCounts'],
       queryFn: async () => {
         const { data, error } = await supabase
           .from('dogs')
           .select('id, location, status, notes')
           .is('status', null);
-        if (error || !data) return 0;
-        return data.filter(dog =>
-          dog.location !== 'Foster Home' &&
-          typeof dog.notes === 'string' && dog.notes.includes('Available Soon') &&
-          !dog.location.startsWith('Dog Treatment') &&
-          !dog.location.endsWith('Trial Adoption') &&
-          !dog.location.startsWith('Foster Office')
+        if (error || !data) return { fosterHome: 0, onsite: 0, total: 0 };
+        // Match Recent Pupdates logic: Available Soon in notes, exclude Trial Adoption
+        const availableSoon = data.filter(dog => {
+          const isAvailableSoon = typeof dog.notes === 'string' && dog.notes.includes('Available Soon');
+          const isTrialAdoption = typeof dog.location === 'string' && dog.location.includes('Trial Adoption');
+          return isAvailableSoon && !isTrialAdoption;
+        });
+        
+        const fosterHome = availableSoon.filter(dog => 
+          typeof dog.location === 'string' && dog.location.toLowerCase() === 'foster home'
         ).length;
+        
+        const onsite = availableSoon.length - fosterHome;
+        
+        return { 
+          fosterHome, 
+          onsite, 
+          total: availableSoon.length 
+        };
       },
       staleTime: 1000 * 60 * 60 * 2
     });
@@ -93,38 +104,16 @@ export default function OverviewUnitChart() {
     staleTime: 1000 * 60 * 60 * 2
   });
 
-  // Count by location
-  const countByLocation = (locationName: string) =>
-    allDogsWithLocation?.filter(dog => (dog.location || '').toLowerCase() === locationName.toLowerCase()).length || 0;
-
-  // Trial Adoption (all dogs, regardless of status)
+  // Trial Adoption (location contains 'Trial Adoption', regardless of status)
   const trialAdoptionCount = allDogsWithLocation?.filter(dog => dog.location?.includes('Trial Adoption')).length || 0;
-
-  // Foster Home
-  const fosterHomeCount = countByLocation('Foster Home');
-  // Foster Office (location contains 'Foster Office', regardless of status)
-  const fosterOfficeCount = allDogsWithLocation?.filter(dog => dog.location?.includes('Foster Office')).length || 0;
-  // Dog Treatment (location contains 'Dog Treatment', regardless of status)
-  const dogTreatmentCount = allDogsWithLocation?.filter(dog => dog.location?.includes('Dog Treatment')).length || 0;
-  // Clinic (location contains 'Clinic' and status is 'available')
-  const clinicCount = allDogsWithLocation?.filter(dog => dog.location?.includes('Clinic') && dog.status === 'available').length || 0;
-  // Behavior Office (location contains 'Behavior Office' and status is 'available')
-  const behaviorOfficeCount = allDogsWithLocation?.filter(dog => dog.location?.includes('Behavior Office') && dog.status === 'available').length || 0;
-  // Parvo Ward (location contains 'Parvo Ward', regardless of status)
-  const parvoWardCount = allDogsWithLocation?.filter(dog => dog.location?.includes('Parvo Ward')).length || 0;
 
   // Compose categories and sort descending by count
   const categories = [
     { label: "Listed on Website", count: availableDogs ?? 0 },
     { label: "Temporarily Unlisted", count: temporarilyUnlistedDogs ?? 0 },
-    { label: "Available Soon", count: availableSoonCount ?? 0 },
-    { label: "Foster Home", count: fosterHomeCount },
+    { label: "Available Soon (Foster)", count: availableSoonCounts?.fosterHome ?? 0 },
+    { label: "Available Soon (Onsite)", count: availableSoonCounts?.onsite ?? 0 },
     { label: "Trial Adoption", count: trialAdoptionCount },
-    { label: "Foster Office", count: fosterOfficeCount },
-    { label: "Dog Treatment", count: dogTreatmentCount },
-    { label: "Clinic", count: clinicCount },
-    { label: "Behavior Office", count: behaviorOfficeCount },
-    { label: "Parvo Ward", count: parvoWardCount },
   ].sort((a, b) => b.count - a.count);
 
   // Find max label length for right alignment
