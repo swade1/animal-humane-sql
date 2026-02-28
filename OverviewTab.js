@@ -208,6 +208,7 @@ function OverviewTab() {
             onClick={(e) => e.stopPropagation()}
             className="bg-white rounded-lg shadow-lg relative flex flex-col"
             style={{
+              backgroundColor: 'white',
               width: '100%',
               height: '100%',
               maxWidth: '800px',

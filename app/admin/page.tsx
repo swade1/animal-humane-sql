@@ -216,7 +216,7 @@ function AdminPage() {
           )}
           <h2 style={{ fontSize: '1.375rem', fontWeight: 700, marginBottom: 16 }}>Currently Available Dogs</h2>
           <div style={{ marginBottom: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {['A-E', 'F-J', 'K-O', 'P-T', 'U-Z'].map(group => (
+            {['A-E', 'F-J', 'K-O', 'P-S', 'T-Z'].map(group => (
               <button
                 key={group}
                 onClick={() => setLetterGroup(group)}
@@ -259,8 +259,8 @@ function AdminPage() {
                 if (letterGroup === 'A-E') return first >= 'A' && first <= 'E';
                 if (letterGroup === 'F-J') return first >= 'F' && first <= 'J';
                 if (letterGroup === 'K-O') return first >= 'K' && first <= 'O';
-                if (letterGroup === 'P-T') return first >= 'P' && first <= 'T';
-                if (letterGroup === 'U-Z') return first >= 'U' && first <= 'Z';
+                if (letterGroup === 'P-S') return first >= 'P' && first <= 'S';
+                if (letterGroup === 'T-Z') return first >= 'T' && first <= 'Z';
                 return true;
               })
               .sort((a, b) => a.name.localeCompare(b.name))
