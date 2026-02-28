@@ -39,12 +39,29 @@ export default function CurrentPopulationTab() {
       <div className="flex items-center justify-between mt-[10px]">
         <h2 className="m-0 text-left text-lg font-semibold" style={{ marginLeft: '4px' }}>Current Population</h2>
       </div>
-      <div style={{ paddingLeft: '18px' }}>
-        <table className="w-1/2 mt-4 text-left border-separate" style={{ borderSpacing: '0 20px' }}>
+      <div style={{ paddingLeft: '4px', paddingRight: '4px', overflowX: 'auto' }}>
+        <table style={{ 
+          width: '100%',
+          minWidth: '300px',
+          marginTop: '1rem',
+          textAlign: 'left',
+          borderSpacing: '0 20px',
+          borderCollapse: 'separate'
+        }}>
           <thead>
             <tr>
-              <th className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem', minWidth: '180px', whiteSpace: 'nowrap' }}>Name</th>
-              <th className="font-bold text-base" style={{ fontWeight: 700, fontSize: '1.1rem', paddingLeft: '10ch', textAlign: 'left', minWidth: '260px', whiteSpace: 'nowrap' }}>Location</th>
+              <th style={{ 
+                fontWeight: 700, 
+                fontSize: '1.1rem', 
+                paddingRight: '1rem',
+                width: '40%'
+              }}>Name</th>
+              <th style={{ 
+                fontWeight: 700, 
+                fontSize: '1.1rem', 
+                textAlign: 'left',
+                width: '60%'
+              }}>Location</th>
             </tr>
           </thead>
           <tbody>
@@ -87,7 +104,11 @@ export default function CurrentPopulationTab() {
               })
               .map(dog => (
                 <tr key={dog.id} className="align-middle">
-                  <td style={{ minWidth: '180px', whiteSpace: 'nowrap' }}>
+                  <td style={{ 
+                    paddingRight: '1rem',
+                    verticalAlign: 'top',
+                    wordBreak: 'break-word'
+                  }}>
                     <span
                       className="text-[#2a5db0] cursor-pointer font-bold"
                       style={{ fontWeight: 700 }}
@@ -96,7 +117,11 @@ export default function CurrentPopulationTab() {
                       {dog.name}
                     </span>
                   </td>
-                  <td style={{ paddingLeft: '11ch', minWidth: '260px', whiteSpace: 'nowrap' }}>{dog.location}</td>
+                  <td style={{ 
+                    verticalAlign: 'top',
+                    wordBreak: 'break-word',
+                    fontSize: '0.95rem'
+                  }}>{dog.location}</td>
                 </tr>
               ))}
           </tbody>
