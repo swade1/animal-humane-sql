@@ -148,169 +148,192 @@ function AdminPage() {
   }
   return (
     <>
-      <style jsx>{`
-        .admin-container {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-          margin-top: 16px;
-          padding: 0 16px;
-        }
-        .dog-list-section {
-          width: 100%;
-          max-width: 100%;
-        }
-        .form-section {
-          width: 100%;
-          max-width: 100%;
-        }
-        @media (min-width: 768px) {
-          .admin-container {
-            flex-direction: row;
-            gap: 48px;
-            align-items: flex-start;
-          }
-          .dog-list-section {
-            margin-left: 48px;
-            width: auto;
-            max-width: none;
-          }
-          .form-section {
-            min-width: 420px;
-            margin-left: 48px;
-            margin-top: 24px;
-            padding: 24px;
-            background: #f8fafc;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-          }
-        }
-      `}</style>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16, padding: '0 16px' }}>
-        <button
-          onClick={async () => {
-            await supabase.auth.signOut();
-            setUser(null);
-            setDogs([]);
-            setEditDog(null);
-          }}
-          style={{
-            fontWeight: 700,
-            color: '#2a5db0',
-            background: '#fff',
-            border: '2px solid #2a5db0',
-            borderRadius: 6,
-            padding: '8px 24px',
-            fontSize: 16,
-            cursor: 'pointer',
-            boxShadow: '0 1px 4px rgba(42,93,176,0.08)'
-          }}
-        >
-          Log Out
-        </button>
-      </div>
-      <div className="admin-container">
-      {/* Dog list and controls */}
-      <div className="dog-list-section">
-        <h2 style={{ fontSize: '1.375rem', fontWeight: 700, marginBottom: 16 }}>Currently Available Dogs</h2>
-        <div style={{ marginBottom: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {['A-E', 'F-J', 'K-O', 'P-T', 'U-Z'].map(group => (
-            <button
-              key={group}
-              onClick={() => setLetterGroup(group)}
-              style={{
-                fontWeight: 700,
-                color: letterGroup === group ? '#fff' : '#2a5db0',
-                background: letterGroup === group ? '#2a5db0' : '#fff',
-                border: '1px solid #2a5db0',
-                borderRadius: 4,
-                padding: '4px 12px',
-                cursor: 'pointer',
-                outline: 'none',
-                transition: 'background 0.2s, color 0.2s',
-              }}
-            >
-              {group}
-            </button>
-          ))}
+      <div style={{ 
+        maxWidth: '1400px', 
+        margin: '0 auto', 
+        padding: '16px'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+          <button
+            onClick={async () => {
+              await supabase.auth.signOut();
+              setUser(null);
+              setDogs([]);
+              setEditDog(null);
+            }}
+            style={{
+              fontWeight: 700,
+              color: '#2a5db0',
+              background: '#fff',
+              border: '2px solid #2a5db0',
+              borderRadius: 6,
+              padding: '8px 24px',
+              fontSize: 16,
+              cursor: 'pointer',
+              boxShadow: '0 1px 4px rgba(42,93,176,0.08)'
+            }}
+          >
+            Log Out
+          </button>
         </div>
-        <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 18, fontWeight: 500 }}>
-          {[...dogs]
-            .filter(dog => dog.status === 'available' || dog.status == null)
-            .filter(dog => {
-              if (!letterGroup) return true;
-              const first = dog.name[0]?.toUpperCase() || '';
-              if (letterGroup === 'A-E') return first >= 'A' && first <= 'E';
-              if (letterGroup === 'F-J') return first >= 'F' && first <= 'J';
-              if (letterGroup === 'K-O') return first >= 'K' && first <= 'O';
-              if (letterGroup === 'P-T') return first >= 'P' && first <= 'T';
-              if (letterGroup === 'U-Z') return first >= 'U' && first <= 'Z';
-              return true;
-            })
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map((dog) => (
-              <li key={dog.id}>
-                <a
-                  href="#"
-                  onClick={e => { e.preventDefault(); handleSelectDog(dog.id); }}
-                  style={{ color: '#2a5db0', fontWeight: 700, textDecoration: 'none', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
-                >
-                  {dog.name}
-                </a>
-              </li>
+
+        {/* Dog edit form - appears at top when dog is selected */}
+        {editDog && (
+          <div style={{ 
+            marginBottom: 32,
+            padding: 24,
+            background: '#f8fafc',
+            borderRadius: 8,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+            border: '2px solid #2a5db0'
+          }}>
+            <h3 style={{ 
+              fontSize: '1.25rem', 
+              fontWeight: 700, 
+              marginBottom: 16, 
+              color: '#2a5db0'
+            }}>
+              {editDog.id === 0 ? 'Add New Dog' : `Editing: ${editDog.name}`}
+            </h3>
+            <DogEditForm dog={editDog} onSave={handleSave} onCancel={handleCancel} />
+          </div>
+        )}
+
+        {/* Dog list and controls */}
+        <div>
+          {!editDog && (
+            <div style={{ 
+              padding: '12px 16px', 
+              background: '#e8f4fd', 
+              border: '1px solid #2a5db0', 
+              borderRadius: 6, 
+              marginBottom: 16,
+              fontSize: '0.95rem',
+              color: '#1a4d8f'
+            }}>
+              <strong>📝 Instructions:</strong> Click a dog's name below to edit, or click "+ Add New Dog" to add a new entry.
+            </div>
+          )}
+          <h2 style={{ fontSize: '1.375rem', fontWeight: 700, marginBottom: 16 }}>Currently Available Dogs</h2>
+          <div style={{ marginBottom: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {['A-E', 'F-J', 'K-O', 'P-T', 'U-Z'].map(group => (
+              <button
+                key={group}
+                onClick={() => setLetterGroup(group)}
+                style={{
+                  fontWeight: 700,
+                  color: letterGroup === group ? '#fff' : '#2a5db0',
+                  background: letterGroup === group ? '#2a5db0' : '#fff',
+                  border: '1px solid #2a5db0',
+                  borderRadius: 4,
+                  padding: '4px 12px',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  transition: 'background 0.2s, color 0.2s',
+                }}
+              >
+                {group}
+              </button>
             ))}
-        </ul>
-        <button
-          onClick={() => {
-            // Create a new dog with all available fields
-            setEditDog({
-              id: 0,
-              name: '',
-              location: '',
-              origin: '',
-              latitude: null,
-              longitude: null,
-              bite_quarantine: 0,
-              returned: 0,
-              notes: '',
-              status: 'available',
-              url: '',
-              intake_date: '',
-              length_of_stay_days: 0,
-              birthdate: '',
-              age_group: '',
-              breed: '',
-              secondary_breed: '',
-              weight_group: '',
-              color: '',
-              adopted_date: '',
-              scraped: false,
-              verified_adoption: 0,
-              'AHNM-A': '',
-            } as any);
-          }}
-          style={{
-            fontWeight: 700,
-            color: '#fff',
-            background: '#2a5db0',
-            border: 'none',
+          </div>
+          <ul style={{ 
+            listStyle: 'none', 
+            padding: 16, 
+            margin: '0 0 16px 0', 
+            fontSize: 18, 
+            fontWeight: 500,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+            gap: '8px',
+            maxHeight: '400px',
+            overflowY: 'auto',
+            border: '1px solid #e5e5e5',
             borderRadius: 6,
-            padding: '8px 20px',
-            fontSize: 16,
-            cursor: 'pointer',
-            marginTop: 20,
-            boxShadow: '0 1px 4px rgba(42,93,176,0.08)'
-          }}
-        >
-          + Add New Dog
-        </button>
-      </div>
-      {/* Dog edit form */}
-      {editDog && (
-        <div className="form-section">
-          <DogEditForm dog={editDog} onSave={handleSave} onCancel={handleCancel} />
+            background: '#fafafa'
+          }}>
+            {[...dogs]
+              .filter(dog => dog.status === 'available' || dog.status == null)
+              .filter(dog => {
+                if (!letterGroup) return true;
+                const first = dog.name[0]?.toUpperCase() || '';
+                if (letterGroup === 'A-E') return first >= 'A' && first <= 'E';
+                if (letterGroup === 'F-J') return first >= 'F' && first <= 'J';
+                if (letterGroup === 'K-O') return first >= 'K' && first <= 'O';
+                if (letterGroup === 'P-T') return first >= 'P' && first <= 'T';
+                if (letterGroup === 'U-Z') return first >= 'U' && first <= 'Z';
+                return true;
+              })
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((dog) => (
+                <li key={dog.id}>
+                  <a
+                    href="#"
+                    onClick={e => { 
+                      e.preventDefault(); 
+                      handleSelectDog(dog.id); 
+                      window.scrollTo({ top: 0, behavior: 'smooth' }); 
+                    }}
+                    style={{ 
+                      color: '#2a5db0', 
+                      fontWeight: 700, 
+                      textDecoration: 'none', 
+                      cursor: 'pointer', 
+                      background: 'none', 
+                      border: 'none', 
+                      padding: 0,
+                      fontSize: '0.95rem'
+                    }}
+                  >
+                    {dog.name}
+                  </a>
+                </li>
+              ))}
+          </ul>
+          <button
+            onClick={() => {
+              // Create a new dog with all available fields
+              setEditDog({
+                id: 0,
+                name: '',
+                location: '',
+                origin: '',
+                latitude: null,
+                longitude: null,
+                bite_quarantine: 0,
+                returned: 0,
+                notes: '',
+                status: 'available',
+                url: '',
+                intake_date: '',
+                length_of_stay_days: 0,
+                birthdate: '',
+                age_group: '',
+                breed: '',
+                secondary_breed: '',
+                weight_group: '',
+                color: '',
+                adopted_date: '',
+                scraped: false,
+                verified_adoption: 0,
+                'AHNM-A': '',
+              } as any);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            style={{
+              fontWeight: 700,
+              color: '#fff',
+              background: '#2a5db0',
+              border: 'none',
+              borderRadius: 6,
+              padding: '10px 20px',
+              fontSize: 16,
+              cursor: 'pointer',
+              boxShadow: '0 1px 4px rgba(42,93,176,0.08)'
+            }}
+          >
+            + Add New Dog
+          </button>
         </div>
-      )}
       </div>
     </>
   );
