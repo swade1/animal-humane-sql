@@ -19,9 +19,9 @@ export default function Tabs({ tabs }: { tabs: Tab[] }) {
             border: "none",
             borderRadius: "4px",
             marginRight: "8px",
-            padding: "16px 32px",
-            fontSize: "1.15rem",
-            fontWeight: 600,
+            padding: "8px 16px",
+            fontSize: "0.95rem",
+            fontWeight: 500,
             cursor: "pointer",
           }}
           onClick={tab.onClick}

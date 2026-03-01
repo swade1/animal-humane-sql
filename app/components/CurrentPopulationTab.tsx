@@ -53,14 +53,14 @@ export default function CurrentPopulationTab() {
               <th style={{ 
                 fontWeight: 700, 
                 fontSize: '1.1rem', 
-                paddingRight: '1rem',
-                width: '40%'
+                paddingRight: '0.3rem',
+                width: '28%'
               }}>Name</th>
               <th style={{ 
                 fontWeight: 700, 
                 fontSize: '1.1rem', 
                 textAlign: 'left',
-                width: '60%'
+                width: '72%'
               }}>Location</th>
             </tr>
           </thead>

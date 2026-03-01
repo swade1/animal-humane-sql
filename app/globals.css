@@ -6,47 +6,47 @@
 @media (min-width: 601px) {
   th.cp-col-name,
   td.cp-col-name {
-    max-width: 120px !important;
-    white-space: nowrap !important;
-    overflow-x: hidden !important;
-    text-overflow: ellipsis !important;
-    padding-right: 0.25ch !important;
-    padding-left: 0.25ch !important;
-    min-width: 40px !important;
-    font-size: 0.95rem !important;
+     max-width: 80px !important;
+     white-space: nowrap !important;
+     overflow-x: hidden !important;
+     text-overflow: ellipsis !important;
+     padding-right: 0.1ch !important;
+     padding-left: 0.1ch !important;
+     min-width: 24px !important;
+     font-size: 0.85rem !important;
   }
   th.cp-col-location,
   td.cp-col-location {
-    min-width: 40px !important;
-    padding-left: 0.5ch !important;
-    font-size: 0.95rem !important;
-    white-space: normal !important;
+     min-width: 24px !important;
+     padding-left: 0.2ch !important;
+     font-size: 0.85rem !important;
+     white-space: normal !important;
   }
 }
 @media (min-width: 601px) {
   .cp-col-location {
-    padding-left: 4px !important;
+    padding-left: 2px !important;
   }
 }
 /* Current Population tab desktop layout */
 @media (min-width: 601px) {
   th.cp-col,
   td.cp-col {
-    min-width: 0 !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    white-space: nowrap !important;
-    font-size: 1rem !important;
+     min-width: 0 !important;
+     padding-left: 0 !important;
+     padding-right: 0 !important;
+     white-space: nowrap !important;
+     font-size: 0.85rem !important;
   }
 }
 /* Adoptions tab mobile layout */
 @media (max-width: 600px) {
   th.adoptions-col,
   td.adoptions-col {
-    min-width: 40px !important;
-    padding-left: 0.5ch !important;
-    font-size: 0.95rem !important;
-    white-space: normal !important;
+     min-width: 24px !important;
+     padding-left: 0.2ch !important;
+     font-size: 0.85rem !important;
+     white-space: normal !important;
   }
   th.sticky-name,
   td.sticky-name {
