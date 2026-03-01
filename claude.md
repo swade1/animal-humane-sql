@@ -287,3 +287,219 @@ Upserted 59 dogs to Supabase.
 
 ## End of Session
 All changes committed and pushed to repository. Dashboard now accurately reflects shelter dog population with simplified, logical categories.
+---
+
+# Mobile Responsiveness Improvements
+
+**Date:** February 27-28, 2026
+
+## Overview
+Fixed multiple mobile responsiveness issues across the dashboard to ensure all features are accessible and usable on cell phones and tablets.
+
+---
+
+## Problems Identified
+
+### 1. Iframe Popup Modals Too Large for Mobile
+- Dog detail popups had fixed pixel widths (800px, 750px) causing them to extend beyond screen boundaries
+- Close button (X) appeared off-screen on mobile devices
+- Users couldn't close the modals on phones
+
+### 2. Admin Page Not Usable on Mobile
+- Side-by-side layout with dog list on left and form on right
+- Fixed margins (96px, 80px) pushed form completely off-screen
+- Form had `minWidth: 420px` which was too wide for phones
+- No responsive breakpoints - layout didn't adapt to screen size
+- Input fields not visible or accessible on mobile
+
+### 3. Current Population Tab Table Too Wide
+- Fixed column widths with `minWidth: 180px` and `minWidth: 260px`
+- Excessive padding (`paddingLeft: 11ch`) made columns too wide
+- `whiteSpace: 'nowrap'` prevented text from wrapping
+- Location column partially cut off on mobile screens
+
+### 4. Modal Background Appearance
+- Modals displaying with grey/translucent background instead of white
+- Only using Tailwind class `bg-white` without explicit inline style
+
+---
+
+## Solutions Implemented
+
+### 1. Fixed Iframe Popup Modal Sizing
+**Files Modified:**
+- `app/components/CurrentPopulationTab.tsx`
+- `app/components/AdoptionsTab.tsx`
+- `app/components/WheresFidoTab.tsx`
+- `app/components/OverviewTable.tsx`
+- `app/components/RecentPupdatesTab.tsx`
+- `OverviewTab.js`
+
+**Changes:**
+- Replaced fixed pixel dimensions with responsive percentages
+- Changed from `width: 800, height: 800` to `width: '100%', height: '100%'`
+- Added max constraints: `maxWidth: '800px', maxHeight: '90vh'`
+- Added `padding: '1rem'` to outer container for proper spacing on mobile
+- Standardized close button position: `top: 8px, right: 8px`
+- Close button always visible with white background and shadow
+
+**Result:**
+✅ Modals scale properly on all screen sizes
+✅ Close button always accessible
+✅ Maintains desktop appearance (max 800px wide)
+✅ Click-outside-to-close functionality added
+
+### 2. Redesigned Admin Page Layout
+**Files Modified:**
+- `app/admin/page.tsx`
+- `app/components/DogEditForm.tsx`
+
+**Major Changes:**
+- **Eliminated side-by-side layout** - Form now appears at TOP when dog selected
+- **Auto-scroll to top** - When clicking dog name or "+ Add New Dog", page scrolls to form automatically
+- **Compact dog list** - Grid layout with multiple columns that adapt to screen width
+- **Scrollable container** - Dog list limited to 400px height with scroll
+- **Helpful instructions** - Blue banner explaining how to edit when no dog selected
+- **Mobile-first workflow** - Single vertical column layout works on all devices
+
+**Form Input Improvements:**
+- All inputs use `fontSize: 16` (prevents iOS auto-zoom on focus)
+- Added `boxSizing: 'border-box'` to all inputs
+- Responsive labels with `fontSize: '0.95rem'`
+- Form takes full width on mobile: `width: '100%'`
+- Buttons flex-wrap on narrow screens
+- Removed window.innerWidth checks in favor of CSS
+
+**Login Form:**
+- Proper padding and responsive sizing
+- 16px font size on inputs (prevents mobile zoom)
+- Responsive margin and padding
+
+**Result:**
+✅ Form fully visible when editing a dog
+✅ All input fields accessible on phone
+✅ No hidden content off-screen
+✅ Clean single-column layout
+✅ Proper touch targets for mobile
+
+### 3. Fixed Current Population Tab Table
+**File:** `app/components/CurrentPopulationTab.tsx`
+
+**Changes:**
+- Changed table from `w-1/2` (50% width) to `width: '100%'`
+- Removed fixed `minWidth` constraints from columns
+- Removed `whiteSpace: 'nowrap'` to allow text wrapping
+- Reduced padding from `paddingLeft: '11ch'` to `paddingRight: '1rem'`
+- Set proportional column widths: Name 40%, Location 60%
+- Added `wordBreak: 'break-word'` for proper text wrapping
+- Reduced container padding from `18px` to `4px` for more space
+- Added `overflowX: 'auto'` as fallback for very long content
+- Smaller font size for location: `fontSize: '0.95rem'`
+
+**Result:**
+✅ Both Name and Location columns fully visible on mobile
+✅ Text wraps naturally to fit screen
+✅ No horizontal scrolling needed
+✅ Maintains readability on all devices
+
+### 4. Fixed Modal Background Color
+**Files Modified:**
+- `app/components/CurrentPopulationTab.tsx`
+- `app/components/AdoptionsTab.tsx`
+- `app/components/WheresFidoTab.tsx`
+- `app/components/OverviewTable.tsx`
+- `OverviewTab.js`
+
+**Change:**
+- Added explicit `backgroundColor: 'white'` inline style to all modal containers
+- Ensures solid white background instead of translucent grey
+
+**Result:**
+✅ Clean white background on all dog detail popups
+
+---
+
+## Key Mobile Design Principles Applied
+
+1. **16px Font Size Rule** - All input fields use 16px to prevent iOS Safari auto-zoom
+2. **Flexible Layouts** - Percentage-based widths instead of fixed pixels
+3. **Proper Box Sizing** - `box-sizing: border-box` on all inputs
+4. **Max Constraints** - Use `maxWidth`/`maxHeight` with viewport units (vh, vw)
+5. **Text Wrapping** - Allow natural text flow with `wordBreak: 'break-word'`
+6. **Touch Targets** - Adequate button sizes and padding for mobile interaction
+7. **Viewport Padding** - Add breathing room with `padding: '1rem'` on containers
+8. **Explicit Styles** - Inline styles override Tailwind for critical mobile properties
+
+---
+
+## Files Modified Summary
+
+### Modal Components (All Tabs)
+- ✅ `app/components/CurrentPopulationTab.tsx` - Responsive modal + table
+- ✅ `app/components/AdoptionsTab.tsx` - Responsive modal
+- ✅ `app/components/WheresFidoTab.tsx` - Responsive modal
+- ✅ `app/components/OverviewTable.tsx` - Responsive modal
+- ✅ `app/components/RecentPupdatesTab.tsx` - Already had responsive modal
+- ✅ `OverviewTab.js` - Responsive modal
+
+### Admin Section
+- ✅ `app/admin/page.tsx` - Complete mobile redesign
+- ✅ `app/components/DogEditForm.tsx` - Mobile-friendly inputs
+
+---
+
+## Testing Checklist
+
+### Mobile Device Testing (phone screen ~375px wide)
+- ✅ Dog detail popups open properly and show close button
+- ✅ Click close button to dismiss popup
+- ✅ Admin page shows form when dog selected
+- ✅ All admin form fields visible and editable
+- ✅ Input fields don't trigger zoom on iOS
+- ✅ Current Population table shows both columns
+- ✅ Location text wraps when too long
+- ✅ All tabs navigate properly
+
+### Tablet Testing (screen ~768px wide)
+- ✅ Layouts adapt smoothly
+- ✅ Tables use available space efficiently
+- ✅ Modals maintain centered appearance
+
+### Desktop Testing (screen >1024px wide)
+- ✅ No regression in existing functionality
+- ✅ Maintain original desktop appearance
+- ✅ Admin page shows form at top (change from side-by-side)
+
+---
+
+## User Experience Improvements
+
+**Before:** Users couldn't use dashboard effectively on mobile
+- Popups too large, close buttons off-screen
+- Admin panel completely unusable
+- Tables cut off and unreadable
+
+**After:** Full mobile functionality
+- ✅ All popups accessible and dismissible
+- ✅ Complete admin capabilities from phone
+- ✅ All tables readable and usable
+- ✅ Professional mobile experience
+
+---
+
+## Success Metrics
+
+✅ Iframe popups properly sized for mobile viewing
+✅ Close buttons always visible and accessible
+✅ Admin page fully functional on mobile devices
+✅ All input fields accessible for data entry
+✅ Current Population table displays both columns
+✅ Clean white backgrounds on all modals
+✅ No horizontal scrolling required
+✅ Touch-friendly UI elements
+✅ Consistent experience across all screen sizes
+
+---
+
+## End of Mobile Improvements Session
+All mobile responsiveness issues resolved. Dashboard now provides consistent, usable experience across desktop, tablet, and mobile devices. Admin functionality fully accessible from cell phones.
