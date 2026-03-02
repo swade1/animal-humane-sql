@@ -288,6 +288,33 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
     }
   }
 
+  // Custom field order: id, url, name, status, origin, latitude, longitude, bite_quarantine, returned, notes, birthdate, intake_date, adopted_date, length_of_stay_days, AHNM-A, etc.
+  const fieldOrder = [
+    'id',
+    'url',
+    'name',
+    'status',
+    'origin',
+    'latitude',
+    'longitude',
+    'bite_quarantine',
+    'returned',
+    'notes',
+    'birthdate',
+    'intake_date',
+    'adopted_date',
+    'length_of_stay_days',
+    'AHNM-A',
+    'age_group',
+    'breed',
+    'secondary_breed',
+    'weight_group',
+    'color',
+    'scraped',
+    'verified_adoption',
+  ];
+  const orderedFields = fieldOrder.filter(f => f in form).concat(Object.keys(form).filter(f => !fieldOrder.includes(f)));
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -308,7 +335,8 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
       <div style={{ color: '#b00', fontWeight: 600, minHeight: 24, fontSize: '0.9rem' }}>
         {error && <span>{error}</span>}
       </div>
-      {Object.entries(form).map(([key, value]) => {
+      {orderedFields.map((key) => {
+        const value = form[key];
         if (key === 'id') {
           return (
             <label key={key} style={{ textTransform: 'capitalize', fontWeight: 600, marginBottom: 6, fontSize: '0.95rem' }}>

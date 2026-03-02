@@ -294,7 +294,9 @@ function AdminPage() {
               // Create a new dog with all available fields
               setEditDog({
                 id: 0,
+                url: '',
                 name: '',
+                status: null,
                 location: '',
                 origin: '',
                 latitude: null,
@@ -302,8 +304,6 @@ function AdminPage() {
                 bite_quarantine: 0,
                 returned: 0,
                 notes: '',
-                status: 'available',
-                url: '',
                 intake_date: '',
                 length_of_stay_days: 0,
                 birthdate: '',
