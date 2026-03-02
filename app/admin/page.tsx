@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabaseClient';
 import { DogEditForm } from '../components/DogEditForm';
 
 type Dog = {
-  id: number;
+  id: number | null;
   name: string;
   origin: string;
   latitude: string | null;
@@ -69,7 +69,7 @@ function AdminPage() {
     }
   }
 
-  function handleSelectDog(id: number) {
+  function handleSelectDog(id: number | null) {
     const dog = dogs.find((d) => d.id === id);
     setEditDog(dog ?? null);
   }
@@ -84,10 +84,12 @@ function AdminPage() {
       latitude: mergedData.latitude === '' || mergedData.latitude == null ? null : mergedData.latitude,
       longitude: mergedData.longitude === '' || mergedData.longitude == null ? null : mergedData.longitude,
     };
-    if (editDog.id === 0) {
+    const isNewDog = !editDog.id || editDog.id === 0 || editDog.id === null;
+    if (isNewDog) {
       // Add new dog
       // If user provided an ID, use it; otherwise remove id field for auto-generation
-      if (!dbData.id || dbData.id === 0) {
+      const hasValidId = dbData.id && dbData.id !== 0 && dbData.id !== null;
+      if (!hasValidId) {
         const { id, ...fields } = dbData;
         ({ error, data } = await supabase
           .from('dogs')
@@ -193,7 +195,7 @@ function AdminPage() {
               marginBottom: 16, 
               color: '#2a5db0'
             }}>
-              {editDog.id === 0 ? 'Add New Dog' : `Editing: ${editDog.name}`}
+              {(!editDog.id || editDog.id === 0 || editDog.id === null) ? 'Add New Dog' : `Editing: ${editDog.name}`}
             </h3>
             <DogEditForm dog={editDog} onSave={handleSave} onCancel={handleCancel} />
           </div>
@@ -293,11 +295,12 @@ function AdminPage() {
             onClick={() => {
               // Create a new dog with all available fields
               setEditDog({
-                id: 0,
+                id: null,
                 url: '',
+                'AHNM-A': '',
                 name: '',
-                status: null,
                 location: '',
+                status: null,
                 origin: '',
                 latitude: null,
                 longitude: null,
@@ -305,17 +308,16 @@ function AdminPage() {
                 returned: 0,
                 notes: '',
                 intake_date: '',
-                length_of_stay_days: 0,
                 birthdate: '',
+                adopted_date: '',
+                length_of_stay_days: 0,
                 age_group: '',
                 breed: '',
                 secondary_breed: '',
                 weight_group: '',
                 color: '',
-                adopted_date: '',
                 scraped: false,
                 verified_adoption: 0,
-                'AHNM-A': '',
               } as any);
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}

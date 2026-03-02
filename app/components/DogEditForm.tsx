@@ -12,7 +12,7 @@ type DogFormFields = {
   intake_date?: string | null;
   adopted_date?: string | null;
   length_of_stay_days?: string | number;
-  id?: number;
+  id?: number | null;
   name?: string;
   status?: string;
   [key: string]: any; // Allow additional fields
@@ -273,7 +273,7 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
       }
       
       // Remove id field if it's 0, null, undefined (new dog)
-      if (!formDataToSave.id || formDataToSave.id === 0) {
+      if (!formDataToSave.id || formDataToSave.id === 0 || formDataToSave.id === null) {
         delete formDataToSave.id;
       }
       
@@ -288,11 +288,13 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
     }
   }
 
-  // Custom field order: id, url, name, status, origin, latitude, longitude, bite_quarantine, returned, notes, birthdate, intake_date, adopted_date, length_of_stay_days, AHNM-A, etc.
+  // Custom field order: id, url, AHNM-A, name, location, status, origin, latitude, longitude, bite_quarantine, returned, notes, intake_date, birthdate, length_of_stay_days, etc., adopted_date (last)
   const fieldOrder = [
     'id',
     'url',
+    'AHNM-A',
     'name',
+    'location',
     'status',
     'origin',
     'latitude',
@@ -300,11 +302,9 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
     'bite_quarantine',
     'returned',
     'notes',
-    'birthdate',
     'intake_date',
-    'adopted_date',
+    'birthdate',
     'length_of_stay_days',
-    'AHNM-A',
     'age_group',
     'breed',
     'secondary_breed',
@@ -312,6 +312,7 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
     'color',
     'scraped',
     'verified_adoption',
+    'adopted_date',
   ];
   const orderedFields = fieldOrder.filter(f => f in form).concat(Object.keys(form).filter(f => !fieldOrder.includes(f)));
 
@@ -346,7 +347,18 @@ export function DogEditForm({ dog, onSave, onCancel }: DogEditFormProps) {
                 type="number"
                 value={value == null ? '' : value}
                 onChange={handleChange}
-                style={{ width: '100%', fontSize: 16, borderRadius: 6, border: '1px solid #bcd', padding: 10, marginTop: 6, background: '#fff', boxSizing: 'border-box' }}
+                style={{ 
+                  width: '100%', 
+                  fontSize: 16, 
+                  borderRadius: 6, 
+                  border: '1px solid #bcd', 
+                  padding: 10, 
+                  marginTop: 6, 
+                  background: '#fff', 
+                  boxSizing: 'border-box',
+                  MozAppearance: 'textfield'
+                }}
+                onWheel={(e) => e.currentTarget.blur()}
               />
               <div style={{ fontSize: 13, color: '#666', marginTop: 2 }}>
                 Auto-generated if left blank for new dogs
