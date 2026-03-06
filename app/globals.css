@@ -183,3 +183,13 @@ input[type=number] {
 .dog-square:hover::after {
   opacity: 1;
 }
+
+/* Hide scrollbar on square containers while maintaining scroll functionality */
+.overview-unit-chart *::-webkit-scrollbar {
+  display: none;
+}
+
+.overview-unit-chart * {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
