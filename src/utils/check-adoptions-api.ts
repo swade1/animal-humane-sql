@@ -277,6 +277,12 @@ async function main() {
 						
 						// Check if location is now empty (adopted from trial adoption)
 						if (!location || location.trim() === '') {
+							// --- EDGE CASE FIX: Skip adoption for Available Soon dogs with TBD location (new arrivals) ---
+							const normalizedDbLocation = typeof dog.location === 'string' ? dog.location.trim() : dog.location;
+							if (normalizedDbLocation === 'TBD') {
+								console.log(`[adoption-check-api] ✓ SKIPPING adoption for Available Soon dog ID ${dog.id} (${dog.name}): location is TBD (new arrival)`);
+								continue;
+							}
 							// Dog was adopted - log status_change and update status
 							const timeZone = 'America/Denver';
 							const now = new Date();
@@ -407,8 +413,12 @@ async function main() {
 									console.log(`[adoption-check-api] Updated location for dog ID ${dog.id} to '${location}'`);
 								}
 							}
-							if (!location || location.trim() === '') {
-								// Only log status_change and update DB if adopted
+							if (!location || location.trim() === '') {							// --- EDGE CASE FIX: Skip adoption for dogs with TBD location (new arrivals) ---
+							const normalizedDbLocation = typeof prevDog.location === 'string' ? prevDog.location.trim() : prevDog.location;
+							if (normalizedDbLocation === 'TBD') {
+								console.log(`[adoption-check-api] ✓ SKIPPING adoption for dog ID ${dog.id} (${dog.name}): location is TBD (new arrival)`);
+								continue;
+							}								// Only log status_change and update DB if adopted
 								const timeZone = 'America/Denver';
 								const now = new Date();
 								const mstNow = toZonedTime(now, timeZone);
