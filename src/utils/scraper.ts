@@ -211,10 +211,15 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]
       if (typeof p.status === 'string' && p.status.trim().toLowerCase() === 'adopted') {
         status = 'adopted';
       }
+      let location = getString(p, 'location');
+      // --- EDGE CASE FIX: If location is empty and status is not 'adopted', set location to 'TBD' ---
+      if ((!location || location.trim() === '') && status.trim().toLowerCase() !== 'adopted') {
+        location = 'TBD';
+      }
       const dogObj = {
         id: getNumber(p, 'nid'),
         name: getString(p, 'name'),
-        location: getString(p, 'location'),
+        location,
         origin: '', // Manual entry required
         status: status.trim(),
         url: getString(p, 'public_url'),
