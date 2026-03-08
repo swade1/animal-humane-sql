@@ -626,6 +626,7 @@ export async function runScraper() {
               }
               if (lastLocation && lastLocation.toLowerCase().includes('clinic')) {
                 // Set status to pending_review and location to 'unknown'
+                console.log(`[scraper][CLINIC-PATH] Marking dog ID ${prevDog.id} (${prevDog.name}) as pending_review`);
                 await logDogHistory({
                   dogId: prevDog.id,
                   name: prevDog.name,
@@ -646,6 +647,7 @@ export async function runScraper() {
                 console.error(`Status/location change detected for dog ID ${prevDog.id} (${prevDog.name}): 'available' -> 'pending_review', location set to 'unknown', most recent location in dog_history contains 'Clinic'.`);
               } else {
                 // Get current date in America/Denver (MST) as YYYY-MM-DD
+                console.log(`[scraper][ADOPTION-PATH] ❌ MARKING dog ID ${prevDog.id} (${prevDog.name}) AS ADOPTED (THIS SHOULD NOT HAPPEN FOR TBD DOGS!)`);
                 const { format: formatTz } = await import('date-fns-tz');
                 const now = new Date();
                 const timeZone = 'America/Denver';
