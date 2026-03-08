@@ -266,6 +266,15 @@ async function main() {
 					}
 					// Always check for location change
 					if ((dog.location || '').trim() !== (location || '').trim()) {
+						// --- EDGE CASE FIX: Skip ALL updates for Available Soon dogs with TBD location when scraped location is empty ---
+						if ((!location || location.trim() === '')) {
+							const normalizedDbLocation = typeof dog.location === 'string' ? dog.location.trim() : dog.location;
+							if (normalizedDbLocation === 'TBD') {
+								console.log(`[adoption-check-api] ✓ SKIPPING all updates for Available Soon dog ID ${dog.id} (${dog.name}): location is TBD (new arrival)`);
+								continue;
+							}
+						}
+						
 						await logDogHistory({
 							dogId: dog.id,
 							name: dog.name,
@@ -277,12 +286,6 @@ async function main() {
 						
 						// Check if location is now empty (adopted from trial adoption)
 						if (!location || location.trim() === '') {
-							// --- EDGE CASE FIX: Skip adoption for Available Soon dogs with TBD location (new arrivals) ---
-							const normalizedDbLocation = typeof dog.location === 'string' ? dog.location.trim() : dog.location;
-							if (normalizedDbLocation === 'TBD') {
-								console.log(`[adoption-check-api] ✓ SKIPPING adoption for Available Soon dog ID ${dog.id} (${dog.name}): location is TBD (new arrival)`);
-								continue;
-							}
 							// Dog was adopted - log status_change and update status
 							const timeZone = 'America/Denver';
 							const now = new Date();
@@ -393,6 +396,15 @@ async function main() {
 						if (prevDogErr) {
 							console.error(`[adoption-check-api] Error fetching previous dog record for history logging:`, prevDogErr);
 						} else if (prevDog) {
+							// --- EDGE CASE FIX: Skip ALL updates for dogs with TBD location when scraped location is empty ---
+							if ((!location || location.trim() === '')) {
+								const normalizedDbLocation = typeof prevDog.location === 'string' ? prevDog.location.trim() : prevDog.location;
+								if (normalizedDbLocation === 'TBD') {
+									console.log(`[adoption-check-api] ✓ SKIPPING all updates for dog ID ${dog.id} (${dog.name}): location is TBD (new arrival)`);
+									continue;
+								}
+							}
+							
 							if ((prevDog.location || '').trim() !== (location || '').trim()) {
 								await logDogHistory({
 									dogId: dog.id,
@@ -413,12 +425,8 @@ async function main() {
 									console.log(`[adoption-check-api] Updated location for dog ID ${dog.id} to '${location}'`);
 								}
 							}
-							if (!location || location.trim() === '') {							// --- EDGE CASE FIX: Skip adoption for dogs with TBD location (new arrivals) ---
-							const normalizedDbLocation = typeof prevDog.location === 'string' ? prevDog.location.trim() : prevDog.location;
-							if (normalizedDbLocation === 'TBD') {
-								console.log(`[adoption-check-api] ✓ SKIPPING adoption for dog ID ${dog.id} (${dog.name}): location is TBD (new arrival)`);
-								continue;
-							}								// Only log status_change and update DB if adopted
+							if (!location || location.trim() === '') {
+								// Only log status_change and update DB if adopted
 								const timeZone = 'America/Denver';
 								const now = new Date();
 								const mstNow = toZonedTime(now, timeZone);
