@@ -599,7 +599,18 @@ export async function runScraper() {
             }
             
             await page.close();
-            if (!location) {
+            
+            // Debug logging for TBD edge case
+            console.log(`[scraper][TBD-CHECK] Dog ID ${prevDog.id} (${prevDog.name}): scraped location='${location}', db location='${prevDog.location}'`);
+            
+            if (!location || location.trim() === '') {
+              // --- EDGE CASE FIX: If scraped location is empty but current dogs.location is 'TBD', skip all updates ---
+              const normalizedDbLocation = typeof prevDog.location === 'string' ? prevDog.location.trim() : prevDog.location;
+              if (normalizedDbLocation === 'TBD') {
+                console.log(`[scraper] ✓ SKIPPING UPDATES for dog ID ${prevDog.id} (${prevDog.name}): scraped location is empty but current location is 'TBD' (manual entry for new arrival)`);
+                continue;
+              }
+              
               // Check if most recent location (new_value) in dog_history contains 'Clinic'
               let lastLocation = prevDog.location || '';
               // Try to get last new_value from dog_history (location_change)
