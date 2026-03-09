@@ -686,9 +686,10 @@ export async function runScraper() {
               }
             } else if (location !== prevDog.location) {
               // If location changed but not adopted, update dogs table and log
-              // For Available Soon dogs (status=null), also set status to 'available' when they get a real location
+              // For Available Soon dogs (status=null), ONLY set status to 'available' if they've been scraped before (scraped=TRUE)
+              // This prevents manually added dogs (scraped=FALSE) from being marked as available before they appear on the website
               const prevStatus = typeof prevDog.status === 'string' ? prevDog.status.trim() : prevDog.status;
-              const shouldUpdateStatus = (prevStatus === null || prevStatus === undefined) && location && location.trim() !== '';
+              const shouldUpdateStatus = (prevStatus === null || prevStatus === undefined) && location && location.trim() !== '' && prevDog.scraped === true;
               
               await logDogHistory({
                 dogId: prevDog.id,
