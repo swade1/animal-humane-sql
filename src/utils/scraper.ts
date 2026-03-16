@@ -751,7 +751,7 @@ export async function runScraper() {
     // Find all dogs with status == NULL
     const { data: manualDogs, error: manualError } = await supabase
       .from('dogs')
-      .select('id, created_at, status, scraped')
+      .select('id, created_at, status, scraped, notes')
       .is('status', null);
     if (manualError) {
       console.error('Error fetching manually added dogs:', manualError);
@@ -760,11 +760,22 @@ export async function runScraper() {
       const now = new Date().toISOString();
       for (const dog of manualDogs) {
         if (dog.scraped) {
+          const currentNotes = typeof dog.notes === 'string' ? dog.notes : '';
+          const hasManualAvailableSoonNote = currentNotes.toLowerCase().includes('available soon');
+          const updateFields: { created_at: string; status: string; notes?: string | null } = {
+            created_at: now,
+            status: 'available',
+          };
+
+          if (hasManualAvailableSoonNote) {
+            updateFields.notes = null;
+          }
+
           await supabase
             .from('dogs')
-            .update({ created_at: now, status: 'available' })
+            .update(updateFields)
             .eq('id', dog.id);
-          console.log(`[scraper] Updated manually added dog ID ${dog.id}: set created_at to now and status to 'available'`);
+          console.log(`[scraper] Updated manually added dog ID ${dog.id}: set created_at to now and status to 'available'${hasManualAvailableSoonNote ? ", cleared manual 'Available Soon' note" : ''}`);
         }
       }
     }
