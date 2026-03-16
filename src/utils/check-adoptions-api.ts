@@ -13,6 +13,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const MAIN_URL = 'https://animalhumanenm.org/adopt/adoptable-dogs';
 
+const trimString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
+
 
 // Helper to extract all available-animals JSON URLs from the main page
 async function getAvailableAnimalsJsonUrls() {
@@ -92,7 +94,7 @@ async function main() {
 							if (raw) {
 								try {
 									const animalObj = JSON.parse(raw);
-									currentLocation = animalObj.location || '';
+									currentLocation = trimString(animalObj.location);
 								} catch (parseErr) {
 									console.warn(`[adoption-check-api] Could not parse animal JSON for returned dog ID ${dog.id}`);
 								}
@@ -256,7 +258,7 @@ async function main() {
 						if (raw) {
 							try {
 								const animalObj = JSON.parse(raw);
-								location = animalObj.location || '';
+								location = trimString(animalObj.location);
 							} catch {
 								console.warn(`[adoption-check-api] Could not parse animal JSON for Available Soon dog ID ${dog.id}:`, raw);
 							}
@@ -379,7 +381,7 @@ async function main() {
 				if (raw) {
 					try {
 						const animalObj = JSON.parse(raw);
-						location = animalObj.location || '';
+						location = trimString(animalObj.location);
 					} catch {
 						console.warn(`[adoption-check-api] Could not parse animal JSON for dog ID ${dog.id}:`, raw);
 					}

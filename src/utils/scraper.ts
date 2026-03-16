@@ -150,6 +150,8 @@ import fetch from 'node-fetch';
 import { supabase } from '../lib/supabaseClient';
 import { logDogHistory } from './dogHistory';
 
+const trimString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
+
 export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]> {
   try {
     const res = await fetch(jsonUrl);
@@ -173,7 +175,7 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]
     const today = new Date();
     const mapped: Dog[] = dogs.map((parsed: Record<string, unknown>, idx: number) => {
       // Helper for safe property extraction
-      const getString = (obj: Record<string, unknown>, key: string): string => typeof obj[key] === 'string' ? obj[key] as string : '';
+      const getString = (obj: Record<string, unknown>, key: string): string => trimString(obj[key]);
       const getNumber = (obj: Record<string, unknown>, key: string): number => typeof obj[key] === 'number' ? obj[key] as number : (typeof obj[key] === 'string' ? parseInt(obj[key] as string, 10) : 0);
 
       const p = parsed;
@@ -337,10 +339,10 @@ export async function runScraper() {
     const returnedMap = new Map<number, number | null>();
     if (prevDogs) {
       for (const d of prevDogs) {
-        locationMap.set(d.id, d.location);
+        locationMap.set(d.id, trimString(d.location));
         // Always trim status from DB
         statusMap.set(d.id, typeof d.status === 'string' ? d.status.trim() : d.status);
-        nameMap.set(d.id, d.name);
+        nameMap.set(d.id, trimString(d.name));
         originMap.set(d.id, d.origin);
         latitudeMap.set(d.id, d.latitude);
         longitudeMap.set(d.id, d.longitude);
@@ -546,8 +548,8 @@ export async function runScraper() {
                 return { location, name };
               });
               
-              location = pageData.location;
-              nameFromPage = pageData.name;
+              location = trimString(pageData.location);
+              nameFromPage = trimString(pageData.name);
               
               if (!location || !nameFromPage) {
                 // Fallback: Use :animal attribute if visible HTML extraction fails
@@ -565,8 +567,8 @@ export async function runScraper() {
                   // Unescape HTML entities and parse JSON
                   const decoded = animalJson.replace(/&quot;/g, '"');
                   const animalObj = JSON.parse(decoded);
-                  if (!location) location = animalObj.location || '';
-                  if (!nameFromPage) nameFromPage = animalObj.name || '';
+                  if (!location) location = trimString(animalObj.location);
+                  if (!nameFromPage) nameFromPage = trimString(animalObj.name);
                 } else {
                   // If :animal attribute is missing, log the page HTML for debugging
                   const pageHtml = await page.content();
@@ -583,11 +585,12 @@ export async function runScraper() {
             console.log(`[scraper] Raw name value for dog ID ${prevDog.id} (${prevDog.name}): '${nameFromPage}'`);
             
             // Check for name change
-            if (nameFromPage && nameFromPage !== prevDog.name) {
+            const normalizedPrevName = trimString(prevDog.name);
+            if (nameFromPage && nameFromPage !== normalizedPrevName) {
               await logDogHistory({
                 dogId: prevDog.id,
                 eventType: 'name_change',
-                oldValue: prevDog.name,
+                oldValue: normalizedPrevName,
                 newValue: nameFromPage,
                 notes: `Name updated for missing dog during scrape.`
               });

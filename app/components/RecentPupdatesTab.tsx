@@ -6,6 +6,9 @@ import { supabase } from "../lib/supabaseClient";
 import { parseISO, isSameDay, format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 
+const sortDogsByName = <T extends { name: string | null | undefined }>(dogs: T[]) =>
+  [...dogs].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
+
 export default function RecentPupdatesTab() {
   // Get today's date in YYYY-MM-DD
   // Use UTC date for comparison
@@ -33,32 +36,48 @@ export default function RecentPupdatesTab() {
 
   // Query for temporarily unlisted dogs: available in DB, not on website (not in latest_scraped_ids.json), not Trial Adoption
   const { data: temporarilyUnlistedDogs, isLoading: isLoadingUnlisted } = useQuery({
-    queryKey: ['temporarilyUnlistedDogsDetails'],
+    queryKey: ['temporarilyUnlistedDogsDetails', 'live-v2'],
     queryFn: async () => {
-      // Fetch scraped IDs from public/latest_scraped_ids.json
+      // Get current website IDs from server-side proxy (avoids browser CORS issues)
       let scrapedIds: number[] = [];
+      const normalizeIds = (ids: unknown[]): number[] => (
+        ids
+          .map(id => Number(id))
+          .filter(id => Number.isFinite(id))
+      );
+
       try {
-        const res = await fetch('/latest_scraped_ids.json');
-        if (res.ok) {
-          const ids = await res.json();
-          if (Array.isArray(ids)) scrapedIds = ids;
+        const liveRes = await fetch('/api/current-website-dog-ids', { cache: 'no-store' });
+        if (liveRes.ok) {
+          const liveData = await liveRes.json();
+          if (liveData && Array.isArray(liveData.ids)) {
+            scrapedIds = normalizeIds(liveData.ids);
+          }
         }
-      } catch {}
-      
-      console.log('[TEMP UNLISTED] Scraped IDs count:', scrapedIds.length);
-      console.log('[TEMP UNLISTED] First 10 scraped IDs:', scrapedIds.slice(0, 10));
-      
+      } catch (err) {
+        console.log('[TEMP UNLISTED] Server live ID fetch failed', err);
+      }
+
+      if (scrapedIds.length === 0) {
+        console.warn('[TEMP UNLISTED] No live website IDs available. Returning no temporarily unlisted dogs to avoid false positives.');
+        return [];
+      }
+
+      console.log('[TEMP UNLISTED] Website IDs count:', scrapedIds.length);
+      console.log('[TEMP UNLISTED] First 10 website IDs:', scrapedIds.slice(0, 10));
+
       // Get all available dogs
       const { data: allAvailable, error: errorAvailable } = await supabase
         .from('dogs')
         .select('id, name, intake_date, created_at, updated_at, status, location')
-        .eq('status', 'available');
+        .eq('status', 'available')
+        .eq('scraped', true);
       if (errorAvailable || !allAvailable) return [];
-      
+
       console.log('[TEMP UNLISTED] Total available dogs:', allAvailable.length);
-      
+
       // Exclude dogs on website and those in Trial Adoption
-      const scrapedIdSet = new Set(scrapedIds.map(id => Number(id)));
+      const scrapedIdSet = new Set(scrapedIds);
       const filtered = allAvailable.filter(dog => {
         // Must have a non-empty location
         if (!dog.location || dog.location.trim() === '') {
@@ -70,7 +89,7 @@ export default function RecentPupdatesTab() {
           console.log(`[TEMP UNLISTED] Excluding ${dog.name} (ID: ${dog.id}) - Trial Adoption`);
           return false;
         }
-        // Exclude dogs on website
+        // Exclude dogs currently on website
         if (scrapedIdSet.has(Number(dog.id))) {
           console.log(`[TEMP UNLISTED] Excluding ${dog.name} (ID: ${dog.id}) - on website`);
           return false;
@@ -78,13 +97,15 @@ export default function RecentPupdatesTab() {
         console.log(`[TEMP UNLISTED] Including ${dog.name} (ID: ${dog.id}) - location: ${dog.location}`);
         return true;
       });
-      
+
       console.log('[TEMP UNLISTED] Filtered count:', filtered.length);
       console.log('[TEMP UNLISTED] Filtered dogs:', filtered.map(d => ({ id: d.id, name: d.name })));
-      
+
       return filtered;
     },
-    staleTime: 1000 * 60 * 60 * 2
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true
   });
 
   const [modalDog, setModalDog] = useState<Dog | null>(null);
@@ -263,7 +284,7 @@ export default function RecentPupdatesTab() {
           {isLoading && <div>Loading new dogs...</div>}
           {!isLoading && newDogs && newDogs.length > 0 && (
             <div style={{ marginLeft: '0.5em' }}>
-              {newDogs.map(dog => (
+              {sortDogsByName(newDogs).map(dog => (
                 <React.Fragment key={dog.id}>
                   <span
                     className="text-[#2a5db0] cursor-pointer font-bold"
@@ -316,7 +337,7 @@ export default function RecentPupdatesTab() {
           {isLoadingReturned && <div>Loading returned dogs...</div>}
           {!isLoadingReturned && returnedDogs && returnedDogs.length > 0 && (
             <div style={{ marginLeft: '0.5em', marginBottom: '1.2em', paddingLeft: '0.5em' }}>
-              {returnedDogs.map(dog => (
+              {sortDogsByName(returnedDogs).map(dog => (
                 <React.Fragment key={dog.id}>
                   <span
                     className="text-[#2a5db0] cursor-pointer font-bold"
@@ -347,7 +368,7 @@ export default function RecentPupdatesTab() {
           {isLoadingUnlisted && <div>Loading temporarily unlisted dogs...</div>}
           {!isLoadingUnlisted && temporarilyUnlistedDogs && temporarilyUnlistedDogs.length > 0 && (
             <div style={{ marginLeft: 'calc(0.5em - 8px)', marginBottom: '1.2em', paddingLeft: '0.5em' }}>
-              {temporarilyUnlistedDogs.map(dog => (
+              {sortDogsByName(temporarilyUnlistedDogs).map(dog => (
                 <React.Fragment key={dog.id}>
                   <span
                     className="text-[#2a5db0] cursor-pointer font-bold"
@@ -377,8 +398,7 @@ export default function RecentPupdatesTab() {
           {isLoadingAvailableSoon && <div>Loading available soon dogs...</div>}
           {!isLoadingAvailableSoon && availableSoonDogs && availableSoonDogs.length > 0 && (
             <div style={{ marginLeft: 'calc(0.5em - 5px)', paddingLeft: '0.5em' }}>
-              {[...availableSoonDogs]
-                .sort((a, b) => a.name.localeCompare(b.name))
+              {sortDogsByName(availableSoonDogs)
                 .map(dog => (
                   <React.Fragment key={dog.id}>
                     <span
@@ -514,7 +534,7 @@ function AdoptedTodayDogs({ setModalDog }: AdoptedTodayDogsProps) {
   );
   return (
     <div style={{ marginLeft: 'calc(1.5em - 12px)' }}>
-      {adoptedToday.map(dog => (
+      {sortDogsByName(adoptedToday).map(dog => (
         <React.Fragment key={`${dog.id}-${dog.adopted_date}`}>
           <span
             className="text-[#2a5db0] cursor-pointer font-bold"
@@ -555,7 +575,7 @@ function TrialAdoptionsDogs({ setModalDog }: TrialAdoptionsDogsProps) {
   );
   return (
     <div style={{ marginLeft: '0.5em', marginBottom: '1.2em' }}>
-      {trialDogs.map(dog => (
+      {sortDogsByName(trialDogs).map(dog => (
         <React.Fragment key={dog.id}>
           <span
             className="text-[#2a5db0] cursor-pointer font-bold"
