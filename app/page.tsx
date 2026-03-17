@@ -49,7 +49,7 @@ export default function HomePage() {
               <PawPrint
                 className="text-orange-500 max-[400px]:w-5 max-[400px]:h-5"
                 size={26}
-                style={{ transform: 'rotate(-45deg)', marginTop: isMobileLayout ? '0px' : '5px' }}
+                style={{ transform: 'rotate(-45deg)', marginTop: isMobileLayout ? '-1px' : '5px' }}
               />
             </span>
             Pet Status & Updates
@@ -71,22 +71,6 @@ export default function HomePage() {
         >
           Updates are not live and may be delayed by up to 2 hours.
         </div>
-        <div
-          style={{
-            marginLeft: '20px',
-            marginRight: '20px',
-            marginTop: '-6px',
-            marginBottom: '16px',
-            padding: '10px 12px',
-            borderRadius: '8px',
-            background: '#f8fafc',
-            color: '#475569',
-            fontSize: '0.9rem',
-            lineHeight: 1.5,
-          }}
-        >
-          This dashboard is an independent volunteer resource intended to help volunteers track the pets they care for. It is not an official Animal Humane New Mexico communication or record and should not be used as a substitute for official shelter information.
-        </div>
         <div className="p-5">
           <div style={{ marginLeft: '20px', marginTop: 0, marginBottom: 0 }}>
             <Tabs
@@ -103,7 +87,19 @@ export default function HomePage() {
                 <OverviewUnitChart />
                 <div
                   style={{
-                    marginTop: '10px',
+                    marginTop: '12px',
+                    marginLeft: '4px',
+                    marginRight: '4px',
+                    color: '#475569',
+                    fontSize: '0.9rem',
+                    lineHeight: 1.5,
+                  }}
+                >
+                  This dashboard is an independent volunteer resource intended to help volunteers track the pets they care for. It is not an official Animal Humane New Mexico communication or record and should not be used as a substitute for official shelter information.
+                </div>
+                <div style={{ height: '12px' }} />
+                <div
+                  style={{
                     marginLeft: '4px',
                     fontSize: '0.9rem',
                     color: '#475569',
