@@ -16,6 +16,10 @@ function getColor(count: number, max: number) {
 
 
 export default function OwnerSurrenderHeatmap() {
+  const TOTAL_CARD_HEIGHT = 540;
+  const DESCRIPTION_HEIGHT = 148;
+  const VISUAL_HEIGHT = 324;
+
   const { data, isLoading, error } = useQuery<Record<string, Record<string, number>> | undefined>({
     queryKey: ["ownerSurrenderHeatmap"],
     queryFn: async () => {
@@ -48,46 +52,51 @@ export default function OwnerSurrenderHeatmap() {
   const max = Math.max(...SIZE_GROUPS.flatMap(size => AGE_GROUPS.map(age => data[size]?.[age] ?? 0)));
 
   return (
-    <div style={{ width: '100%', maxWidth: 580, background: '#fff', borderRadius: 16, boxShadow: '0 2px 16px 0 rgba(0,0,0,0.07)', padding: 18 }}>
-      <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 10, textAlign: 'center' }}>
+    <div style={{ width: '600px', maxWidth: '100%', marginLeft: 0, height: TOTAL_CARD_HEIGHT, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ fontWeight: 700, fontSize: 22, marginBottom: 8, textAlign: 'center' }}>
         Owner Surrendered Dogs by Age and Size
       </div>
-      <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-        <thead>
-          <tr>
-            <th style={{ width: 80, textAlign: 'left', fontWeight: 600, fontSize: 14, color: '#444', padding: 4 }}></th>
-            {AGE_GROUPS.map(age => (
-              <th key={age} style={{ textAlign: 'center', fontWeight: 600, fontSize: 14, color: '#444', padding: 4 }}>{age}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {SIZE_GROUPS.map(size => (
-            <tr key={size}>
-              <td style={{ fontWeight: 600, fontSize: 14, color: '#444', padding: 4 }}>{size}</td>
+      <div style={{ textAlign: 'left', fontSize: 15, color: '#444', lineHeight: 1.6, marginLeft: 0, marginRight: 0, marginTop: 0, width: '100%', height: DESCRIPTION_HEIGHT, overflow: 'hidden' }}>
+        Cross-tabulation of owner-surrendered dogs by size and age group, with darker cells indicating higher counts.
+      </div>
+      <div style={{ width: '100%', maxWidth: 580, marginTop: 16, marginBottom: 0, background: '#fff', borderRadius: 16, boxShadow: '0 2px 16px 0 rgba(0,0,0,0.07)', padding: 24, marginLeft: 0, height: VISUAL_HEIGHT }}>
+        <table style={{ borderCollapse: 'collapse', width: '100%', height: '100%' }}>
+          <thead>
+            <tr>
+              <th style={{ width: 92, textAlign: 'left', fontWeight: 600, fontSize: 14, color: '#444', padding: 6 }}></th>
               {AGE_GROUPS.map(age => (
-                <td key={age} style={{ padding: 4, textAlign: 'center' }}>
-                  <div style={{
-                    width: 48,
-                    height: 32,
-                    background: getColor(data[size]?.[age] ?? 0, max),
-                    borderRadius: 6,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 600,
-                    fontSize: 15,
-                    color: (data[size]?.[age] ?? 0) > max * 0.6 ? '#fff' : '#222',
-                    boxShadow: '0 1px 2px 0 rgba(0,0,0,0.04)',
-                  }}>
-                    {data[size]?.[age] ?? 0}
-                  </div>
-                </td>
+                <th key={age} style={{ textAlign: 'center', fontWeight: 600, fontSize: 14, color: '#444', padding: 6 }}>{age}</th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {SIZE_GROUPS.map(size => (
+              <tr key={size}>
+                <td style={{ fontWeight: 600, fontSize: 14, color: '#444', padding: 6 }}>{size}</td>
+                {AGE_GROUPS.map(age => (
+                  <td key={age} style={{ padding: 6, textAlign: 'center' }}>
+                    <div style={{
+                      width: 64,
+                      height: 48,
+                      background: getColor(data[size]?.[age] ?? 0, max),
+                      borderRadius: 6,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 600,
+                      fontSize: 15,
+                      color: (data[size]?.[age] ?? 0) > max * 0.6 ? '#fff' : '#222',
+                      boxShadow: '0 1px 2px 0 rgba(0,0,0,0.04)',
+                    }}>
+                      {data[size]?.[age] ?? 0}
+                    </div>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

@@ -58,11 +58,39 @@ export default function HomePage() {
             {activeTab === 4 && (
               <>
                 <InsightsSpotlightTab />
-                <div style={{ marginTop: 40, display: "flex", flexDirection: "row", alignItems: "flex-end", gap: 32 }}>
-                  <ShelterMap />
-                  <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', width: '600px', maxWidth: '100%' }}>
-                    <ShelterBarChart />
-                    <div style={{ marginTop: 32 }}>
+                <div
+                  style={{
+                    marginTop: 40,
+                    width: '100%',
+                    overflowX: 'auto',
+                    WebkitOverflowScrolling: 'touch',
+                  }}
+                >
+                  <div style={{ minWidth: '940px' }}>
+                    <ShelterMap />
+                  </div>
+                </div>
+                <div
+                  style={{
+                    marginTop: 32,
+                    width: '100%',
+                    overflowX: 'auto',
+                    WebkitOverflowScrolling: 'touch',
+                  }}
+                >
+                  <div
+                    style={{
+                      minWidth: '1240px',
+                      display: 'flex',
+                      flexDirection: 'row',
+                      alignItems: 'flex-end',
+                      gap: 32,
+                    }}
+                  >
+                    <div style={{ width: '600px', flexShrink: 0 }}>
+                      <ShelterBarChart />
+                    </div>
+                    <div style={{ width: '600px', flexShrink: 0 }}>
                       <OwnerSurrenderHeatmap />
                     </div>
                   </div>

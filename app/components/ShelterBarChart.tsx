@@ -6,6 +6,10 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, C
 import React from "react";
 
 export default function ShelterBarChart() {
+  const TOTAL_CARD_HEIGHT = 540;
+  const DESCRIPTION_HEIGHT = 148;
+  const VISUAL_HEIGHT = 324;
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["shelterBarChartData"],
     queryFn: async () => {
@@ -50,18 +54,18 @@ export default function ShelterBarChart() {
   if (!data) return null;
 
   return (
-    <div style={{ width: '600px', maxWidth: '100%', marginLeft: 0 }}>
-      <div style={{ width: '100%', maxWidth: 580, display: 'flex', flexDirection: 'column', alignItems: 'center', marginLeft: 0, marginRight: 0, marginTop: 0, marginBottom: 6 }}>
-        <div style={{ textAlign: 'center', fontWeight: 700, fontSize: 22, letterSpacing: 0.5, marginBottom: 8, marginLeft: 0, marginRight: 0, marginTop: 0 }}>Dog Intake Sources</div>
-        <div style={{ textAlign: 'left', fontSize: 15, color: '#444', lineHeight: 1.6, marginLeft: 0, marginRight: 0, marginTop: 0, width: '100%' }}>
+    <div style={{ width: '600px', maxWidth: '100%', marginLeft: 0, height: TOTAL_CARD_HEIGHT, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ textAlign: 'center', fontWeight: 700, fontSize: 22, letterSpacing: 0.5, marginBottom: 8, marginLeft: 0, marginRight: 0, marginTop: 0 }}>
+        Dog Intake Sources
+      </div>
+      <div style={{ textAlign: 'left', fontSize: 15, color: '#444', lineHeight: 1.6, marginLeft: 0, marginRight: 0, marginTop: 0, width: '100%', height: DESCRIPTION_HEIGHT, overflow: 'hidden' }}>
           <span style={{ fontWeight: 700 }}>Shelters/Rescues</span>: Dogs transferred from other rescue organizations across the state of New Mexico.<br />
           <span style={{ fontWeight: 700 }}>Strays</span>: Lost or abandoned dogs found and brought to Animal Humane by members of the public.<br />
           <span style={{ fontWeight: 700 }}>Owner Surrenders</span>: Pets brought to the shelter by their owners who can no longer care for them.<br />
           <span style={{ fontWeight: 700 }}>Unknown</span>: Intake source currently unknown.
-        </div>
       </div>
-      <div style={{ width: '100%', maxWidth: 580, marginTop: 32, marginBottom: 0, background: "#fff", borderRadius: 16, boxShadow: "0 2px 16px 0 rgba(0,0,0,0.07)", padding: 24, marginLeft: 0 }}>
-        <ResponsiveContainer width="100%" minWidth={320} height={300}>
+      <div style={{ width: '100%', maxWidth: 580, marginTop: 16, marginBottom: 0, background: "#fff", borderRadius: 16, boxShadow: "0 2px 16px 0 rgba(0,0,0,0.07)", padding: 24, marginLeft: 0, height: VISUAL_HEIGHT }}>
+        <ResponsiveContainer width="100%" minWidth={320} height="100%">
           <BarChart data={data} layout="vertical" margin={{ top: 10, right: 30, left: 30, bottom: 10 }} barCategoryGap={24}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
             <XAxis type="number" allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 15, fill: '#666' }} />
