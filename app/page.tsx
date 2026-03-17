@@ -59,8 +59,8 @@ export default function HomePage() {
             marginBottom: '16px',
             padding: '8px 12px',
             borderRadius: '8px',
-            background: '#fff7ed',
-            color: '#9a3412',
+            background: '#eff6ff',
+            color: '#1e3a8a',
             fontSize: '0.9rem',
             fontWeight: 500,
           }}
