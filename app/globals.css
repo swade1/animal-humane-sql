@@ -229,3 +229,9 @@ input[type=number] {
   box-shadow: none !important;
   border: none !important;
 }
+
+@media (max-width: 768px) {
+  .shelter-map-description {
+    margin-left: 0 !important;
+  }
+}
