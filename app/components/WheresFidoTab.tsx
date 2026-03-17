@@ -45,9 +45,9 @@ export default function WheresFidoTab() {
       </div>
       
       <div style={{ paddingLeft: '18px', marginTop: '24px' }}>
-        <p className="text-base mb-4" style={{ fontSize: '1.1rem' }}>Enter a dog's name:</p>
+        <p className="text-base" style={{ fontSize: '1.1rem', marginBottom: '14px' }}>Enter a dog's name:</p>
         
-        <form onSubmit={handleSearch} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
+        <form onSubmit={handleSearch} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px', marginBottom: '32px' }}>
           <div style={{ position: 'relative', width: '400px', maxWidth: '100%' }}>
             <input
               type="text"
