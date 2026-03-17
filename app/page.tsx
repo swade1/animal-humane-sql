@@ -43,18 +43,16 @@ export default function HomePage() {
     <div className="min-h-screen bg-white">
       <div className="p-5">
         <div style={{ marginTop: '60px', marginBottom: '30px', marginLeft: '20px', marginRight: '20px' }}>
-          <h1 className="text-2xl font-bold" style={{ lineHeight: 1.25 }}>
-            <PawPrint
-              className="text-orange-500"
-              size={26}
-              style={{
-                transform: 'rotate(-90deg)',
-                display: 'inline-block',
-                marginRight: '8px',
-                verticalAlign: 'text-top',
-              }}
-            />
-            Animal Humane New Mexico: Pet Status and Updates
+          <h1 className="text-2xl max-[400px]:text-[1.35rem] font-bold" style={{ lineHeight: 1.25 }}>
+            Animal Humane New Mexico
+            <span style={{ display: 'inline-flex', alignItems: 'center', marginLeft: '6px', marginRight: '8px', verticalAlign: 'text-top' }}>
+              <PawPrint
+                className="text-orange-500 max-[400px]:w-5 max-[400px]:h-5"
+                size={26}
+                style={{ transform: 'rotate(-45deg)', marginTop: '5px' }}
+              />
+            </span>
+            Pet Status & Updates
           </h1>
         </div>
         <div
