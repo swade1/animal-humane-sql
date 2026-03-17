@@ -105,7 +105,7 @@ export default function HomePage() {
                     color: '#475569',
                   }}
                 >
-                  Send dashboard corrections or updates to{' '}
+                  Send dashboard corrections, updates, or suggestions to{' '}
                   <a href="mailto:susan.wade09@gmail.com" style={{ color: '#1d4ed8', textDecoration: 'underline' }}>
                     susan.wade09@gmail.com
                   </a>
