@@ -42,12 +42,18 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
       <div className="p-5">
-        <div style={{ display: 'flex', alignItems: 'center', marginTop: '60px', marginBottom: '30px', marginLeft: '20px' }}>
-          <PawPrint className="text-orange-500" size={28} style={{ marginLeft: '10px', marginTop: '-6px', transform: 'rotate(-90deg)', position: 'relative' }} />
-          <h1
-            className="text-2xl font-bold"
-            style={{ marginLeft: '5px' }}
-          >
+        <div style={{ marginTop: '60px', marginBottom: '30px', marginLeft: '20px', marginRight: '20px' }}>
+          <h1 className="text-2xl font-bold" style={{ lineHeight: 1.25 }}>
+            <PawPrint
+              className="text-orange-500"
+              size={26}
+              style={{
+                transform: 'rotate(-90deg)',
+                display: 'inline-block',
+                marginRight: '8px',
+                verticalAlign: 'text-top',
+              }}
+            />
             Animal Humane New Mexico: Pet Status and Updates
           </h1>
         </div>
