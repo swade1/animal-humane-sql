@@ -194,31 +194,24 @@ input[type=number] {
   scrollbar-width: none;
 }
 
-@media (hover: none) and (pointer: coarse) {
-  .daily-adoptions-chart .recharts-wrapper,
-  .daily-adoptions-chart .recharts-surface,
-  .daily-adoptions-chart .recharts-layer,
-  .daily-adoptions-chart .recharts-dot,
-  .daily-adoptions-chart .recharts-active-dot {
-    -webkit-tap-highlight-color: transparent !important;
-  }
+.daily-adoptions-chart,
+.daily-adoptions-chart *,
+.daily-adoptions-chart svg,
+.daily-adoptions-chart svg * {
+  -webkit-tap-highlight-color: transparent !important;
+}
 
-  .daily-adoptions-chart .recharts-wrapper:focus,
-  .daily-adoptions-chart .recharts-surface:focus,
-  .daily-adoptions-chart .recharts-layer:focus,
-  .daily-adoptions-chart .recharts-dot:focus,
-  .daily-adoptions-chart .recharts-active-dot:focus {
-    outline: none !important;
-    box-shadow: none !important;
-    border: none !important;
-  }
-
-  .daily-adoptions-chart *:focus,
-  .daily-adoptions-chart *:focus-visible,
-  .daily-adoptions-chart *[tabindex]:focus,
-  .daily-adoptions-chart *[tabindex]:focus-visible {
-    outline: none !important;
-    box-shadow: none !important;
-    border: none !important;
-  }
+.daily-adoptions-chart,
+.daily-adoptions-chart:focus,
+.daily-adoptions-chart:focus-visible,
+.daily-adoptions-chart:focus-within,
+.daily-adoptions-chart *:focus,
+.daily-adoptions-chart *:focus-visible,
+.daily-adoptions-chart *[tabindex]:focus,
+.daily-adoptions-chart *[tabindex]:focus-visible,
+.daily-adoptions-chart svg:focus,
+.daily-adoptions-chart svg *:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
 }
