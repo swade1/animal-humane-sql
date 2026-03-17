@@ -8,11 +8,11 @@ type Tab = {
 
 export default function Tabs({ tabs }: { tabs: Tab[] }) {
   return (
-    <div className="mb-3 py-2 md:py-0">
+    <div className="mb-3 py-2 md:py-0 max-md:flex max-md:flex-wrap max-md:gap-y-2">
       {tabs.map((tab, i) => (
         <button
           key={tab.label}
-          className="mr-2 mb-2 md:mb-0 rounded border-none cursor-pointer"
+          className="mr-2 mb-0 rounded border-none cursor-pointer"
           style={{
             backgroundColor: tab.active ? "#007bff" : "#f0f0f0",
             color: tab.active ? "white" : "black",
