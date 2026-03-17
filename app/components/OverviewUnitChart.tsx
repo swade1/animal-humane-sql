@@ -87,10 +87,6 @@ export default function OverviewUnitChart() {
         <Square color="#22c55e" name="Seniors" />
         <span>Seniors</span>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <Square color="#9ca3af" name="Unknown" />
-        <span>Unknown</span>
-      </div>
     </div>
   );
 
