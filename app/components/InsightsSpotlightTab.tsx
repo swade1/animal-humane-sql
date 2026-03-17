@@ -257,7 +257,7 @@ export default function InsightsSpotlightTab() {
   return (
     <div>
       <h2 className="text-2xl font-bold mb-4 text-center">Daily Adoption Totals</h2>
-      <div style={{ width: "100%", height: 350 }}>
+      <div className="daily-adoptions-chart" style={{ width: "100%", height: 350 }}>
         {isLoading ? (
           <div>Loading...</div>
         ) : (

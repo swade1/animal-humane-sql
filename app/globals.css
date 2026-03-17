@@ -193,3 +193,22 @@ input[type=number] {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+@media (hover: none) and (pointer: coarse) {
+  .daily-adoptions-chart .recharts-wrapper,
+  .daily-adoptions-chart .recharts-surface,
+  .daily-adoptions-chart .recharts-layer,
+  .daily-adoptions-chart .recharts-dot,
+  .daily-adoptions-chart .recharts-active-dot {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .daily-adoptions-chart .recharts-wrapper:focus,
+  .daily-adoptions-chart .recharts-surface:focus,
+  .daily-adoptions-chart .recharts-layer:focus,
+  .daily-adoptions-chart .recharts-dot:focus,
+  .daily-adoptions-chart .recharts-active-dot:focus {
+    outline: none;
+    box-shadow: none;
+  }
+}
