@@ -35,7 +35,7 @@
     return null;
   };
 // Removed stray JSX and ensured grouped bar chart is only rendered inside the main return statement
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "../lib/supabaseClient";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart, Bar, Legend, LegendProps } from "recharts";
@@ -57,6 +57,18 @@ type DailyAdoptions = {
 };
 
 export default function InsightsSpotlightTab() {
+    const [isMobileLayout, setIsMobileLayout] = useState(false);
+
+    useEffect(() => {
+      const updateLayoutMode = () => {
+        setIsMobileLayout(window.innerWidth <= 768);
+      };
+
+      updateLayoutMode();
+      window.addEventListener('resize', updateLayoutMode);
+      return () => window.removeEventListener('resize', updateLayoutMode);
+    }, []);
+
     // Fetch weekly adoptions by age group (hybrid: dogs table + dog_history)
     const { data: weeklyData, isLoading: isLoadingWeekly } = useQuery<WeeklyAdoptions[]>({
       queryKey: ["weeklyAdoptionsByAgeGroupHybrid"],
@@ -259,7 +271,11 @@ export default function InsightsSpotlightTab() {
                   let formatted = payload.value;
                   if (/^\d{4}-\d{2}-\d{2}$/.test(payload.value)) {
                     const [y, m, d] = payload.value.split('-');
-                    formatted = `${m}-${d}-${y}`;
+                    if (isMobileLayout) {
+                      formatted = `${Number(m)}/${Number(d)}`;
+                    } else {
+                      formatted = `${m}-${d}-${y}`;
+                    }
                   }
                   const xNum = typeof x === 'number' ? x : Number(x);
                   const yNum = typeof y === 'number' ? y : Number(y);
@@ -267,7 +283,7 @@ export default function InsightsSpotlightTab() {
                     <text
                       x={xNum + 8}
                       y={yNum + 8}
-                      style={{ fontSize: 12, fill: "#222" }}
+                      style={{ fontSize: isMobileLayout ? 11 : 12, fill: "#222" }}
                       transform={`rotate(-35,${xNum + 8},${yNum + 8})`}
                       textAnchor="end"
                     >
@@ -276,7 +292,7 @@ export default function InsightsSpotlightTab() {
                   );
                 }}
                 height={60}
-                interval={0}
+                interval={isMobileLayout ? 2 : 0}
               />
               <YAxis
                 allowDecimals={false}
