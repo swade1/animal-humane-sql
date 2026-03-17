@@ -503,3 +503,100 @@ Fixed multiple mobile responsiveness issues across the dashboard to ensure all f
 
 ## End of Mobile Improvements Session
 All mobile responsiveness issues resolved. Dashboard now provides consistent, usable experience across desktop, tablet, and mobile devices. Admin functionality fully accessible from cell phones.
+
+---
+
+# Session Continuation Summary: March 16–17, 2026
+
+## Overview
+Follow-up work focused on UI polish (chart sizing, alignment, and messaging), then a user-requested hard reset to the latest commit, followed by partial recovery of deleted context docs and build-error remediation.
+
+---
+
+## Work Attempted (UI/Styling)
+
+### 1. Insights & Spotlight visualization sizing/alignment
+- Iterated on matching sizes/heights for:
+  - `Dog Intake Sources` (`ShelterBarChart`)
+  - `Owner Surrendered Dogs by Age and Size` (`OwnerSurrenderHeatmap`)
+- Applied equal-width card approach and tuned fixed heights.
+- Increased heatmap cell sizes to reduce bottom whitespace.
+- Added mobile-specific stacking logic in `app/page.tsx` for the dual-visualization row.
+
+### 2. Overview and messaging updates
+- Removed `Unknown` from the Overview legend in `OverviewUnitChart`.
+- Added update-delay disclaimer to main page and adjusted styling from yellow alert-like tone to light blue info tone.
+- Added official/non-official project disclaimer text.
+- Moved corrections contact line to below the Overview unit graph, outside the card.
+
+### 3. Chart visual consistency pass
+- Standardized chart title style to a shared spec across major visualization components.
+- Standardized secondary/subtitle text style (`fontSize`, color tone, line-height) across chart/map description blocks.
+
+---
+
+## Major Reset Event
+
+At user request, the repo was reverted to latest commit via:
+
+```bash
+git reset --hard HEAD
+git clean -fd
+```
+
+### Important impact
+- Local untracked files were deleted from working directory.
+- Tracked files were reset to committed versions.
+- Ignored files remained (as expected).
+
+---
+
+## Recovery Actions Performed
+
+### Restored deleted docs
+- Recreated:
+  - `docs/premium-request-rubric.md`
+  - `docs/premium_prompt.md`
+
+### Build/import fix after reset
+- Resolved module error:
+  - `Module not found: Can't resolve './components/ShelterTransferChart'`
+- Updated `app/page.tsx` to use existing `ShelterStackedBarChart` import/component.
+
+---
+
+## Notes for Next AI Session
+
+1. **Inspect live file state first** before applying assumptions from prior edits.
+   - User/editor made additional post-reset edits across multiple chart components and `app/page.tsx`.
+2. `claude.md` remains the canonical continuity file and should be appended (not replaced).
+3. If user asks to “revert,” confirm whether they mean:
+   - code-only reset (`git reset --hard`) **or**
+   - full cleanup including untracked deletion (`git clean -fd`).
+4. For any recovery request, prefer restoring from:
+   - git history (tracked files), then
+   - known session content (for previously untracked docs/scripts).
+
+---
+
+## Current Known State (Quick Verification)
+
+Use this 2-minute checklist at session start:
+
+- [ ] Confirm app builds/runs without import errors from `app/page.tsx`.
+- [ ] Verify Insights & Spotlight tab renders all sections:
+  - `InsightsSpotlightTab`
+  - `ShelterMap`
+  - dual row (`ShelterBarChart` + `OwnerSurrenderHeatmap`)
+  - `ShelterStackedBarChart`
+  - `LengthOfStayHistogram`
+  - `AverageLengthOfStayByAgeGroupChart`
+- [ ] Confirm update-delay notice appears near top of main page and uses light blue informational styling.
+- [ ] Confirm Overview legend excludes `Unknown`.
+- [ ] Confirm corrections contact line appears below the Overview unit graph, outside the card:
+  - `Send dashboard corrections or updates to susan.wade09@gmail.com`
+- [ ] Confirm project disclaimer text remains visible near top of main page.
+- [ ] Confirm recovered docs exist:
+  - `docs/premium-request-rubric.md`
+  - `docs/premium_prompt.md`
+
