@@ -47,9 +47,9 @@ export default function HomePage() {
             Animal Humane New Mexico
             <span style={{ display: 'inline-flex', alignItems: 'center', marginLeft: '6px', marginRight: '8px', verticalAlign: 'text-top' }}>
               <PawPrint
-                className="text-orange-500 max-[400px]:w-5 max-[400px]:h-5"
+                className="text-orange-500 mt-[5px] max-[400px]:mt-[2px] max-[400px]:w-5 max-[400px]:h-5"
                 size={26}
-                style={{ transform: 'rotate(-45deg)', marginTop: '5px' }}
+                style={{ transform: 'rotate(-45deg)' }}
               />
             </span>
             Pet Status & Updates
