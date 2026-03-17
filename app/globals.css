@@ -197,7 +197,11 @@ input[type=number] {
 .daily-adoptions-chart,
 .daily-adoptions-chart *,
 .daily-adoptions-chart svg,
-.daily-adoptions-chart svg * {
+.daily-adoptions-chart svg *,
+.insights-no-outline-chart,
+.insights-no-outline-chart *,
+.insights-no-outline-chart svg,
+.insights-no-outline-chart svg * {
   -webkit-tap-highlight-color: transparent !important;
 }
 
@@ -210,7 +214,17 @@ input[type=number] {
 .daily-adoptions-chart *[tabindex]:focus,
 .daily-adoptions-chart *[tabindex]:focus-visible,
 .daily-adoptions-chart svg:focus,
-.daily-adoptions-chart svg *:focus {
+.daily-adoptions-chart svg *:focus,
+.insights-no-outline-chart,
+.insights-no-outline-chart:focus,
+.insights-no-outline-chart:focus-visible,
+.insights-no-outline-chart:focus-within,
+.insights-no-outline-chart *:focus,
+.insights-no-outline-chart *:focus-visible,
+.insights-no-outline-chart *[tabindex]:focus,
+.insights-no-outline-chart *[tabindex]:focus-visible,
+.insights-no-outline-chart svg:focus,
+.insights-no-outline-chart svg *:focus {
   outline: none !important;
   box-shadow: none !important;
   border: none !important;

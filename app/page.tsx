@@ -148,7 +148,7 @@ export default function HomePage() {
                       gap: isMobileLayout ? 24 : 32,
                     }}
                   >
-                    <div style={{ width: isMobileLayout ? '100%' : '600px', maxWidth: '600px', flexShrink: 0 }}>
+                    <div className="insights-no-outline-chart" style={{ width: isMobileLayout ? '100%' : '600px', maxWidth: '600px', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}>
                       <ShelterBarChart />
                     </div>
                     <div style={{ width: isMobileLayout ? '100%' : '600px', maxWidth: '600px', flexShrink: 0 }}>
@@ -156,13 +156,13 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
-                <div style={{ clear: 'both', width: '100%' }}>
+                <div className="insights-no-outline-chart" style={{ clear: 'both', width: '100%', WebkitTapHighlightColor: 'transparent' }}>
                   <ShelterTransferChart />
                 </div>
-                <div style={{ marginTop: 32 }}>
+                <div className="insights-no-outline-chart" style={{ marginTop: 32, WebkitTapHighlightColor: 'transparent' }}>
                   <LengthOfStayHistogram />
                 </div>
-                <div style={{ marginTop: 32 }}>
+                <div className="insights-no-outline-chart" style={{ marginTop: 32, WebkitTapHighlightColor: 'transparent' }}>
                   {/* Average length of stay bar chart by age group */}
                   <AverageLengthOfStayByAgeGroupChart />
                 </div>

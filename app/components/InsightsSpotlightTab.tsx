@@ -257,7 +257,7 @@ export default function InsightsSpotlightTab() {
   return (
     <div>
       <h2 className="text-2xl font-bold mb-4 text-center">Daily Adoption Totals</h2>
-      <div className="daily-adoptions-chart" style={{ width: "100%", height: 350, WebkitTapHighlightColor: 'transparent' }}>
+      <div className="daily-adoptions-chart insights-no-outline-chart" style={{ width: "100%", height: 350, WebkitTapHighlightColor: 'transparent' }}>
         {isLoading ? (
           <div>Loading...</div>
         ) : (
@@ -332,7 +332,7 @@ export default function InsightsSpotlightTab() {
 
       {/* Weekly grouped bar chart */}
       <h2 className="text-2xl font-bold mb-4 text-center" style={{ marginTop: 48 }}>Weekly Adoption Totals per Age Group</h2>
-      <div style={{ width: "100%", height: 350 }}>
+      <div className="insights-no-outline-chart" style={{ width: "100%", height: 350, WebkitTapHighlightColor: 'transparent' }}>
         {isLoadingWeekly ? (
           <div>Loading...</div>
         ) : (
