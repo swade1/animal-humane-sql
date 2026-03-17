@@ -1,6 +1,6 @@
 "use client";
 import { PawPrint } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Tabs from "./components/Tabs";
 import OverviewUnitChart from "./components/OverviewUnitChart";
 import RecentPupdatesTab from "./components/RecentPupdatesTab";
@@ -27,6 +27,17 @@ const tabLabels = [
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState(0);
+  const [isMobileLayout, setIsMobileLayout] = useState(false);
+
+  useEffect(() => {
+    const updateLayoutMode = () => {
+      setIsMobileLayout(window.innerWidth <= 768);
+    };
+
+    updateLayoutMode();
+    window.addEventListener('resize', updateLayoutMode);
+    return () => window.removeEventListener('resize', updateLayoutMode);
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">
@@ -62,11 +73,11 @@ export default function HomePage() {
                   style={{
                     marginTop: 40,
                     width: '100%',
-                    overflowX: 'auto',
-                    WebkitOverflowScrolling: 'touch',
+                    overflowX: isMobileLayout ? 'visible' : 'auto',
+                    WebkitOverflowScrolling: isMobileLayout ? undefined : 'touch',
                   }}
                 >
-                  <div style={{ minWidth: '940px' }}>
+                  <div style={{ minWidth: isMobileLayout ? undefined : '940px' }}>
                     <ShelterMap />
                   </div>
                 </div>
@@ -74,23 +85,23 @@ export default function HomePage() {
                   style={{
                     marginTop: 32,
                     width: '100%',
-                    overflowX: 'auto',
-                    WebkitOverflowScrolling: 'touch',
+                    overflowX: isMobileLayout ? 'visible' : 'auto',
+                    WebkitOverflowScrolling: isMobileLayout ? undefined : 'touch',
                   }}
                 >
                   <div
                     style={{
-                      minWidth: '1240px',
+                      minWidth: isMobileLayout ? undefined : '1240px',
                       display: 'flex',
-                      flexDirection: 'row',
-                      alignItems: 'flex-end',
-                      gap: 32,
+                      flexDirection: isMobileLayout ? 'column' : 'row',
+                      alignItems: isMobileLayout ? 'center' : 'flex-end',
+                      gap: isMobileLayout ? 24 : 32,
                     }}
                   >
-                    <div style={{ width: '600px', flexShrink: 0 }}>
+                    <div style={{ width: isMobileLayout ? '100%' : '600px', maxWidth: '600px', flexShrink: 0 }}>
                       <ShelterBarChart />
                     </div>
-                    <div style={{ width: '600px', flexShrink: 0 }}>
+                    <div style={{ width: isMobileLayout ? '100%' : '600px', maxWidth: '600px', flexShrink: 0 }}>
                       <OwnerSurrenderHeatmap />
                     </div>
                   </div>
