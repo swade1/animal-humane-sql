@@ -74,6 +74,7 @@ export default function HomePage() {
         <div className="p-5">
           <div style={{ marginLeft: '20px', marginTop: 0, marginBottom: 0 }}>
             <Tabs
+              isMobileLayout={isMobileLayout}
               tabs={tabLabels.map((label, idx) => ({
                 label,
                 active: idx === activeTab,

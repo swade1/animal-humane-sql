@@ -6,13 +6,27 @@ type Tab = {
   onClick: () => void;
 };
 
-export default function Tabs({ tabs }: { tabs: Tab[] }) {
+type TabsProps = {
+  tabs: Tab[];
+  isMobileLayout?: boolean;
+};
+
+export default function Tabs({ tabs, isMobileLayout = false }: TabsProps) {
   return (
-    <div className="mb-3 py-2 md:py-0 max-md:flex max-md:flex-wrap max-md:gap-y-2">
+    <div
+      className="mb-3"
+      style={{
+        display: isMobileLayout ? "flex" : "block",
+        flexWrap: isMobileLayout ? "wrap" : undefined,
+        rowGap: isMobileLayout ? "8px" : undefined,
+        paddingTop: isMobileLayout ? "8px" : undefined,
+        paddingBottom: isMobileLayout ? "8px" : undefined,
+      }}
+    >
       {tabs.map((tab, i) => (
         <button
           key={tab.label}
-          className="mr-2 mb-0 rounded border-none cursor-pointer"
+          className="mr-2 rounded border-none cursor-pointer"
           style={{
             backgroundColor: tab.active ? "#007bff" : "#f0f0f0",
             color: tab.active ? "white" : "black",
