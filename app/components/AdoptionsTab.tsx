@@ -74,7 +74,7 @@ export default function AdoptionsTab() {
       <div className="flex items-center justify-between mt-[10px]">
         <h2 className="m-0 text-left text-lg font-semibold" style={{ marginLeft: '8px' }}>Adoptions</h2>
       </div>
-      <div style={{ paddingLeft: '18px', marginBottom: '0.8em', marginTop: '0.5em' }}>
+      <div style={{ paddingLeft: '18px', paddingRight: '18px', marginBottom: '0.8em', marginTop: '0.5em' }}>
         <p className="text-sm mb-0" style={{ margin: 0, color: '#555' }}><em>Dogs are assumed to have been adopted when their location online becomes empty. Once adoptions have been verified, a green checkmark is added for each dog.</em></p>
       </div>
       <div style={{ paddingLeft: '18px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollPaddingLeft: '0' }}>
