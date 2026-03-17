@@ -67,6 +67,22 @@ export default function HomePage() {
         >
           Updates are not live and may be delayed by up to 2 hours.
         </div>
+        <div
+          style={{
+            marginLeft: '20px',
+            marginRight: '20px',
+            marginTop: '-6px',
+            marginBottom: '16px',
+            padding: '10px 12px',
+            borderRadius: '8px',
+            background: '#f8fafc',
+            color: '#475569',
+            fontSize: '0.9rem',
+            lineHeight: 1.5,
+          }}
+        >
+          This dashboard is an independent volunteer resource intended to help volunteers track the pets they care for. It is not an official Animal Humane New Mexico communication or record and should not be used as a substitute for official shelter information.
+        </div>
         <div className="p-5">
           <div style={{ marginLeft: '20px', marginTop: 0, marginBottom: 0 }}>
             <Tabs
@@ -78,7 +94,24 @@ export default function HomePage() {
             />
           </div>
           <div style={{ marginTop: '10px', marginLeft: '20px', marginRight: '20px', marginBottom: 0 }}>
-            {activeTab === 0 && <OverviewUnitChart />}
+            {activeTab === 0 && (
+              <>
+                <OverviewUnitChart />
+                <div
+                  style={{
+                    marginTop: '10px',
+                    marginLeft: '4px',
+                    fontSize: '0.9rem',
+                    color: '#475569',
+                  }}
+                >
+                  Send dashboard corrections or updates to{' '}
+                  <a href="mailto:susan.wade09@gmail.com" style={{ color: '#1d4ed8', textDecoration: 'underline' }}>
+                    susan.wade09@gmail.com
+                  </a>
+                </div>
+              </>
+            )}
             {activeTab === 1 && <RecentPupdatesTab />}
             {activeTab === 2 && <CurrentPopulationTab />}
             {activeTab === 3 && <AdoptionsTab />}
