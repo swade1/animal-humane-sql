@@ -51,6 +51,22 @@ export default function HomePage() {
             Animal Humane New Mexico: Pet Status and Updates
           </h1>
         </div>
+        <div
+          style={{
+            marginLeft: '20px',
+            marginRight: '20px',
+            marginTop: '-12px',
+            marginBottom: '16px',
+            padding: '8px 12px',
+            borderRadius: '8px',
+            background: '#fff7ed',
+            color: '#9a3412',
+            fontSize: '0.9rem',
+            fontWeight: 500,
+          }}
+        >
+          Updates are not live and may be delayed by up to 2 hours.
+        </div>
         <div className="p-5">
           <div style={{ marginLeft: '20px', marginTop: 0, marginBottom: 0 }}>
             <Tabs
