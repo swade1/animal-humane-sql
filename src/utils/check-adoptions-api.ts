@@ -105,7 +105,16 @@ async function main() {
 									const animalObj = JSON.parse(raw);
 									currentLocation = trimString(animalObj.location);
 								} catch (parseErr) {
-									console.warn(`[adoption-check-api] Could not parse animal JSON for returned dog ID ${dog.id}`);
+									// JSON parsing failed (likely due to truncation in HTML attribute)
+									// Try to extract location field using regex as fallback
+									console.warn(`[adoption-check-api] JSON parse failed for returned dog ID ${dog.id}, attempting regex extraction`);
+									const locationMatch = raw.match(/"location"\s*:\s*"([^"]*)"/);  
+									if (locationMatch && locationMatch[1]) {
+										currentLocation = locationMatch[1].trim();
+										console.log(`[adoption-check-api] Extracted location via regex for returned dog ID ${dog.id}: "${currentLocation}"`);
+									} else {
+										console.warn(`[adoption-check-api] Could not extract location for returned dog ID ${dog.id}`);
+									}
 								}
 							}
 						}
@@ -268,8 +277,17 @@ async function main() {
 							try {
 								const animalObj = JSON.parse(raw);
 								location = trimString(animalObj.location);
-							} catch {
-								console.warn(`[adoption-check-api] Could not parse animal JSON for Available Soon dog ID ${dog.id}:`, raw);
+							} catch (parseErr) {
+								// JSON parsing failed (likely due to truncation in HTML attribute)
+								// Try to extract location field using regex as fallback
+								console.warn(`[adoption-check-api] JSON parse failed for Available Soon dog ID ${dog.id}, attempting regex extraction`);
+								const locationMatch = raw.match(/"location"\s*:\s*"([^"]*)"/);  
+								if (locationMatch && locationMatch[1]) {
+									location = locationMatch[1].trim();
+									console.log(`[adoption-check-api] Extracted location via regex for Available Soon dog ID ${dog.id}: "${location}"`);
+								} else {
+									console.warn(`[adoption-check-api] Could not extract location for Available Soon dog ID ${dog.id}`);
+								}
 							}
 						}
 					} else {
@@ -387,8 +405,17 @@ async function main() {
 					try {
 						const animalObj = JSON.parse(raw);
 						location = trimString(animalObj.location);
-					} catch {
-						console.warn(`[adoption-check-api] Could not parse animal JSON for dog ID ${dog.id}:`, raw);
+					} catch (parseErr) {
+						// JSON parsing failed (likely due to truncation in HTML attribute)
+						// Try to extract location field using regex as fallback
+						console.warn(`[adoption-check-api] JSON parse failed for dog ID ${dog.id}, attempting regex extraction`);
+						const locationMatch = raw.match(/"location"\s*:\s*"([^"]*)"/);
+						if (locationMatch && locationMatch[1]) {
+							location = locationMatch[1].trim();
+							console.log(`[adoption-check-api] Extracted location via regex for dog ID ${dog.id}: "${location}"`);
+						} else {
+							console.warn(`[adoption-check-api] Could not extract location for dog ID ${dog.id}`);
+						}
 					}
 				}
 			} else {
