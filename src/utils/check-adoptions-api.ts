@@ -342,7 +342,9 @@ async function main() {
 				}
 			}
 		}
-	// 2. Get all dogs with status 'available' from Supabase
+	// 2. Check location for ALL dogs with status 'available' 
+	// Dogs with empty location are adopted. Dogs with any location value are still available.
+	// This check applies to ALL available dogs regardless of whether they appear in the API endpoint.
 	const { data: availableDogs, error } = await supabase
 		.from('dogs')
 		.select('id, name, location, url, status')
@@ -356,16 +358,10 @@ async function main() {
 		return;
 	}
 
-	// 3. For each dog in DB not in API, check their embed page
-	const suspectedAdoptions = availableDogs.filter(dog => !apiDogIds.has(dog.id));
-	if (suspectedAdoptions.length === 0) {
-		console.log('[adoption-check-api] No suspected adoptions. All available dogs are present in the API data.');
-		return;
-	}
-
-	console.log(`[adoption-check-api] Checking embed pages for ${suspectedAdoptions.length} suspected adoptions...`);
-	// Use Puppeteer to extract the animal attribute from the rendered page
-	for (const dog of suspectedAdoptions) {
+	console.log(`[adoption-check-api] Checking location for ${availableDogs.length} available dogs (whether listed on website or not)...`);
+	
+	// Check ALL available dogs for location changes and adoptions
+	for (const dog of availableDogs) {
 		const embedUrl = dog.url;
 		let location = '';
 		try {
@@ -437,7 +433,7 @@ async function main() {
 								}
 							}
 							if (!location || location.trim() === '') {
-								// Only log status_change and update DB if adopted
+								// Empty location means adopted
 								const timeZone = 'America/Denver';
 								const now = new Date();
 								const mstNow = toZonedTime(now, timeZone);
@@ -448,7 +444,7 @@ async function main() {
 									eventType: 'status_change',
 									oldValue: prevDog.status,
 									newValue: 'adopted',
-									notes: `Dog no longer present in available-animals JSON and location is empty; likely adopted at ${adoptionDate}.`,
+									notes: `Dog location is empty on embed page; marking as adopted at ${adoptionDate}.`,
 									adopted_date: adoptionDate
 								});
 								const { error: updateErr } = await supabase
@@ -461,14 +457,15 @@ async function main() {
 									console.log(`[adoption-check-api] Updated dogs table for adopted dog ID ${dog.id}`);
 								}
 							} else {
-								console.log(`STILL PRESENT: ID: ${dog.id}, Name: ${dog.name}, Location: '${location}', URL: ${embedUrl}`);
+								// Non-empty location means still available (whether on website or temporarily unlisted)
+								console.log(`[adoption-check-api] Dog ID ${dog.id} (${dog.name}) still available with location: '${location}'`);
 							}
 						}
 		} catch (err) {
 			console.error(`[adoption-check-api] Error fetching/parsing embed page for dog ID ${dog.id}:`, err);
 		}
 	}
-	console.log(`[adoption-check-api] Finished checking suspected adoptions.`);
+	console.log(`[adoption-check-api] Finished checking all available dogs for location changes and adoptions.`);
 }
 
 
