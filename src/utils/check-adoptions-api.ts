@@ -11,37 +11,46 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_P
 if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('Supabase env vars not set');
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const MAIN_URL = 'https://animalhumanenm.org/adopt/adoptable-dogs';
-
 const trimString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
 
-// Helper to extract all available-animals JSON URLs from the main page
-async function getAvailableAnimalsJsonUrls() {
-	const res = await fetch(MAIN_URL);
-	const html = await res.text();
-	const urlRegex = /https:\/\/animalhumanenm\.org\/available-animals\?location=[^"']+/g;
-	const matches = html.match(urlRegex) || [];
-	return Array.from(new Set(matches));
-}
-
-// Get all available animal IDs from all endpoints
+// Get all available animal IDs from the direct ShelterLuv API endpoint
+// Updated March 20, 2026: Fixed critical bug where scraping HTML for URLs returned empty array,
+// causing all dogs to be marked as adopted. Now uses direct API endpoint.
 async function getCurrentAvailableAnimalIds() {
-	const urls = await getAvailableAnimalsJsonUrls();
-	const ids = new Set();
-	for (const url of urls) {
-		try {
-			const res = await fetch(url);
-			const data = await res.json() as { animals?: Array<{ nid: number | string }> };
-			if (data.animals && Array.isArray(data.animals)) {
-				for (const a of data.animals) {
-					ids.add(typeof a.nid === 'number' ? a.nid : parseInt(a.nid, 10));
-				}
-			}
-		} catch (err) {
-			console.error(`[adoption-check-api] Error fetching/parsing ${url}:`, err);
+	// Use the direct ShelterLuv API endpoint (same as scraper.ts)
+	// This returns ALL available animals from the shelter
+	const apiUrl = 'https://new.shelterluv.com/api/v3/available-animals/1255';
+	const ids = new Set<number>();
+	
+	try {
+		console.log(`[adoption-check-api] Fetching available animals from: ${apiUrl}`);
+		const res = await fetch(apiUrl);
+		if (!res.ok) {
+			console.error(`[adoption-check-api] Failed to fetch API: HTTP ${res.status}`);
+			return ids;
 		}
+		const data = await res.json() as { animals?: Array<{ nid: number | string; species?: string }> };
+		if (!data.animals || !Array.isArray(data.animals)) {
+			console.error(`[adoption-check-api] No animals array in API response`);
+			return ids;
+		}
+		
+		// Filter to only dogs (same as scraper.ts)
+		const dogs = data.animals.filter((animal) => {
+			const species = typeof animal.species === 'string' ? animal.species : '';
+			return species.toLowerCase() === 'dog';
+		});
+		
+		for (const dog of dogs) {
+			ids.add(typeof dog.nid === 'number' ? dog.nid : parseInt(dog.nid as string, 10));
+		}
+		
+		console.log(`[adoption-check-api] Found ${ids.size} available dog IDs from API`);
+	} catch (err) {
+		console.error(`[adoption-check-api] Error fetching/parsing API data:`, err);
 	}
+	
 	return ids;
 }
 
