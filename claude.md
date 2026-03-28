@@ -600,3 +600,144 @@ Use this 2-minute checklist at session start:
   - `docs/premium-request-rubric.md`
   - `docs/premium_prompt.md`
 
+---
+
+# Session Continuation Summary: March 17, 2026 (Mobile + Insights UI Polish)
+
+## Overview
+This session focused on targeted mobile/desktop presentation fixes across the main page and Insights & Spotlight tab, plus chart interaction polish on touch devices.
+
+---
+
+## Completed Changes
+
+### 1. Main headline placement, spacing, and icon alignment
+**File:** `app/page.tsx`
+
+- Reworked headline content to:
+  - `Animal Humane New Mexico` + paw icon + `Pet Status & Updates`
+- Replaced the colon with the paw icon and used explicit spacing around the icon.
+- Tuned icon alignment and final orientation to `-45deg`.
+- Kept laptop styling stable while applying mobile-specific vertical icon adjustment.
+- Set fixed left/right headline margins to `20px` to align with top message cards.
+
+**Result:**
+✅ Headline now reflects requested copy and icon placement in both laptop/mobile views.
+
+---
+
+### 2. Overview-only placement for independent-resource disclaimer
+**File:** `app/page.tsx`
+
+- Moved the long independent-resource disclaimer from the shared top area.
+- Inserted it below `OverviewUnitChart` only (Overview tab).
+- Added spacing (blank line/separator) between that disclaimer and the corrections contact line.
+
+**Result:**
+✅ Disclaimer now appears only at the bottom of Overview and no longer appears on other tabs.
+
+---
+
+### 3. Tab spacing behavior on mobile
+**Files:**
+- `app/components/Tabs.tsx`
+- `app/page.tsx`
+
+- Identified that prior Tailwind breakpoint-only changes were not reliably applying in runtime.
+- Added `isMobileLayout` prop to `Tabs` and passed it from `page.tsx`.
+- Applied explicit inline mobile layout styles for wrapped tab rows:
+  - `display: flex`
+  - `flex-wrap: wrap`
+  - `rowGap: 8px`
+  - vertical padding on mobile
+
+**Result:**
+✅ Mobile tab rows now have visible whitespace between wrapped rows without disturbing desktop layout.
+
+---
+
+### 4. Adoptions tab explanatory text right-side spacing
+**File:** `app/components/AdoptionsTab.tsx`
+
+- Added `paddingRight: '18px'` to the “Dogs are assumed...” explanatory text container.
+
+**Result:**
+✅ Wrapped lines no longer run into card border on right side (desktop/mobile).
+
+---
+
+### 5. Where’s Fido label/input breathing room
+**File:** `app/components/WheresFidoTab.tsx`
+
+- Replaced utility-only spacing with explicit inline spacing for reliability:
+  - label `marginBottom`
+  - form `marginTop`
+
+**Result:**
+✅ Visible spacing between “Enter a dog’s name:” and search input.
+
+---
+
+### 6. Daily Adoptions mobile x-axis readability
+**File:** `app/components/InsightsSpotlightTab.tsx`
+
+- Added `isMobileLayout` detection in component.
+- Mobile-only axis tuning for Daily Adoptions line chart:
+  - Fewer x-axis ticks (`interval` increased on mobile)
+  - Short date format (`M/D`) on x-axis labels
+  - Full tooltip detail retained (full date + exact count + names)
+
+**Result:**
+✅ Mobile x-axis labels are significantly more readable.
+
+---
+
+### 7. Tap/focus black border suppression on Insights charts
+**Files:**
+- `app/components/InsightsSpotlightTab.tsx`
+- `app/page.tsx`
+- `app/globals.css`
+
+- Added scoped class wrappers for chart containers requiring suppression.
+- Disabled Recharts accessibility focus layer on Daily Adoptions `LineChart`.
+- Added strong scoped CSS to suppress tap highlight/focus outlines and border artifacts on chart elements.
+- Extended suppression to Insights visualizations except:
+  - `ShelterMap`
+  - `OwnerSurrenderHeatmap`
+
+**Result:**
+✅ Removed tap-triggered thick/thin black border artifacts on targeted Insights visualizations.
+
+---
+
+### 8. Shelter map description clipping fix on mobile
+**Files:**
+- `app/components/ShelterMap.tsx`
+- `app/globals.css`
+
+- Added class to map description text block.
+- Added mobile-only CSS override to remove excessive left margin (`margin-left: 0`) under `768px`.
+
+**Result:**
+✅ Description text shifts left on mobile and no longer clips on the right side.
+
+---
+
+## Files Modified This Session
+
+- `app/page.tsx`
+- `app/components/Tabs.tsx`
+- `app/components/AdoptionsTab.tsx`
+- `app/components/WheresFidoTab.tsx`
+- `app/components/InsightsSpotlightTab.tsx`
+- `app/components/ShelterMap.tsx`
+- `app/globals.css`
+
+---
+
+## Notes for Next Session
+
+1. If any mobile spacing/offset appears unchanged, verify active viewport width and cached CSS (hard refresh).
+2. For mobile-specific behavior in this project, JS breakpoint state (`isMobileLayout`) proved more reliable than some Tailwind breakpoint-only tweaks in prior attempts.
+3. Black border suppression is intentionally scoped to Insights chart wrappers and excludes map/heatmap by request.
+
