@@ -336,7 +336,7 @@ export default function RecentPupdatesTab() {
           <div style={{ height: '0.6em' }} />
           {isLoadingReturned && <div>Loading returned dogs...</div>}
           {!isLoadingReturned && returnedDogs && returnedDogs.length > 0 && (
-            <div style={{ marginLeft: '0.5em', marginBottom: '1.2em', paddingLeft: '0.5em' }}>
+            <div style={{ marginLeft: '0.5em', marginBottom: '1.2em'}}>
               {sortDogsByName(returnedDogs).map(dog => (
                 <React.Fragment key={dog.id}>
                   <span
