@@ -353,7 +353,7 @@ export default function RecentPupdatesTab() {
           )}
 
           {!isLoadingReturned && returnedDogs && returnedDogs.length === 0 && (
-            <div style={{ marginLeft: 'calc(1.5em - 12px)', color: '#888', marginTop: '0.3em', marginBottom: '1.2em' }}>No returned dogs today.</div>
+            <div style={{ marginLeft: 'calc(1.4em - 12px)', color: '#888', marginTop: '0.3em', marginBottom: '1.2em' }}>No returned dogs today.</div>
           )}
         </div>
 
@@ -530,7 +530,7 @@ function AdoptedTodayDogs({ setModalDog }: AdoptedTodayDogsProps) {
   });
   if (isLoading) return <div>Loading adopted dogs...</div>;
   if (!adoptedToday || adoptedToday.length === 0) return (
-    <div style={{ marginLeft: '1.5em', color: '#888', marginTop: '0.3em' }}>No adoptions today.</div>
+    <div style={{ marginLeft: '0.6em', color: '#888', marginTop: '0.3em' }}>No adoptions today.</div>
   );
   return (
     <div style={{ marginLeft: 'calc(1.5em - 12px)' }}>
