@@ -299,7 +299,7 @@ export default function RecentPupdatesTab() {
             </div>
           )}
           {!isLoading && newDogs && newDogs.length === 0 && (
-            <div style={{ marginLeft: '1.5em', color: '#888', marginTop: '0.05em', marginBottom: '1.2em' }}>No new dogs today.</div>
+            <div style={{ marginLeft: '0.6em', color: '#888', marginTop: '0.05em', marginBottom: '1.2em' }}>No new dogs today.</div>
           )}
         </div>
         <div style={{ height: '1em' }} />
