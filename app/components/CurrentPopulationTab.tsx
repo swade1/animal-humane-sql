@@ -26,10 +26,20 @@ export default function CurrentPopulationTab() {
           (typeof dog.location === 'string' && dog.location.includes('Parvo Ward'))
         );
       }
-      if ((errorAvailable && !available) && (errorSoon && !availableSoon)) return [];
+      // Get dogs with status 'adopted' that have a location (edge case: lost/missing after adoption)
+      const { data: adoptedWithLocation, error: errorAdoptedWithLocation } = await supabase
+        .from('dogs')
+        .select('id, name, location')
+        .eq('status', 'adopted')
+        .not('location', 'is', null);
+      let adoptedEdgeCases: Array<{ id: number; name: string; location?: string }> = [];
+      if (adoptedWithLocation && Array.isArray(adoptedWithLocation)) {
+        adoptedEdgeCases = adoptedWithLocation;
+      }
+      if ((errorAvailable && !available) && (errorSoon && !availableSoon) && (errorAdoptedWithLocation && !adoptedWithLocation)) return [];
       // Remove notes property from availableSoon for consistency
       const availableSoonClean = availableSoon.map(({ id, name, location }) => ({ id, name, location }));
-      return [...(available || []), ...availableSoonClean];
+      return [...(available || []), ...availableSoonClean, ...adoptedEdgeCases];
     },
     staleTime: 1000 * 60 * 60 * 2
   });
