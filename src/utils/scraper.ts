@@ -103,6 +103,8 @@ export async function checkForAdoptions() {
 
 import puppeteer from 'puppeteer';
 import { toZonedTime } from 'date-fns-tz';
+import { load } from 'cheerio';
+import he from 'he';
 
 // Define Dog type for mapping
 type Dog = {
@@ -500,11 +502,9 @@ export async function runScraper() {
       // Debug: log all missing dogs being checked
       const missingDogs = prevAvailableAndSoonDogs.filter(prevDog => !mergedDogIds.has(prevDog.id));
       console.log(`[debug] Missing dogs to check (not in mergedDogs, status=available or null):`, missingDogs.map(d => ({ id: d.id, name: d.name, location: d.location, status: d.status })));
-      const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
       for (const prevDog of prevAvailableAndSoonDogs) {
         if (!mergedDogIds.has(prevDog.id)) {
           try {
-            const page = await browser.newPage();
             const mergedDogUrlMap = new Map<number, string>();
             for (const dog of mergedDogs) {
               mergedDogUrlMap.set(dog.id, dog.url);
@@ -514,65 +514,73 @@ export async function runScraper() {
               console.warn(`[scraper] No valid url for missing dog ${prevDog.name} (ID: ${prevDog.id}), skipping adoption check.`);
               continue;
             }
-            await page.goto(urlToCheck, { waitUntil: 'networkidle2', timeout: 60000 });
+            
+            console.log(`[scraper] Fetching missing dog page: ${urlToCheck}`);
+            const res = await fetch(urlToCheck);
+            if (!res.ok) {
+              console.error(`[scraper] Failed to fetch embed page for dog ${prevDog.name} (ID: ${prevDog.id}): HTTP ${res.status}`);
+              continue;
+            }
+            
+            const html = await res.text();
+            const $ = load(html);
+            
             let location = '';
             let nameFromPage = '';
             try {
               // Extract both location and name from visible HTML structure
-              const pageData = await page.evaluate(() => {
-                let location = '';
-                let name = '';
-                
-                // Find all divs with class 'inline-flex' and text 'Location'
-                const labelDivs = Array.from(document.querySelectorAll('div.inline-flex'));
-                for (const labelDiv of labelDivs) {
-                  if (labelDiv.textContent && labelDiv.textContent.trim().toLowerCase() === 'location') {
-                    // The value is in the next sibling div with class 'pl-2'
-                    let sibling = labelDiv.nextElementSibling;
-                    while (sibling) {
-                      if (sibling.classList.contains('pl-2')) {
-                        location = sibling.textContent?.trim() || '';
-                        break;
-                      }
-                      sibling = sibling.nextElementSibling;
+              // Find all divs with class 'inline-flex' and text 'Location'
+              const labelDivs = $('div.inline-flex');
+              labelDivs.each((_, el) => {
+                const text = $(el).text().trim().toLowerCase();
+                if (text === 'location') {
+                  let sibling = $(el).next();
+                  while (sibling.length) {
+                    if (sibling.hasClass('pl-2')) {
+                      location = sibling.text().trim();
+                      break;
                     }
+                    sibling = sibling.next();
                   }
                 }
-                
-                // Extract name from h1 or title element
-                const h1Element = document.querySelector('h1');
-                if (h1Element) {
-                  name = h1Element.textContent?.trim() || '';
-                }
-                
-                return { location, name };
               });
-              
-              location = trimString(pageData.location);
-              nameFromPage = trimString(pageData.name);
+
+              // Extract name from h1
+              const h1Element = $('h1');
+              if (h1Element.length) {
+                nameFromPage = h1Element.text().trim();
+              }
               
               if (!location || !nameFromPage) {
                 // Fallback: Use :animal attribute if visible HTML extraction fails
-                const animalJson = await page.evaluate(() => {
-                  const allElements = document.querySelectorAll('*');
-                  for (const el of allElements) {
-                    if (el.hasAttribute(':animal')) {
-                      return el.getAttribute(':animal');
+                const iframeAnimal = $('iframe-animal');
+                let raw = '';
+                if (iframeAnimal.length) {
+                  const animalAttr = iframeAnimal.attr('animal') ?? '';
+                  const colonAnimalAttr = iframeAnimal.attr(':animal') ?? '';
+                  if (animalAttr) {
+                    raw = animalAttr;
+                  } else if (colonAnimalAttr) {
+                    raw = he.decode(colonAnimalAttr);
+                  }
+                  
+                  if (raw) {
+                    try {
+                      const animalObj = JSON.parse(raw);
+                      if (!location) location = trimString(animalObj.location);
+                      if (!nameFromPage) nameFromPage = trimString(animalObj.name);
+                    } catch (parseErr) {
+                      // Regex fallback
+                      const locationMatch = raw.match(/"location"\s*:\s*"([^"]*)"/);
+                      if (locationMatch && locationMatch[1]) {
+                        location = locationMatch[1].trim();
+                      }
+                      const nameMatch = raw.match(/"name"\s*:\s*"([^"]*)"/);
+                      if (nameMatch && nameMatch[1]) {
+                        nameFromPage = nameMatch[1].trim();
+                      }
                     }
                   }
-                  return null;
-                });
-                console.log(`[scraper] Raw :animal attribute for dog ID ${prevDog.id} (${prevDog.name}):`, animalJson);
-                if (animalJson) {
-                  // Unescape HTML entities and parse JSON
-                  const decoded = animalJson.replace(/&quot;/g, '"');
-                  const animalObj = JSON.parse(decoded);
-                  if (!location) location = trimString(animalObj.location);
-                  if (!nameFromPage) nameFromPage = trimString(animalObj.name);
-                } else {
-                  // If :animal attribute is missing, log the page HTML for debugging
-                  const pageHtml = await page.content();
-                  console.error(`[scraper] Could not find :animal attribute for dog ${prevDog.name} (ID: ${prevDog.id}). Page HTML:\n`, pageHtml);
                 }
               }
             } catch (selErr) {
@@ -600,8 +608,6 @@ export async function runScraper() {
                 .eq('id', prevDog.id);
               console.log(`[scraper] Updated name for missing dog ID ${prevDog.id}: '${prevDog.name}' -> '${nameFromPage}'`);
             }
-            
-            await page.close();
             
             // Debug logging for TBD edge case
             console.log(`[scraper][TBD-CHECK] Dog ID ${prevDog.id} (${prevDog.name}): scraped location='${location}', db location='${prevDog.location}'`);
@@ -727,7 +733,6 @@ export async function runScraper() {
           }
         }
       }
-      await browser.close();
     }
 
     // Set scraped=true for all scraped dogs
