@@ -4,8 +4,8 @@ on:
   schedule:
     # Runs at 9am, 11am, 1pm, 3pm, 5pm, 7pm MST
     # Split into separate cron entries (rather than one comma-separated hour list) so
-    # github.event.schedule can be used to identify the 7pm run and gate the
-    # unlisted-returns check step to run only once a day, after the last scrape.
+    # github.event.schedule can be used to identify the 11am run and gate the
+    # unlisted-returns check step to run only once a day, right after that scrape.
     - cron: '0 15 * * *'
     - cron: '0 17 * * *'
     - cron: '0 19 * * *'
@@ -64,7 +64,7 @@ jobs:
           path: public/latest_scraped_ids.json
 
       - name: Check for unlisted returns (adopted dogs back at shelter but not re-listed)
-        if: github.event.schedule == '0 1 * * *' || github.event_name == 'workflow_dispatch'
+        if: github.event.schedule == '0 17 * * *' || github.event_name == 'workflow_dispatch'
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}

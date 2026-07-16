@@ -6,8 +6,10 @@
 // (new.shelterluv.com/embed/animal/{id}). A non-empty 'location' field there means
 // the dog is physically back at the shelter, regardless of whether it's listed.
 //
-// Runs once daily (after the final scheduled scrape) rather than on every scrape cycle,
-// since it iterates every adopted dog individually (hundreds of requests).
+// Runs once daily (gated to the 11am scheduled scrape) rather than on every scrape cycle,
+// since it iterates every adopted dog individually (hundreds of requests). Running it in
+// the morning means any detected returns show as "Returned" on Recent Pupdates for the
+// full day, rather than only during the last few hours after a 7pm run.
 
 import fetch from 'node-fetch';
 import { load } from 'cheerio';
