@@ -20,7 +20,7 @@ export async function logDogHistory({
   // Check for recent identical event to prevent duplicates within the last minute
   const { data: recent, error: recentError } = await supabase
     .from('dog_history')
-    .select('id, old_value, new_value, name, adopted_date, created_at')
+    .select('id, old_value, new_value, name, adopted_date, event_time')
     .eq('dog_id', dogId)
     .eq('event_type', eventType)
     .order('id', { ascending: false })
@@ -39,13 +39,13 @@ export async function logDogHistory({
   ) {
     // Check if the last event was within the last minute
     const now = Date.now();
-    const createdAt = recent[0].created_at ? new Date(recent[0].created_at).getTime() : 0;
+    const eventTime = recent[0].event_time ? new Date(recent[0].event_time).getTime() : 0;
     const oneMinute = 60 * 1000;
-    if (createdAt > 0 && (now - createdAt) < oneMinute) {
-      console.log('[dogHistory] Duplicate event detected within 1 minute, skipping log:', { dogId, eventType, oldValue, newValue, createdAt: recent[0].created_at });
+    if (eventTime > 0 && (now - eventTime) < oneMinute) {
+      console.log('[dogHistory] Duplicate event detected within 1 minute, skipping log:', { dogId, eventType, oldValue, newValue, eventTime: recent[0].event_time });
       return;
     } else {
-      console.log('[dogHistory] Identical event found but outside 1 minute window, will log new event:', { dogId, eventType, oldValue, newValue, createdAt: recent[0].created_at });
+      console.log('[dogHistory] Identical event found but outside 1 minute window, will log new event:', { dogId, eventType, oldValue, newValue, eventTime: recent[0].event_time });
     }
   }
 
