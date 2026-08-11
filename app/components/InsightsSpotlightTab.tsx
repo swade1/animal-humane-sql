@@ -292,7 +292,7 @@ export default function InsightsSpotlightTab() {
                   );
                 }}
                 height={60}
-                interval={isMobileLayout ? 14 : 4}
+                interval={isMobileLayout ? 9 : 4}
               />
               <YAxis
                 allowDecimals={false}
