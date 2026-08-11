@@ -3,13 +3,21 @@ import React, { useState } from "react";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "../lib/supabaseClient";
 import { Search } from "lucide-react";
+import { format } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
+import { parseUtcTimestamp } from "../lib/dateUtils";
 
 type Dog = {
   id: number;
   name: string;
   status: string | null;
   location: string | null;
+  updated_at: string | null;
 };
+
+// Statuses for which location info isn't meaningful (dog is no longer physically at the shelter,
+// or its location has never been confirmed).
+const LOCATION_NA_STATUSES = new Set(['adopted', 'euthanized', 'pending_review']);
 
 export default function WheresFidoTab() {
   const [searchName, setSearchName] = useState("");
@@ -23,7 +31,7 @@ export default function WheresFidoTab() {
       
       const { data, error } = await supabase
         .from('dogs')
-        .select('id, name, status, location')
+        .select('id, name, status, location, updated_at')
         .ilike('name', `%${searchQuery}%`);
       
       if (error) throw error;
@@ -104,6 +112,7 @@ export default function WheresFidoTab() {
                   <th style={{ textAlign: 'left', fontWeight: 700, fontSize: '1.1rem', paddingBottom: '8px' }}>Name</th>
                   <th style={{ textAlign: 'left', fontWeight: 700, fontSize: '1.1rem', paddingBottom: '8px', paddingLeft: '20px' }}>Status</th>
                   <th style={{ textAlign: 'left', fontWeight: 700, fontSize: '1.1rem', paddingBottom: '8px', paddingLeft: '20px' }}>Location</th>
+                  <th style={{ textAlign: 'left', fontWeight: 700, fontSize: '1.1rem', paddingBottom: '8px', paddingLeft: '20px' }}>Date</th>
                 </tr>
               </thead>
               <tbody>
@@ -114,7 +123,6 @@ export default function WheresFidoTab() {
                         onClick={() => setModalDog(dog)}
                         style={{
                           color: '#2a5db0',
-                          textDecoration: 'underline',
                           fontWeight: 700,
                           cursor: 'pointer'
                         }}
@@ -126,7 +134,10 @@ export default function WheresFidoTab() {
                       {dog.status || 'N/A'}
                     </td>
                     <td style={{ fontSize: '1rem', paddingLeft: '20px', paddingTop: '4px', paddingBottom: '4px' }}>
-                      {dog.location || 'N/A'}
+                      {LOCATION_NA_STATUSES.has(dog.status || '') ? 'N/A' : (dog.location || 'N/A')}
+                    </td>
+                    <td style={{ fontSize: '1rem', paddingLeft: '20px', paddingTop: '4px', paddingBottom: '4px' }}>
+                      {dog.updated_at ? format(toZonedTime(parseUtcTimestamp(dog.updated_at), 'America/Denver'), 'MM-dd-yyyy') : 'N/A'}
                     </td>
                   </tr>
                 ))}

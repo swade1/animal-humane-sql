@@ -3,18 +3,12 @@ import React, { useState } from "react";
 type Dog = { id: number; name: string; intake_date: string; created_at: string };
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "../lib/supabaseClient";
-import { parseISO, isSameDay, format } from 'date-fns';
+import { isSameDay, format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
+import { parseUtcTimestamp } from "../lib/dateUtils";
 
 const sortDogsByName = <T extends { name: string | null | undefined }>(dogs: T[]) =>
   [...dogs].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
-
-// Postgres returns timestamp columns without a 'Z' suffix even though the stored value is UTC,
-// so a plain `new Date(value)` would be misparsed as the viewer's local time. Append 'Z' first.
-const parseUtcTimestamp = (value: string): Date => {
-  const withZ = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(value) ? `${value}Z` : value;
-  return parseISO(withZ);
-};
 
 export default function RecentPupdatesTab() {
   // Get today's date in YYYY-MM-DD
@@ -235,19 +229,13 @@ export default function RecentPupdatesTab() {
         // Include if created_at is today
         if (!dog.created_at) return false;
         try {
-          // Patch: If created_at is missing 'Z' or timezone, treat as UTC
-          let createdAtStr = dog.created_at;
-          if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(createdAtStr)) {
-            createdAtStr += 'Z';
-          }
-          const createdDate = parseISO(createdAtStr);
+          const createdDate = parseUtcTimestamp(dog.created_at);
           const createdMST = toZonedTime(createdDate, mstTimeZone);
           const sameDay = isSameDay(createdMST, todayMST);
           console.log('[NEW DOGS DEBUG]', {
             id: dog.id,
             name: dog.name,
             created_at: dog.created_at,
-            createdAtStr,
             createdDate: createdDate.toString(),
             createdMST: createdMST.toString(),
             todayMST: todayMST.toString(),
