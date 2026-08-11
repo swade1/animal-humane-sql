@@ -9,6 +9,13 @@ import { toZonedTime } from 'date-fns-tz';
 const sortDogsByName = <T extends { name: string | null | undefined }>(dogs: T[]) =>
   [...dogs].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
 
+// Postgres returns timestamp columns without a 'Z' suffix even though the stored value is UTC,
+// so a plain `new Date(value)` would be misparsed as the viewer's local time. Append 'Z' first.
+const parseUtcTimestamp = (value: string): Date => {
+  const withZ = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(value) ? `${value}Z` : value;
+  return parseISO(withZ);
+};
+
 export default function RecentPupdatesTab() {
   // Get today's date in YYYY-MM-DD
   // Use UTC date for comparison
@@ -137,11 +144,7 @@ export default function RecentPupdatesTab() {
       const recentReturnMap = new Map();
       for (const h of history) {
         if (!h.dog_id || !h.event_time) continue;
-        let eventTimeStr = h.event_time;
-        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(eventTimeStr)) {
-          eventTimeStr += 'Z';
-        }
-        const eventDate = parseISO(eventTimeStr);
+        const eventDate = parseUtcTimestamp(h.event_time);
         const eventMST = toZonedTime(eventDate, mstTimeZone);
         if (!recentReturnMap.has(h.dog_id) || eventMST > recentReturnMap.get(h.dog_id)) {
           recentReturnMap.set(h.dog_id, eventMST);
@@ -561,7 +564,7 @@ function TrialAdoptionsDogs({ setModalDog }: TrialAdoptionsDogsProps) {
       // Get all dogs with status 'available' OR status null and 'Trial Adoption' in location
       const { data: trialAdoptionDogs, error: errorTrial } = await supabase
         .from('dogs')
-        .select('id, name, intake_date, created_at, location, status')
+        .select('id, name, intake_date, created_at, updated_at, location, status')
         .or('status.eq.available,status.is.null')
         .ilike('location', '%Trial Adoption%');
       if (errorTrial || !trialAdoptionDogs) return [];
@@ -576,16 +579,20 @@ function TrialAdoptionsDogs({ setModalDog }: TrialAdoptionsDogsProps) {
   return (
     <div style={{ marginLeft: '0.5em', marginBottom: '1.2em' }}>
       {sortDogsByName(trialDogs).map(dog => (
-        <React.Fragment key={dog.id}>
+        <div key={dog.id} style={{ display: 'flex', alignItems: 'baseline', marginBottom: '0.5em' }}>
           <span
             className="text-[#2a5db0] cursor-pointer font-bold"
-            style={{ fontWeight: 700, display: 'inline-block', marginBottom: '0.5em' }}
+            style={{ fontWeight: 700, display: 'inline-block', minWidth: '9em' }}
             onClick={() => setModalDog(dog)}
           >
             {dog.name}
           </span>
-          <br />
-        </React.Fragment>
+          {dog.updated_at && (
+            <span style={{ color: '#888' }}>
+              {format(toZonedTime(parseUtcTimestamp(dog.updated_at), 'America/Denver'), 'MM-dd-yyyy')}
+            </span>
+          )}
+        </div>
       ))}
     </div>
   );
