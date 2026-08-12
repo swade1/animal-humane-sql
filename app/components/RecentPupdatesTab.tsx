@@ -552,11 +552,40 @@ function TrialAdoptionsDogs({ setModalDog }: TrialAdoptionsDogsProps) {
       // Get all dogs with status 'available' OR status null and 'Trial Adoption' in location
       const { data: trialAdoptionDogs, error: errorTrial } = await supabase
         .from('dogs')
-        .select('id, name, intake_date, created_at, updated_at, location, status')
+        .select('id, name, intake_date, created_at, location, status')
         .or('status.eq.available,status.is.null')
         .ilike('location', '%Trial Adoption%');
       if (errorTrial || !trialAdoptionDogs) return [];
-      return trialAdoptionDogs;
+      if (trialAdoptionDogs.length === 0) return [];
+
+      // Look up when each dog's current trial adoption actually started, via the
+      // location_change event that moved it into a Trial Adoption location. This avoids
+      // dogs.updated_at, which only refreshes for dogs still present in the live scraped
+      // listing (Trial Adoption dogs are hidden from that listing, so it goes stale).
+      const dogIds = trialAdoptionDogs.map(d => d.id);
+      const { data: history, error: errorHistory } = await supabase
+        .from('dog_history')
+        .select('dog_id, new_value, event_time')
+        .in('dog_id', dogIds)
+        .eq('event_type', 'location_change')
+        .ilike('new_value', '%Trial Adoption%');
+
+      const trialStartMap = new Map<number, Date>();
+      if (!errorHistory && history) {
+        for (const h of history) {
+          if (!h.dog_id || !h.event_time) continue;
+          const eventDate = parseUtcTimestamp(h.event_time);
+          const existing = trialStartMap.get(h.dog_id);
+          if (!existing || eventDate > existing) {
+            trialStartMap.set(h.dog_id, eventDate);
+          }
+        }
+      }
+
+      return trialAdoptionDogs.map(dog => ({
+        ...dog,
+        trialStartDate: trialStartMap.get(dog.id) ?? null
+      }));
     },
     staleTime: 1000 * 60 * 60 * 2
   });
@@ -575,9 +604,9 @@ function TrialAdoptionsDogs({ setModalDog }: TrialAdoptionsDogsProps) {
           >
             {dog.name}
           </span>
-          {dog.updated_at && (
+          {dog.trialStartDate && (
             <span style={{ color: '#888' }}>
-              {format(toZonedTime(parseUtcTimestamp(dog.updated_at), 'America/Denver'), 'MM-dd-yyyy')}
+              {format(toZonedTime(dog.trialStartDate, 'America/Denver'), 'MM-dd-yyyy')}
             </span>
           )}
         </div>
