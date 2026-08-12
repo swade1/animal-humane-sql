@@ -343,19 +343,21 @@ export default function InsightsSpotlightTab() {
                 dataKey="week"
                 tick={props => {
                   const { x, y, payload } = props;
+                  const xNum = typeof x === 'number' ? x : Number(x);
                   const yNum = typeof y === 'number' ? y : Number(y);
                   return (
                     <text
-                      x={x}
-                      y={yNum + 12}
+                      x={xNum + 8}
+                      y={yNum + 8}
                       style={{ fontSize: 12, fill: "#222" }}
-                      textAnchor="middle"
+                      transform={`rotate(-45,${xNum + 8},${yNum + 8})`}
+                      textAnchor="end"
                     >
                       {payload.value}
                     </text>
                   );
                 }}
-                height={52}
+                height={65}
                 interval={0}
               />
               <YAxis
