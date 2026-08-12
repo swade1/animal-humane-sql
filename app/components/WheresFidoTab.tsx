@@ -12,7 +12,7 @@ type Dog = {
   name: string;
   status: string | null;
   location: string | null;
-  updated_at: string | null;
+  lastEventDate: Date | null;
 };
 
 // Statuses for which location info isn't meaningful (dog is no longer physically at the shelter,
@@ -31,11 +31,37 @@ export default function WheresFidoTab() {
       
       const { data, error } = await supabase
         .from('dogs')
-        .select('id, name, status, location, updated_at')
+        .select('id, name, status, location')
         .ilike('name', `%${searchQuery}%`);
-      
+
       if (error) throw error;
-      return data as Dog[];
+      if (!data || data.length === 0) return [];
+
+      // dogs.updated_at only refreshes for dogs still present in the live scraped listing,
+      // so it goes stale for dogs that leave it (adopted, euthanized, trial adoption, etc.).
+      // Use the most recent dog_history event per dog instead.
+      const dogIds = data.map(d => d.id);
+      const { data: history, error: errorHistory } = await supabase
+        .from('dog_history')
+        .select('dog_id, event_time')
+        .in('dog_id', dogIds);
+
+      const lastEventMap = new Map<number, Date>();
+      if (!errorHistory && history) {
+        for (const h of history) {
+          if (!h.dog_id || !h.event_time) continue;
+          const eventDate = parseUtcTimestamp(h.event_time);
+          const existing = lastEventMap.get(h.dog_id);
+          if (!existing || eventDate > existing) {
+            lastEventMap.set(h.dog_id, eventDate);
+          }
+        }
+      }
+
+      return data.map(dog => ({
+        ...dog,
+        lastEventDate: lastEventMap.get(dog.id) ?? null
+      })) as Dog[];
     },
     enabled: searchQuery.length > 0,
     staleTime: 1000 * 60 * 5 // 5 minutes
@@ -137,7 +163,7 @@ export default function WheresFidoTab() {
                       {LOCATION_NA_STATUSES.has(dog.status || '') ? 'N/A' : (dog.location || 'N/A')}
                     </td>
                     <td style={{ fontSize: '1rem', paddingLeft: '20px', paddingTop: '4px', paddingBottom: '4px' }}>
-                      {dog.updated_at ? format(toZonedTime(parseUtcTimestamp(dog.updated_at), 'America/Denver'), 'MM-dd-yyyy') : 'N/A'}
+                      {dog.lastEventDate ? format(toZonedTime(dog.lastEventDate, 'America/Denver'), 'MM-dd-yyyy') : 'N/A'}
                     </td>
                   </tr>
                 ))}
