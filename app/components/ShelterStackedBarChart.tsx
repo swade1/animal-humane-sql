@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../lib/supabaseClient";
+import { supabase, fetchAllRows } from "../lib/supabaseClient";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, CartesianGrid } from "recharts";
 import React, { useState } from "react";
 
@@ -11,11 +11,15 @@ export default function ShelterStackedBarChart() {
     queryKey: ["shelterStackedBarData"],
     queryFn: async () => {
       // Fetch all dogs with origin, status
-      const { data: dogs, error } = await supabase
-        .from("dogs")
-        .select("origin, status")
-        .not("origin", "is", null);
-      if (error || !dogs) return [];
+      const { data: dogs, error } = await fetchAllRows((from, to) =>
+        supabase
+          .from("dogs")
+          .select("origin, status")
+          .not("origin", "is", null)
+          .order("id", { ascending: true })
+          .range(from, to)
+      );
+      if (error) return [];
       // Group by origin, filter out non-shelter names
       const exclude = new Set(["Stray", "Owner Surrender", "Unknown"]);
       const map = new Map();

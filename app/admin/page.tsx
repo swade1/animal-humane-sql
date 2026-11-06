@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { supabase, fetchAllRows } from '../lib/supabaseClient';
 import { DogEditForm } from '../components/DogEditForm';
 
 type Dog = {
@@ -44,13 +44,13 @@ function AdminPage() {
     checkSession();
     async function fetchDogs() {
       setLoading(true);
-      const { data, error } = await supabase.from('dogs').select('*');
+      const { data, error } = await fetchAllRows((from, to) =>
+        supabase.from('dogs').select('*').order('id', { ascending: true }).range(from, to)
+      );
       if (error) {
-        alert('Error fetching dogs: ' + error.message);
-      } else if (Array.isArray(data)) {
-        setDogs(data as Dog[]);
+        alert('Error fetching dogs: ' + (error as Error).message);
       } else {
-        setDogs([]);
+        setDogs(data as Dog[]);
       }
       setLoading(false);
     }
@@ -64,7 +64,9 @@ function AdminPage() {
     } else if (data && data.user) {
       setUser(data.user);
       // Fetch dogs after login
-      const { data: dogsData } = await supabase.from('dogs').select('*');
+      const { data: dogsData } = await fetchAllRows((from, to) =>
+        supabase.from('dogs').select('*').order('id', { ascending: true }).range(from, to)
+      );
       setDogs(dogsData as Dog[]);
     }
   }
@@ -115,12 +117,10 @@ function AdminPage() {
       throw new Error(error.message);
     } else {
       // Refresh dog list
-      const { data } = await supabase.from('dogs').select('*');
-      if (Array.isArray(data)) {
-        setDogs(data as Dog[]);
-      } else {
-        setDogs([]);
-      }
+      const { data } = await fetchAllRows((from, to) =>
+        supabase.from('dogs').select('*').order('id', { ascending: true }).range(from, to)
+      );
+      setDogs(data as Dog[]);
       setEditDog(null);
     }
   }

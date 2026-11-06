@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../lib/supabaseClient";
+import { supabase, fetchAllRows } from "../lib/supabaseClient";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, CartesianGrid } from "recharts";
 import React, { useState, useMemo } from "react";
 
@@ -20,12 +20,16 @@ export default function ShelterTransferChart() {
     queryKey: ["shelterTransferData"],
     queryFn: async () => {
       // Fetch all dogs with origin and status
-      const { data: dogs, error } = await supabase
-        .from("dogs")
-        .select("origin, status")
-        .not("origin", "is", null);
-      
-      if (error || !dogs) return [];
+      const { data: dogs, error } = await fetchAllRows((from, to) =>
+        supabase
+          .from("dogs")
+          .select("origin, status")
+          .not("origin", "is", null)
+          .order("id", { ascending: true })
+          .range(from, to)
+      );
+
+      if (error) return [];
       
       // Exclude specific origins
       const exclude = new Set(["Stray", "Owner Surrender", "Unknown"]);

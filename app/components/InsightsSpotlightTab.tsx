@@ -37,7 +37,7 @@
 // Removed stray JSX and ensured grouped bar chart is only rendered inside the main return statement
 import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../lib/supabaseClient";
+import { supabase, fetchAllRows } from "../lib/supabaseClient";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart, Bar, Legend, LegendProps } from "recharts";
 import { startOfWeek, format as formatDate, addDays } from 'date-fns';
 import { toZonedTime, format as formatTz } from 'date-fns-tz';
@@ -75,11 +75,15 @@ export default function InsightsSpotlightTab() {
       queryFn: async () => {
 
         // Get all adopted dogs with adopted_date and age_group from dogs table
-        const { data: dogs, error: dogsError } = await supabase
-          .from("dogs")
-          .select("id, adopted_date, age_group, name")
-          .not("adopted_date", "is", null);
-        if (dogsError || !dogs) return [];
+        const { data: dogs, error: dogsError } = await fetchAllRows((from, to) =>
+          supabase
+            .from("dogs")
+            .select("id, adopted_date, age_group, name")
+            .not("adopted_date", "is", null)
+            .order("id", { ascending: true })
+            .range(from, to)
+        );
+        if (dogsError) return [];
 
         // Build a map of dog_id to age_group for lookup
         const dogIdToAgeGroup = new Map<number, string>();
@@ -192,11 +196,15 @@ export default function InsightsSpotlightTab() {
     queryKey: ["dailyAdoptions"],
     queryFn: async () => {
       // Get all adopted dogs with adopted_date and name
-      const { data: dogs, error: dogsError } = await supabase
-        .from("dogs")
-        .select("id, name, adopted_date")
-        .not("adopted_date", "is", null);
-      if (dogsError || !dogs) return [];
+      const { data: dogs, error: dogsError } = await fetchAllRows((from, to) =>
+        supabase
+          .from("dogs")
+          .select("id, name, adopted_date")
+          .not("adopted_date", "is", null)
+          .order("id", { ascending: true })
+          .range(from, to)
+      );
+      if (dogsError) return [];
 
       // Build a set of adopted dog IDs from the dogs table
       const adoptedDogIds = new Set((dogs as { id: number }[]).map(d => d.id));

@@ -1,6 +1,6 @@
 "use client";
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from "../lib/supabaseClient";
+import { supabase, fetchAllRows } from "../lib/supabaseClient";
 import React from "react";
 
 // Type for dog with age_group
@@ -185,10 +185,14 @@ export default function OverviewUnitChart() {
   const { data: allDogsWithLocation, isLoading: loadingLocations } = useQuery({
     queryKey: ['allDogsWithLocationAndAge'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('dogs')
-        .select('id, name, location, status, age_group');
-      return error || !data ? [] : data;
+      const { data, error } = await fetchAllRows((from, to) =>
+        supabase
+          .from('dogs')
+          .select('id, name, location, status, age_group')
+          .order('id', { ascending: true })
+          .range(from, to)
+      );
+      return error ? [] : data;
     },
     staleTime: 1000 * 60 * 60 * 2
   });

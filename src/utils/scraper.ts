@@ -323,10 +323,31 @@ export async function runScraper() {
     }
 
     // Fetch name, location, status, and all manual fields for comparison
-    // Fetch all previously available dogs (all statuses) for manual field preservation
-    const { data: prevDogs, error: prevFetchError } = await supabase
-      .from('dogs')
-      .select('id,location,status,name,url,origin,latitude,longitude,bite_quarantine,returned,created_at,scraped');
+    // Fetch all previously available dogs (all statuses) for manual field preservation.
+    // Paginated: Supabase/PostgREST caps an unpaginated select() at 1000 rows. The dogs
+    // table has grown past that, so a single select() was silently dropping rows, which
+    // made the scraper treat already-seen dogs as brand new on every run.
+    const prevDogs: any[] = [];
+    let prevFetchError: unknown = null;
+    {
+      const pageSize = 1000;
+      let from = 0;
+      while (true) {
+        const { data: page, error } = await supabase
+          .from('dogs')
+          .select('id,location,status,name,url,origin,latitude,longitude,bite_quarantine,returned,created_at,scraped')
+          .order('id', { ascending: true })
+          .range(from, from + pageSize - 1);
+        if (error) {
+          prevFetchError = error;
+          break;
+        }
+        if (!page || page.length === 0) break;
+        prevDogs.push(...page);
+        if (page.length < pageSize) break;
+        from += pageSize;
+      }
+    }
     if (prevFetchError) {
       console.error('Error fetching previous dogs:', prevFetchError);
     }

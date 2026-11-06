@@ -13,6 +13,26 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const trimString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
+// Supabase/PostgREST caps an unpaginated select() at 1000 rows, and the dogs table has
+// grown past that. Any query expected to return more than ~1000 rows must page through
+// with .range() instead of relying on a single select() — this wraps that pattern.
+async function fetchAllRows<T = any>(
+  queryFactory: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>
+): Promise<{ data: T[]; error: unknown }> {
+  const pageSize = 1000;
+  const rows: T[] = [];
+  let from = 0;
+  while (true) {
+    const { data, error } = await queryFactory(from, from + pageSize - 1);
+    if (error) return { data: rows, error };
+    if (!data || data.length === 0) break;
+    rows.push(...data);
+    if (data.length < pageSize) break;
+    from += pageSize;
+  }
+  return { data: rows, error: null };
+}
+
 
 // Get all available animal IDs from the direct ShelterLuv API endpoint
 // Updated March 20, 2026: Fixed critical bug where scraping HTML for URLs returned empty array,
@@ -62,10 +82,14 @@ async function main() {
 	// 1. Check for returned dogs (dogs that were adopted but are now back in the API)
 	
 	// Get all dogs currently marked as adopted
-	const { data: adoptedDogs, error: adoptedError } = await supabase
-		.from('dogs')
-		.select('id, name, status, location, returned, verified_adoption, adopted_date')
-		.eq('status', 'adopted');
+	const { data: adoptedDogs, error: adoptedError } = await fetchAllRows((from, to) =>
+		supabase
+			.from('dogs')
+			.select('id, name, status, location, returned, verified_adoption, adopted_date')
+			.eq('status', 'adopted')
+			.order('id', { ascending: true })
+			.range(from, to)
+	);
 	
 	if (adoptedError) {
 		console.error('[adoption-check-api] Error fetching adopted dogs:', adoptedError);

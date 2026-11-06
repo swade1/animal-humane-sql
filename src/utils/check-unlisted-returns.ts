@@ -14,7 +14,7 @@
 import fetch from 'node-fetch';
 import { load } from 'cheerio';
 import he from 'he';
-import { supabase } from '../lib/supabaseClient';
+import { supabase, fetchAllRows } from '../lib/supabaseClient';
 import { logDogHistory } from './dogHistory';
 
 const trimString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
@@ -53,10 +53,14 @@ async function fetchEmbedLocation(dogId: number): Promise<string> {
 }
 
 export async function checkForUnlistedReturns() {
-  const { data: adoptedDogs, error } = await supabase
-    .from('dogs')
-    .select('id, name, returned, adopted_date')
-    .eq('status', 'adopted');
+  const { data: adoptedDogs, error } = await fetchAllRows((from, to) =>
+    supabase
+      .from('dogs')
+      .select('id, name, returned, adopted_date')
+      .eq('status', 'adopted')
+      .order('id', { ascending: true })
+      .range(from, to)
+  );
 
   if (error) {
     console.error('[unlisted-returns] Error fetching adopted dogs:', error);
