@@ -9,7 +9,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // Supabase/PostgREST caps an unpaginated select() at 1000 rows, and the dogs table has
 // grown past that. Any query expected to return more than ~1000 rows must page through
 // with .range() instead of relying on a single select() — this wraps that pattern.
-export async function fetchAllRows<T = any>(
+export async function fetchAllRows<T = unknown>(
   queryFactory: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>
 ): Promise<{ data: T[]; error: unknown }> {
   const pageSize = 1000;

@@ -327,7 +327,7 @@ export async function runScraper() {
     // Paginated: Supabase/PostgREST caps an unpaginated select() at 1000 rows. The dogs
     // table has grown past that, so a single select() was silently dropping rows, which
     // made the scraper treat already-seen dogs as brand new on every run.
-    const prevDogs: any[] = [];
+    const prevDogs = [];
     let prevFetchError: unknown = null;
     {
       const pageSize = 1000;
