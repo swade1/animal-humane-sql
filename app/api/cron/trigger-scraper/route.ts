@@ -11,7 +11,10 @@ const WORKFLOW_FILE = 'scraper-schedule.yml';
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const secretParam = new URL(request.url).searchParams.get('secret');
+  const expected = process.env.CRON_SECRET;
+  const authorized = authHeader === `Bearer ${expected}` || (!!expected && secretParam === expected);
+  if (!authorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
