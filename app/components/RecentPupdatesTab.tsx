@@ -21,6 +21,13 @@ const LOW_AHNM_A_RETURN_THRESHOLD = 70000;
 const isLowAhnmA = (ahnmA: unknown): boolean =>
   typeof ahnmA === 'number' && ahnmA > 0 && ahnmA < LOW_AHNM_A_RETURN_THRESHOLD;
 
+// These dogs have no dog_history event to anchor "today" the way other sections
+// do, so the signal is just created_at (when we first scraped them as available).
+// A short lookback catches a dog scraped just before someone next checks this tab
+// (e.g. Bella, scraped a day before this feature shipped) without resurfacing
+// long-standing low-AHNM-A dogs that have been sitting as available for months.
+const LOW_AHNM_A_LOOKBACK_DAYS = 3;
+
 export default function RecentPupdatesTab() {
   // Get today's date in YYYY-MM-DD
   // Use UTC date for comparison
@@ -187,6 +194,13 @@ export default function RecentPupdatesTab() {
       // Convert MST day boundaries to UTC for database query
       const startOfDayMST_Date = new Date(`${todayStr}T00:00:00-07:00`); // MST is UTC-7
       const endOfDayMST_Date = new Date(`${todayStr}T23:59:59.999-07:00`);
+
+      // Wider lookback start, used only for the low-AHNM-A check below.
+      const lookbackStartStr = format(
+        new Date(todayMST.getTime() - (LOW_AHNM_A_LOOKBACK_DAYS - 1) * 86400000),
+        'yyyy-MM-dd'
+      );
+      const lookbackStart_Date = new Date(`${lookbackStartStr}T00:00:00-07:00`);
       
       console.log('[NEW DOGS] Date conversion:', { 
         todayStr, 
@@ -268,7 +282,19 @@ export default function RecentPupdatesTab() {
       // really returns, not new intakes, even though no adopted->available
       // dog_history event exists to detect that the normal way.
       const trueNew = filtered.filter(dog => !isLowAhnmA(dog['AHNM-A']));
-      const lowAhnmReturning = filtered.filter(dog => isLowAhnmA(dog['AHNM-A']));
+
+      // Use a wider lookback than "today" for this check specifically, since these
+      // dogs have no dog_history event to anchor on, only created_at.
+      const lowAhnmReturning = dogsToday.filter(dog => {
+        if (availableSoonIds.includes(dog.id)) return false;
+        if (!isLowAhnmA(dog['AHNM-A'])) return false;
+        if (!dog.created_at) return false;
+        try {
+          return parseUtcTimestamp(dog.created_at) >= lookbackStart_Date;
+        } catch {
+          return false;
+        }
+      });
       return { trueNew, lowAhnmReturning };
     },
     staleTime: 1000 * 60 * 60 * 2 // 2 hours
