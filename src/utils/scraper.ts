@@ -125,6 +125,7 @@ type Dog = {
   color: string;
   bite_quarantine: number | null;
   returned: number | null;
+  'AHNM-A': number | null;
   latitude: string | null;
   longitude: string | null;
   notes: string;
@@ -151,6 +152,7 @@ export async function getIframeUrls(mainUrl: string): Promise<string[]> {
 import fetch from 'node-fetch';
 import { supabase } from '../lib/supabaseClient';
 import { logDogHistory } from './dogHistory';
+import { isLowAhnmA } from '../lib/ahnmA';
 
 const trimString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
@@ -220,6 +222,9 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]
       if ((!location || location.trim() === '') && status.trim().toLowerCase() !== 'adopted') {
         location = 'TBD';
       }
+      // uniqueId comes back as e.g. "AHNM-A-8375"; pull out the numeric tag.
+      const uniqueIdMatch = getString(p, 'uniqueId').match(/AHNM-A-(\d+)/);
+      const ahnmA = uniqueIdMatch ? parseInt(uniqueIdMatch[1], 10) : null;
       const dogObj = {
         id: getNumber(p, 'nid'),
         name: getString(p, 'name'),
@@ -237,6 +242,7 @@ export async function scrapeAvailableAnimalsJson(jsonUrl: string): Promise<Dog[]
         color: getString(p, 'secondary_color') ? `${getString(p, 'primary_color')} and ${getString(p, 'secondary_color')}` : getString(p, 'primary_color'),
         bite_quarantine: null, // Manual entry required
         returned: null, // Manual entry required
+        'AHNM-A': ahnmA,
         latitude: null, // Manual entry required
         longitude: null, // Manual entry required
         notes: getString(p, 'kennel_description') || '',
@@ -469,11 +475,30 @@ export async function runScraper() {
           newValue: newStatus,
           notes: 'Status updated by scraper'
         });
+        const statusUpdatePayload: Record<string, unknown> = { status: newStatus };
+        if (oldStatus === 'adopted' && newStatus === 'available') {
+          const newReturnedCount = (typeof dog.returned === 'number' ? dog.returned : 0) + 1;
+          dog.returned = newReturnedCount;
+          statusUpdatePayload.returned = newReturnedCount;
+        }
         await supabase
           .from('dogs')
-          .update({ status: newStatus })
+          .update(statusUpdatePayload)
           .eq('id', dog.id);
         console.error(`Status change detected for dog ID ${dog.id} (${dog.name}): '${oldStatus}' -> '${newStatus}'`);
+      }
+      // A low-AHNM-A dog becoming available is also a return, but it never goes
+      // through 'adopted' in our DB (the adoption predates it), so the block above
+      // never catches it. Guard on oldStatus !== 'available' so this only fires on
+      // the actual transition, not every run while the dog stays available.
+      if (newStatus === 'available' && oldStatus !== 'available' && oldStatus !== 'adopted' && isLowAhnmA(dog['AHNM-A'])) {
+        const newReturnedCount = (typeof dog.returned === 'number' ? dog.returned : 0) + 1;
+        dog.returned = newReturnedCount;
+        await supabase
+          .from('dogs')
+          .update({ returned: newReturnedCount })
+          .eq('id', dog.id);
+        console.log(`[scraper] Low-AHNM-A return detected for dog ID ${dog.id} (${dog.name}): returned count -> ${newReturnedCount}`);
       }
       // Name change
       const oldName = nameMap.get(dog.id) ?? null;

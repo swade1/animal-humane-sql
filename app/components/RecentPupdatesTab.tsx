@@ -6,20 +6,10 @@ import { supabase } from "../lib/supabaseClient";
 import { isSameDay, format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { parseUtcTimestamp } from "../lib/dateUtils";
+import { isLowAhnmA } from "@/lib/ahnmA";
 
 const sortDogsByName = <T extends { name: string | null | undefined }>(dogs: T[]) =>
   [...dogs].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
-
-// Dogs whose AHNM-A tag number is far below the current active population almost
-// certainly predate this database (adopted long before scraping began) and are now
-// back at the shelter, even though no adopted->available dog_history event exists
-// for them to detect the return normally. There's currently a ~70,000-wide gap
-// between the AHNM-A numbers of the oldest still-active dogs (~10,800) and the
-// newest intakes (~86,000+), so any number below this threshold is an unambiguous
-// signal of an old intake rather than a genuinely new dog.
-const LOW_AHNM_A_RETURN_THRESHOLD = 70000;
-const isLowAhnmA = (ahnmA: unknown): boolean =>
-  typeof ahnmA === 'number' && ahnmA > 0 && ahnmA < LOW_AHNM_A_RETURN_THRESHOLD;
 
 export default function RecentPupdatesTab() {
   // Get today's date in YYYY-MM-DD
