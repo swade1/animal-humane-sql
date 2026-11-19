@@ -1,18 +1,17 @@
 name: Scheduled Scraper
 
 on:
-  schedule:
-    # Runs at 9am, 11am, 1pm, 3pm, 5pm, 7pm MST
-    # Split into separate cron entries (rather than one comma-separated hour list) so
-    # github.event.schedule can be used to identify the 11am run and gate the
-    # unlisted-returns check step to run only once a day, right after that scrape.
-    - cron: '0 15 * * *'
-    - cron: '0 17 * * *'
-    - cron: '0 19 * * *'
-    - cron: '0 21 * * *'
-    - cron: '0 23 * * *'
-    - cron: '0 1 * * *'
+  # Scheduling is handled externally (cron-job.org calling app/api/cron/trigger-scraper,
+  # which fires this workflow_dispatch) rather than via GitHub's native `schedule` trigger,
+  # which is best-effort and was frequently delayed or dropped by hours.
   workflow_dispatch:
+    inputs:
+      slot:
+        description: >
+          Optional label for which daily run this is. Set to '11am' only on the
+          run that should also do the once-daily unlisted-returns check.
+        required: false
+        default: ''
 
 jobs:
   run-scraper:
@@ -64,7 +63,7 @@ jobs:
           path: public/latest_scraped_ids.json
 
       - name: Check for unlisted returns (adopted dogs back at shelter but not re-listed)
-        if: github.event.schedule == '0 17 * * *' || github.event_name == 'workflow_dispatch'
+        if: github.event.inputs.slot == '11am'
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}

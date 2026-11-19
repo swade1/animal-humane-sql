@@ -1,22 +1,26 @@
 import { NextResponse } from 'next/server';
 
 // GitHub's own `schedule` (cron) trigger is documented as best-effort/lowest-priority
-// and can be delayed or silently dropped under load. Vercel Cron has none of that
-// slack, so it's used here purely as a reliable trigger: it calls this route, which
-// fires a `workflow_dispatch` on the existing scraper workflow (which runs immediately,
-// unlike `schedule`). The workflow itself is unchanged.
+// and can be delayed or silently dropped under load, so scheduling is handled externally
+// (cron-job.org calling this route 6x/day) instead. This route just fires a
+// `workflow_dispatch` on the existing scraper workflow, which runs immediately.
 const GITHUB_OWNER = 'swade1';
 const GITHUB_REPO = 'animal-humane-sql';
 const WORKFLOW_FILE = 'scraper-schedule.yml';
 
 export async function GET(request: Request) {
+  const url = new URL(request.url);
   const authHeader = request.headers.get('authorization');
-  const secretParam = new URL(request.url).searchParams.get('secret');
+  const secretParam = url.searchParams.get('secret');
   const expected = process.env.CRON_SECRET;
   const authorized = authHeader === `Bearer ${expected}` || (!!expected && secretParam === expected);
   if (!authorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  // Passed through as the 'slot' workflow_dispatch input so the workflow can gate its
+  // once-daily unlisted-returns check to a specific run (see scraper-schedule.yml).
+  const slot = url.searchParams.get('slot') ?? '';
 
   const githubToken = process.env.GITHUB_DISPATCH_TOKEN;
   if (!githubToken) {
@@ -33,7 +37,7 @@ export async function GET(request: Request) {
         'User-Agent': 'animal-humane-sql-cron',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ ref: 'main' }),
+      body: JSON.stringify({ ref: 'main', inputs: { slot } }),
     }
   );
 
