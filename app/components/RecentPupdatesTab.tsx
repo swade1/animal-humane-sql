@@ -10,6 +10,17 @@ import { parseUtcTimestamp } from "../lib/dateUtils";
 const sortDogsByName = <T extends { name: string | null | undefined }>(dogs: T[]) =>
   [...dogs].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''));
 
+// Dogs whose AHNM-A tag number is far below the current active population almost
+// certainly predate this database (adopted long before scraping began) and are now
+// back at the shelter, even though no adopted->available dog_history event exists
+// for them to detect the return normally. There's currently a ~70,000-wide gap
+// between the AHNM-A numbers of the oldest still-active dogs (~10,800) and the
+// newest intakes (~86,000+), so any number below this threshold is an unambiguous
+// signal of an old intake rather than a genuinely new dog.
+const LOW_AHNM_A_RETURN_THRESHOLD = 70000;
+const isLowAhnmA = (ahnmA: unknown): boolean =>
+  typeof ahnmA === 'number' && ahnmA > 0 && ahnmA < LOW_AHNM_A_RETURN_THRESHOLD;
+
 export default function RecentPupdatesTab() {
   // Get today's date in YYYY-MM-DD
   // Use UTC date for comparison
@@ -152,17 +163,17 @@ export default function RecentPupdatesTab() {
     staleTime: 1000 * 60 * 60 * 2
   });
 
-  const { data: newDogs, isLoading } = useQuery({
+  const { data: newDogsData, isLoading } = useQuery({
     queryKey: ['newDogs', availableSoonDogs?.map(d => d.id) ?? []],
     queryFn: async () => {
       // Get all available dogs present today
       const { data: dogsToday, error: errorToday } = await supabase
         .from('dogs')
-        .select('id, name, intake_date, created_at, status')
+        .select('id, name, intake_date, created_at, status, "AHNM-A"')
         .eq('status', 'available');
       if (errorToday || !dogsToday) {
         console.log('Error or no dogsToday:', errorToday, dogsToday);
-        return [];
+        return { trueNew: [], lowAhnmReturning: [] };
       }
 
       // Get IDs of Available Soon dogs to exclude
@@ -252,10 +263,27 @@ export default function RecentPupdatesTab() {
       console.log('availableSoonIds:', availableSoonIds);
       console.log('statusChangeIds:', Array.from(statusChangeIds));
       console.log('newDogs (filtered):', filtered);
-      return filtered;
+
+      // Dogs with an implausibly low AHNM-A number predate the database and are
+      // really returns, not new intakes, even though no adopted->available
+      // dog_history event exists to detect that the normal way.
+      const trueNew = filtered.filter(dog => !isLowAhnmA(dog['AHNM-A']));
+      const lowAhnmReturning = filtered.filter(dog => isLowAhnmA(dog['AHNM-A']));
+      return { trueNew, lowAhnmReturning };
     },
     staleTime: 1000 * 60 * 60 * 2 // 2 hours
   });
+
+  const newDogs = newDogsData?.trueNew;
+
+  // Combine the history-detected returns with the low-AHNM-A ones; dedup by id in
+  // case a dog is ever picked up by both checks.
+  const allReturnedDogs = Array.from(
+    new Map(
+      [...(returnedDogs ?? []), ...(newDogsData?.lowAhnmReturning ?? [])].map(dog => [dog.id, dog])
+    ).values()
+  );
+  const isLoadingAnyReturned = isLoadingReturned || isLoading;
 
   return (
     <div className="border border-[#ccc] p-4 rounded bg-[#fafafa]">
@@ -325,10 +353,10 @@ export default function RecentPupdatesTab() {
           <div style={{ height: '0.6em' }} />
           <p className="text-sm mb-4" style={{ marginLeft: '0.5em' }}><em>We're back!</em></p>
           <div style={{ height: '0.6em' }} />
-          {isLoadingReturned && <div>Loading returned dogs...</div>}
-          {!isLoadingReturned && returnedDogs && returnedDogs.length > 0 && (
+          {isLoadingAnyReturned && <div>Loading returned dogs...</div>}
+          {!isLoadingAnyReturned && allReturnedDogs.length > 0 && (
             <div style={{ marginLeft: '0.5em', marginBottom: '1.2em'}}>
-              {sortDogsByName(returnedDogs).map(dog => (
+              {sortDogsByName(allReturnedDogs).map(dog => (
                 <React.Fragment key={dog.id}>
                   <span
                     className="text-[#2a5db0] cursor-pointer font-bold"
@@ -343,7 +371,7 @@ export default function RecentPupdatesTab() {
             </div>
           )}
 
-          {!isLoadingReturned && returnedDogs && returnedDogs.length === 0 && (
+          {!isLoadingAnyReturned && allReturnedDogs.length === 0 && (
             <div style={{ marginLeft: 'calc(1.4em - 12px)', color: '#888', marginTop: '0.3em', marginBottom: '1.2em' }}>No returned dogs today.</div>
           )}
         </div>
